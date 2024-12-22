@@ -44,7 +44,7 @@ rcUpload=$?
 echo "{ \"name\": \"makeTarSave\", \"dthSecond\": \"`date '+%s'`\", \"salageCrypto\": \"$salage\", \"md5\": \"$md5\", \"nbFile\": \"$nbFile\", \"rcTar\": \"$rcTar\", \"rcUpload\": \"$rcUpload\" }" > $JSON
 echo
 #
-# Efface le fichier car contient des elements sensibles
+# Efface le fichier tgz - taille importante
 rm -f $SAVETGZ
 #
 #fini
