@@ -160,7 +160,7 @@
 	.rune { 
 		padding: 0.3em;
 		border-color: rgb(0, 0, 0, .2);
-		border-image-source: url("https://d23yucuzbjibi3.cloudfront.net/ff-7/runemetal.png");
+		border-image-source: url("https://cdn.adhoc.click/ff-7/runemetal.png");
 		border-image-repeat: stretch;
 		border-image-slice: 2% 2% fill;
 		cursor: pointer;
@@ -237,7 +237,7 @@
 	{#if epiqStep==5}
 		<div class="reveal">
 			<div>
-				{pseudo}, je ne perçois plus le flux unicast de la Possession des âmes à mon encontre.
+				{pseudo}, je ne perçois plus le flux UniCast de la Possession des âmes à mon encontre.
 				Je suis à nouveau libre. Encore Merci.
 				<div class="br" />
 				Je penses que Méphistophélès est derrière tout cela,

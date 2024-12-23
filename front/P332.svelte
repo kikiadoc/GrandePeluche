@@ -133,6 +133,7 @@
 
 {#if step==0}
 	<div class="reveal">
+		<img style="float:right; width:40%" src="{urlCdn+'ff-7/ancien.png'}" alt="" />
 		<div>
 			Les Anciens étaient une antique civilisation qui a disparu lors de la Fragmentation.
 			<div class="br"></div>
@@ -143,7 +144,7 @@
 			certains ont retrouvé une activité inhabituelle.
 		</div>
 		<p>
-			Ainsi, celà confirme que de Nouveaux Anciens
+			Celà confirme que de Nouveaux Anciens
 			apparaissent en Eorzéa et que tu en as peut-être déjà identifié un: 
 			<a href="https://fr.wikipedia.org/wiki/M%C3%A9phistoph%C3%A9l%C3%A8s" target="_blank">
 				Méphistophélès
@@ -154,10 +155,11 @@
 			ils veulent remplacer les civilisations d'Eorzéa par une nouvelle Hégémonie.
 		</p>
 		<p>
-			C'est pourquoi tu vas m'aider à comprendre les arcanes de ces Nouveaux Anciens
+			C'est pourquoi j'espère que tu vas m'aider à comprendre les arcanes de ces Nouveaux Anciens
 			et, si besoin, de les combattre.
 		</p>
 		<Btn bind:refStep={step} step=1 video="ff-7-epique-1" val="Tu peux compter sur moi" />
+		<div style="clear:both" />
 	</div>
 {/if}
 {#if step==1}
@@ -262,7 +264,8 @@
 		<div class="br"></div>
 		Rends-toi dans ces régions d'Eorzéa et indique sur ton parchemin ce que tu y vois:
 		<div class="info">
-			Tu peux explorer en solo, ou le faire à plusieurs et partager tes découvertes.
+			Tu peux explorer en solo, le faire à plusieurs, tu peux aussi partager tes découvertes sur Discord.
+			<br />
 			Si tu n'as pas découvert une zone, demande de l'aide aux autres joueurs!
 		</div>
 		<div class="br"></div>

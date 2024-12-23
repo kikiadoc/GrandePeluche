@@ -8,7 +8,7 @@
 	 */
 
 	/** @type {Props} */
-	let { cbImageRaw, maxSize = 16000000 } = $props();
+	let { cbImageRaw, maxSize = 18000000 } = $props();
 	
 	// e=event change d'un input type=file
 	function validateImageUpload(eventFileInput,tagImg) {

@@ -96,16 +96,26 @@
 		nous a parlé de chiffrement.
 		Il nous a démontré qu'une série mathématique peut servir à chiffrer ou déchiffrer une information.
 		Il nous a indiqué qu'une fonction mathématique ne se limite pas à calculer un résultat
-		en fonction de ses paramètres. Il a illustré son propos avec la 
-		<a href="https://fr.wikipedia.org/wiki/Conjecture_de_Syracuse" target="_blank">Conjecture de Syracuse</a>.
+		en fonction de ses paramètres car celui-ci peut même être déjà connu. Il a illustré son propos avec la 
+		<a href="https://fr.wikipedia.org/wiki/Conjecture_de_Syracuse" target="_blank">Conjecture de Syracuse</a>:
+		Son résultat est connu, c'est toujours 1, la suite 4/2/1 des derniers calculs est appelée le cycle trivial.
 		<br/>
-		<Btn bind:refStep={epiqStep} step=5 val="Et alors?" />
+		<Btn bind:refStep={epiqStep} step=5 val="Et?" />
+		<div class="info">
+			La Conjecture de Syracuse n'est pas, aujourd'hui, mathématiquement démontrée, mais aucune exception n'a été
+			identifiée, c'est pourquoi ce n'est pas un
+			<a href="https://fr.wikipedia.org/wiki/Th%C3%A9or%C3%A8me" alt="" target="_blank">théorème</a>,
+			mais une
+			<a href="https://fr.wikipedia.org/wiki/Conjecture" alt="" target="_blank">conjecture</a>.
+			Tu vas l'utiliser alors que les meilleurs mathématiciens du monde s'attèlent à sa preuve
+			et en espèrent la 
+			<a href="https://fr.wikipedia.org/wiki/M%C3%A9daille_Fields" alt="">médaille Fields</a>
+		</div>
 	</div>
 {/if}
 
 {#if epiqStep==5}
 	<div class="reveal">
-
 		C'est alors qu'au fond de la salle de conférence,
 		<a href="https://fr.wikipedia.org/wiki/Alan_Turing" target="_blank">Alan Turing</a>
 		s'est levé et s'est exclamé:

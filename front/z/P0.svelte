@@ -26,7 +26,8 @@
 		loadDiscordActions();
 	}
 
-	// generique
+	// generique non sauvegardées
+	let saisies = {}
 	
 	/////////////////////////////////////////////////////////////////////
 	// Gestion discord
@@ -107,21 +108,10 @@
 	// Pseudos
 	/////////////////////////////////////////////////////////////////////
 	let dspPseudo = $state(null);
-	async function clearPseudoServer()	{ 
-		const pseudo = document.getElementById('admClearPseudo').value;
-		let retJson = await apiCall("/pseudos/"+pseudo,"DELETE");
-		newInfoPopup("deletePeudo:",retJson.o.pseudo,"status="+retJson.status); 
-	}
 	async function infoGlobalPseudos() {
 		const ret = await apiCall("/pseudos");
 		if (ret.status==200) {
 			dspPseudo = Object.entries(ret.o)
-		}
-	}
-	async function infoGlobalDiscord() {
-		const ret = await apiCall("/discord/admGetRaw");
-		if (ret.status==200) {
-			dspObject = ret.o
 		}
 	}
 /*
@@ -134,25 +124,9 @@
 	}
 */
 	/////////////////////////////////////////////////////////////////////
-	// Hauts faits
-	/////////////////////////////////////////////////////////////////////
-	async function infoGlobalHautsFaits() {
-		let ret = await apiCall("/hautsFaits");
-		let res=[];
-		Object.keys(ret.o.id).forEach( id => {
-			res.push(id);
-			let lst= "";
-			Object.keys(ret.o.id[id].pseudos).forEach( p => {
-				lst = lst + p + " ";
-			});
-			res.push("->"+lst);
-		});
-		newInfoPopup("Synthèse hautsFaits",res,"admin!");
-	}
-	/////////////////////////////////////////////////////////////////////
 	// test 
 	/////////////////////////////////////////////////////////////////////
-	let cryptoTestVal = null; // resulat signature crypto
+	// let cryptoTestVal = null; // resulat signature crypto
 
 </script>
 <style>
@@ -160,14 +134,22 @@
 </style>
 <div style="font-size: 0.7em">
 	<div class="adminCadre">
-		<input type="button" value="infoGlobalPseudos" onclick={()=>infoGlobalPseudos()} />
+		<input type="button" value="infoGlobalPseudos" onclick={async ()=>await infoGlobalPseudos()} />
 		<!-- <input type="button" value="infoGlobalJetons" on:click={()=>infoGlobalJetons()} /> -->
-		<input type="button" value="infoGlobalHautsFaits" onclick={()=>infoGlobalHautsFaits()} />
-		<input type="button" value="infoGlobalDiscord" onclick={()=>infoGlobalDiscord()} />
+		<input type="button" value="infoGlobalHautsFaits" onclick={async ()=>dspObject=await apiCall("/hautsFaits")} />
+		<input type="button" value="infoGlobalDiscord" onclick={async ()=>dspObject=await apiCall("/discord/admGetRaw")} />
 	</div>
 	<div class="adminCadre">
-		<input type="text" placeholder="pseudo" id="admClearPseudo">
-		<input type="button" value="ClearServer/pseudo" onclick={clearPseudoServer}>
+		<input bind:value={saisies.admPseudo} type="text" placeholder="pseudo" />
+		<input type="button" value="ClearServer/pseudo"
+			onclick={async ()=> dspObject=confirm('Delete pseudo?'+saisies.admPseudo) && await apiCall("/pseudos/"+saisies.admPseudo,"DELETE")}
+		/>
+		<input bind:value={saisies.admNumPage} type="number" min=0 max=999 placeholder="numPage">
+		<input type="button" value="GoToPage/pseudo"
+			onclick={async ()=>dspObject=await apiCall("/adminTest/gotoPage/"+saisies.admPseudo+"/"+saisies.admNumPage,'PATCH')}
+		/>
+	</div>
+	<div class="adminCadre">
 		<input type="text" placeholder="ff14Id" id="admClearDiscord">
 		<input type="button" value="ClearDiscord/ff14Id" onclick={clearFf14IdDiscord}>
 	</div>

@@ -140,7 +140,7 @@
 			C'est un grand danger pour l'Univers Connu et je pense que la cause est le Gaz de Possession.
 		</div>
 		<div class="info">
-			Prends le temps de bien lire le lore, le challenge ne commence pas immédiatement.
+			Prends le temps de bien lire le lore, le challenge ne commence que dans quelques minutes.
 		</div>
 		<Btn bind:refStep={epiqStep} step=10 val="Le Gaz de Possession?" />
 	</div>
@@ -156,7 +156,7 @@
 		<br/>
 		Cette arme radioactive est très dangeureuse.
 		Passant de main de Nouvel Ancien en main de Nouvel Ancien, elle peut répendre
-		le pire des neurotoxiques connus,
+		le pire des neurotoxiques,
 		le fameux Gaz de Possession, sur toute la surface d'Eorzéa.
 		<br />
 		<Btn bind:refStep={epiqStep} step=20 val="Que faire?" />
@@ -188,10 +188,10 @@
 	</div>
 {/if}
 {#if epiqStep==26}
-	<div class="reveal" oncdTimeout={()=>epiqStep=27}>
+	<div class="reveal">
 		Attend
 		<span style="color:red">
-			<countdown dth={dthAttenteStep26} cbCountdown={()=>epiqStep=27}></countdown>
+			<countdown dth={dthAttenteStep26} oncdTimeout={()=>epiqStep=27}></countdown>
 		</span>
 		, j'ai un message urgent.
 		<br />

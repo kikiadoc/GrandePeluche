@@ -135,9 +135,7 @@ export function countDownTo(dth) {
 }
 
 export function geUtcMsFrom(y,m,d,hh,mm,ss) {
-	let dateLoc = new Date(Date.UTC(y, m-1, d, hh, mm, ss))
-	// console.log("date=",dateLoc)
-	return dateLoc.valueOf()
+	return Date.UTC(y, m-1, d, hh, mm, ss)
 }
 
 export function shuffle(array) {
@@ -240,11 +238,18 @@ export function newObjectPopup(o) {
 	else alert("bad DOM")
 }
 
-// popup d'info, t,b,t : libelles, opt: option (si string, url de l'image complémentaire
-// sinon option {img ding et back })
+// popup d'info opt: contient les options complémentaires (si opt==string, devient l'img)
 export function newInfoPopup(titre,body,trailer,opt) {
-	// console.log("newInfoPopup",titre,body)
-	let o = {}
+	let o = {} 
+	// titre: string
+	// body: []
+	// trailer: string
+	// back: class
+	// img urlsanscdn (float 50%)
+	// imgFull urlsandcdn (top 100%)
+	// ding
+	// mp3
+	// autoClose: #sec
 	switch(typeof opt) {
 		case "string": o = {img: opt};	break;
 		case "object": o = opt; break;

@@ -237,10 +237,13 @@
 	<input type="button" value="Revoir le Lore" onclick={() => epiqStep=0} />
 	<input type="button" value="Resultats TBD" onclick={() => epiqStep=0} />
 	{#if igImage}
-		<span class="gpHelp info" gpHelp="Etat de synchronisation temps réel avec le serveur, clique sur 🆘 pour le détail">
-			sync:{Math.floor(Date.now() - (igImage.dth+igImage.epsilon))}ms
-			ε={igImage.epsilon}ms
-			Δtts:{ssms(Date.now()-(etatTTS.dth+igImage.epsilon))}
+		<span class="gpHelp info" gpHelp="Ecart entre image server et image client de l'in-game après correction temporelle">
+			ΔigSync:{Math.floor(Date.now() - (igImage.dth+igImage.epsilon))}ms
+			<sup>🛈</sup>
+		</span>
+		<span class="gpHelp info" gpHelp="Temp réseau de propagation depuis ACT (chaine complète)">
+			Δevt:n/a
+			<sup>🛈</sup>
 		</span>
 		<span role="button" style="cursor:pointer" 
 			onclick={()=>{ 
@@ -364,7 +367,7 @@
 			lors de ce challenge.
 		</div>
 		<div class="info">
-			Pour profiter d'une expérience immersive inédite, je te propose de
+			Pour profiter d'une expérience immersive optimale, je te propose de
 			suivre
 			<a href="{urlCdn}ff-7/Spartaci.pdf" target="_blank">
 				<span class="blinkMsg">
@@ -373,8 +376,8 @@
 			</a>
 		</div>
 		<div class="info">
-			De tels réglages te permettront de participer de façon optimale
-			à ce challenge: Barre de raccourcis ciblés, raccoucis de chat etc...
+			De tels réglages te permettront de participer à ce challenge avec
+			une barre de raccourcis ciblés, des raccoucis de chat etc...
 		</div>
 		<Btn bind:refStep={epiqStep} step=5 val="J'ai un soucis de configuration du jeu"
 			msg="Relis attentivement les conseils ci-dessus, vérifie bien et contacte alors Kikiadoc sur discord"

@@ -277,7 +277,7 @@
 		La Source, j'ai lu quelque chose à ce propos dans le Grimoire des Savoirs.
 		<br/>
 		Patiente 
-		<countdown style="color:red" dth={Date.now()+(chercheDelay*1000)} oncdTimeout={()=>{epiqStep=45}}></countdown>
+		<countdown style="color:red" dth={Date.now()+(chercheDelay*1000)} oncdTimeout={()=>epiqStep=45}></countdown>
 		, je cherche dans le Grimoire...
 		<br/>
 		<Btn bind:refStep={epiqStep} step=40 val="Grouille-toi!" ifFct={()=> chercheDelay+=30 }
@@ -314,7 +314,7 @@
 		Combien y-a-t-il de cartes de diffusion dans La Source ?
 		<br/>
 		<input type="number" placeholder="nombre" size=4 bind:value={saisies.nbCartes} />
-		<Btn bind:refStep={epiqStep} step=60 val="Ok" ifFct={()=> saisies.nbCartes==10 }
+		<Btn bind:refStep={epiqStep} step=60 val="➤" ifFct={()=> saisies.nbCartes==10 }
 			bind:refPageDone={pageDone} pageDone={pageDesc.n}
 			hautFait="decouvreurDeLaSource"
 			koMsg="Recompte encore" />
