@@ -7,6 +7,7 @@ echo "Début de la mise à jour système"
 
 # update system
 echo "*** Mise a jour systeme et patch securite du " `date` > $logs
+sudo /usr/bin/dnf check-update >> $logs
 sudo /usr/bin/dnf upgrade -y >> $logs
 rcYumUpdate=$?
 echo "*** fin de mise a jour:" `date` >> $logs

@@ -189,10 +189,7 @@
 					{/if}
 					{#each calculs.ops as c, i}
 						<div>
-							#{calculs.ops.length - i}: {c.p}
-							{#if c.op}
-								{c.op}{c.r}
-							{/if}
+							#{calculs.ops.length - i}: {c.p}{#if c.op}{c.op}{c.r}{/if}
 						</div>
 					{/each}
 				</div>

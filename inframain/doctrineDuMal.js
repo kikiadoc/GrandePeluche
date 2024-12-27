@@ -9,8 +9,8 @@ const uploadFile = require('../inframain/uploadFile.js');
 
 const DELAYRECHERCHE= 30*60000 // temps allouer pour trouver le pnj
 const DELAYPRISON= 24*60*60000 // delai de sortie automatique de la prison
-const DELAYTROUVEBASE= 5*60000
-const DELAYTROUVECOEF= 25*60000 // delai selon le nombre de runes trouvees
+const DELAYTROUVEBASE= 10*60000
+const DELAYTROUVECOEF= 30*60000 // delai selon le nombre de runes trouvees
 const DELAYFAIL=30000 // 30 secondes pour reessai en cas de sortie prison ou de pnj non intéressant
 const CHANCEPRISON=0.10
 const CHANCEGAGNE=0.65

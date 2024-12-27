@@ -133,7 +133,7 @@
 
 {#if step==0}
 	<div class="reveal">
-		<img style="float:right; width:40%" src="{urlCdn+'ff-7/ancien.png'}" alt="" />
+		<img class="parchemin" style="float:right; width:30%" src="{urlCdn+'ff-7/ancien.png'}" alt="" />
 		<div>
 			Les Anciens étaient une antique civilisation qui a disparu lors de la Fragmentation.
 			<div class="br"></div>
@@ -164,9 +164,9 @@
 {/if}
 {#if step==1}
 	<div class="reveal">
-		{pseudo}, note son nom sur ton parchemin épique.
-		<br/>
 		<input type="button" value="Je peux revoir ton message?" onclick={()=>playVideo('ff-7-epique-1')} />
+		<br/>
+		{pseudo}, note le nom de ce maître de guilde sur ton parchemin épique.
 		<div class="parchemin">
 			Parchemin épique:
 			<br/>
@@ -180,13 +180,15 @@
 	
 {#if step==15}
 	<div class="reveal">
+		<img class="parchemin" style="float:right; width:30%" src="{urlCdn+'ff-7/ancien.png'}" alt="" />
 		{pseudo}, ton âme est prisonnière des Nouveaux Anciens, mais elle n'est pas encore possédée!
 		<br/>
-		<Btn video="ff-7-epique-2" val="Remontre-moi ma capture" />
-		<Btn bind:refStep={step} step=20 video="ff-7-escapeprison" val="Que dois-je faire?" />
 		{#if saisies.escape}
 			<Btn bind:refStep={step} step=30 val="Je me suis déjà échappé" />
 		{/if}
+		<Btn video="ff-7-epique-2" val="Remontre-moi ma capture" />
+		<Btn bind:refStep={step} step=20 video="ff-7-escapeprison" val="Que dois-je faire?" />
+		<div style="clear:both" />
 	</div>
 {/if}
 {#if step==20}
@@ -195,20 +197,23 @@
 
 {#if step==30}
 	<div class="reveal">
+		<img class="parchemin" style="float:right; width:30%" src="{urlCdn+'ff-7/ancien.png'}" alt="" />
 		Ton âme a réussi à s'échapper de la Prison des Ames et rejoindre ton corps.
 		<br />
-		Tu as eu de la chance, car les Gardiens de le Prison
+		Tu as eu de la chance, car les Gardiens
 		ont été surpris par ta capture et ton évasion a été facile...
 		<br />
 		Si ton âme est à nouveau prisonnière de la Prison des Ames,
 		ta future évasion sera probablement plus délicate...
 		<br />
 		<Btn bind:refStep={step} step=35 val="J'ai eu chaud aux fesses!" />
+		<div style="clear:both" />
 	</div>
 {/if}
 
 {#if step==35}
 	<div class="reveal">
+		<img class="parchemin" style="float:right; width:30%" src="{urlCdn+'ff-7/engrenage.webp'}" alt="" />
 		{pseudo}, je suis très perturbée par ce qu'il vient de t'arriver. 
 		<div class="br"></div>
 		Il semble que notre interprétation était incorrecte.
@@ -225,37 +230,42 @@
 		et je vais voir ce qui se passe.
 		<br />
 		<Btn bind:refStep={step} step=40 val="Je peux regarder avec toi?" />
+		<div style="clear:both" />
 	</div>
 {/if}
 	
 {#if step==40}
-	<div class="reveal" style="text-align:center">
-		Voici les émanations éthéréennes {pseudo}!
-		<br/>
-		<img style="width:30%" src="{urlCdn+'ff-7/runetournantes.webp'}" alt="" />
+	<div class="reveal">
+		<img class="parchemin" style="float:right; width:30%" src="{urlCdn+'ff-7/runetournantes.webp'}" alt="" />
+		Regarde ci-contre les émanations éthéréennes {pseudo}!
 		<br/>
 		<Btn bind:refStep={step} step=45 val="J'ai une idée!" />
 		<Btn bind:refStep={step} step=46 val="Je n'y comprend rien" />
+		<div style="clear:both" />
 	</div>
 {/if}
 
 {#if step==45}
 	<div class="reveal">
+		<img class="parchemin" style="float: right; width:30%" src="{urlCdn+'ff-7/runetournantes.webp'}" alt="" />
 		Petit scarabée présomptueux, je suis la seule à pouvoir interpréter
 		les émanations éthéréennes des grimoires.
 		<br/>
 		Remet tes idées saugrenues dans ton... bref...
 		<br/>
 		<Btn bind:refStep={step} step=50 val="Excuse-moi Grande Peluche" />
+		<div style="clear:both" />
 	</div>
 {/if}
 
 {#if step==46}
 	<div class="reveal">
+		<img class="parchemin" style="float: right; width:30%" src="{urlCdn+'ff-7/runetournantes.webp'}" alt="" />
 		C'est normal, je suis la seule à pouvoir interpréter
 		les émanations éthéréennes des grimoires.
 		<br/>
 		<Btn bind:refStep={step} step=50 val="Et qu'as-tu vu?" />
+		<div style="clear:both" />
 	</div>
 {/if}
 {#if step==50}
@@ -303,6 +313,7 @@
 
 {#if step==60}
 	<div class="reveal">
+		<img class="parchemin" style="float: right; width:30%" src="{urlCdn+'ff-7/conference.webp'}" alt="" />
 		Merci d'avoir exploré ces lieux, {pseudo}.
 		<div class="br"></div>
 		Tu n'as donc pas trouvé dans ces lieux, ni maître de guilde, ni maître-artisan.
@@ -314,9 +325,10 @@
 		<Btn bind:refPage={page} video="ff-7-epique-3" bind:refPageDone={pageDone} page=0 pageDone={pageDesc.n} val="Voir les préparatifs" />
 		<div class="br"></div>
 		<div class="info">
-			Ce challenge est terminé, tu peux cliquer en haut cette page pour
+			Ce challenge est terminé, tu peux cliquer sur les boutons en haut cette page pour
 			revoir le lore ou les résultats actuels.
 		</div>
+		<div style="clear:both" />
 	</div>
 {/if}
 

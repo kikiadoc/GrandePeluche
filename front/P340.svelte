@@ -77,60 +77,149 @@
   <input type="button" onclick={async ()=> dspResultats = await getHautFait(nomHautFait)} value="Résultats" />
 </div>
 
-
 {#if epiqStep==0}
 	<div class="reveal">
+		<img class="parchemin" src={urlImg+"ff-7/Euklid2.jpg"} style="width:20%; float:right" alt="" />
+		<div class="info">
+			Ce challenge est d'un type un peu singulier.
+			<div class="br"/>
+			Il se fait en solo, sans contrainte de rapidité, 
+			sans compétition, sans besoin de coopération et est, malgré les apparences, très facile.
+			<div class="br"/>
+			Kikiadoc l'appelle son challenge sentimental<sup>(*)</sup>
+			<div class="br"/>
+			En cas de difficulté, tu pourras demander l'aide 
+			d'<a href="https://fr.wikipedia.org/wiki/Euclide" target="_blank">Euclide</a>
+			qui te donnera alors les solutions grâce à sa règle et son compas,
+			ou consulter les résultats de l'intelligence artificielle
+			<a href="https://fr.wikipedia.org/wiki/Intelligence_artificielle_g%C3%A9n%C3%A9rative" target="_blank">
+				genAI
+			</a> chatGPT<sup>(**)</sup>
+			<div class="br"/>
+			Prends le temps de lire le lore, de suivre les liens et ainsi 
+			<u>découvrir le background historique IRL de ce challenge</u>.
+			<div class="br"/>
+			Tu vas utiliser une conjecture mathématique des plus célèbres.
+			<div class="br"/>
+			Sa démonstration (ou son infirmation) résiste aux super-ordinateurs, aux ordinateurs quantiques
+			d'aujourd'hui et à toutes les intelligences humaines depuis des décennies.
+			<div class="br"/>
+			Elle est paradoxalement terriblement simple à mettre en oeuvre.
+			<div class="br"/>
+			Tu vas l'utiliser alors que des mathématiciens parmi les plus célèbre du monde s'attèlent à sa démonstration
+			et en espèrent l'équivalent d'un prix Nobel, la 
+			<a href="https://fr.wikipedia.org/wiki/M%C3%A9daille_Fields" alt="" target="_blank">médaille Fields</a>
+		</div>
+		<div class="br"/>
+		<Btn bind:refStep={epiqStep} step=1 val="Ca a l'air passionant, je vais tout lire" />
+		<Btn bind:refStep={epiqStep} step=1 msg="Profite de ce challenge pour changer d'avis!" val="Moi et les maths..." />
+		<div class="br" />
+		<div class="info">
+			(*) Dans ce challenge se retrouvent deux de mes passions: l'Informatique et les Mathématiques.
+			<br />
+			Et j'ai versé quelques larmes en le concevant car j'ai pensé à ma première rencontre avec
+			mon premier Mentor IRL, 
+			<a href="https://www.palais-decouverte.fr/fr/explorer-nos-contenus/revue-decouverte/archives/n-409-mars-avril-2017/hommage-a-jean-brette-1946-2017"
+				target="_blank" alt="" >
+				Jean Brette
+			</a>, Mathématicien, Informaticien et prodigieux vulgarisateur.
+			<br />
+			Je n'étais qu'un gamin de 11 ans.
+			En quelques minutes,
+			il m'a transmis ses passions et constellé mon imaginaire.
+			<br />
+			C'était le 14 décembre 1974, il y a 50 ans, au
+			<a href="https://www.palais-decouverte.fr/fr/venir-nous-voir/les-etincelles/les-exposes/informatique-et-sciences-du-numerique"
+				target="_blank" alt="" >
+				Palais de la découverte
+			</a>
+			lors de 
+			<span class="imgLink" gpImg="ff-7/expo-palais-1974.png">
+			l'exposition "Micro"
+			</span>,
+			et je m'en souviens comme si c'était hier.
+		</div>
+		<div class="info">
+			(**) L'usage des API des genAI n'est pas gratuit.
+			Aussi, j'ai demandé à 
+			<a href="https://chatgpt.com/" target="_blank">chatGPT</a>
+			tous les calculs et j'ai stocké les résultats afin de limiter les couts d'usage.
+			C'est ce résultat précalculé pas forcement bien lisible qui te sera présenté.
+			<br/>
+			Les outils de genIA sont nombreux, chatGPT, Gemini, Copilot, Grok...
+			Dans tous les cas, il faut vérifier les éléments et ne pas prendre les informations
+			comme des "vérités vraies".
+			Certains sont très pertinents	et certains colportent des fakes.
+			A titre d'exemple, quand on demande la démonstration de la Conjecture,
+			c'est une question idiote car une conjecture n'est justement pas démontrée.
+			chatGPT, gemini ne tombent pas dans le panneau et indique qu'il n'y a aucune preuve
+			mais Grok présente des démonstrations ineptes: Grok n'est vraiment qu'un
+			<a href="https://en.wikipedia.org/wiki/Stochastic_parrot" target="_blank">
+				perroquet stochastique
+			</a>.
+		</div>
+		<div style="clear:both" />
+	</div>
+{/if}
+
+{#if epiqStep==1}
+	<div class="reveal">
+		<img class="parchemin" src={urlImg+"ff-7/BNF.jpg"} style="width:30%; float:right" alt="" />
 		<div>Te voila à nouveau {pseudo}.</div>
 		<div class="br"></div>
-		Le congrés scientifique vient de se terminer. Je t'en fais ici la synthèse, c'était fabuleux!
+		Le congrès scientifique vient de se terminer. Je t'en fais ici la synthèse, c'était fabuleux!
 		<div class="br"></div>
-		<a href="https://fr.wikipedia.org/wiki/Jean-Fran%C3%A7ois_Champollion" target="_blank">Champollion</a>
+		La Peluche
+		<a href="https://fr.wikipedia.org/wiki/Jean-Fran%C3%A7ois_Champollion" target="_blank">
+			Jean-François Champollion
+		</a>
 		nous a expliqué qu'un élément peut se traduire de différentes
 		façons selon le contexte: un nombre, une lettre, un glyphe ou même un mot!!!
 		Comme illustration, il a dévoilé la
 		<a href="https://fr.wikipedia.org/wiki/Pierre_de_Rosette" target="_blank">Pierre de Qarn</a>
-		qu'il a découverte au fond du temple éponyme et comportant de multiples traductions d'un même texte.
-		<div class="br"></div>
-		Ensuite,
-		<a href="https://fr.wikipedia.org/wiki/Lothar_Collatz" target="_blank">Callatz</a>
+		qu'il a découverte au fond du temple éponyme.
+		<div class="br" />
+		Ensuite, la Peluche
+		<a href="https://fr.wikipedia.org/wiki/Lothar_Collatz" target="_blank">Lothar Collatz</a>
 		nous a parlé de chiffrement.
 		Il nous a démontré qu'une série mathématique peut servir à chiffrer ou déchiffrer une information.
 		Il nous a indiqué qu'une fonction mathématique ne se limite pas à calculer un résultat
 		en fonction de ses paramètres car celui-ci peut même être déjà connu. Il a illustré son propos avec la 
 		<a href="https://fr.wikipedia.org/wiki/Conjecture_de_Syracuse" target="_blank">Conjecture de Syracuse</a>:
-		Son résultat est connu, c'est toujours 1, la suite 4/2/1 des derniers calculs est appelée le cycle trivial.
+		Son résultat est connu, c'est toujours 1 et ensuite le cycle 4, 2, 1.
 		<br/>
-		<Btn bind:refStep={epiqStep} step=5 val="Et?" />
-		<div class="info">
-			La Conjecture de Syracuse n'est pas, aujourd'hui, mathématiquement démontrée, mais aucune exception n'a été
-			identifiée, c'est pourquoi ce n'est pas un
-			<a href="https://fr.wikipedia.org/wiki/Th%C3%A9or%C3%A8me" alt="" target="_blank">théorème</a>,
-			mais une
-			<a href="https://fr.wikipedia.org/wiki/Conjecture" alt="" target="_blank">conjecture</a>.
-			Tu vas l'utiliser alors que les meilleurs mathématiciens du monde s'attèlent à sa preuve
-			et en espèrent la 
-			<a href="https://fr.wikipedia.org/wiki/M%C3%A9daille_Fields" alt="">médaille Fields</a>
-		</div>
+		<Btn bind:refStep={epiqStep} step=5 val="Super mais je fais quoi, moi?" />
+		<div style="clear:both" />
 	</div>
 {/if}
 
 {#if epiqStep==5}
 	<div class="reveal">
-		C'est alors qu'au fond de la salle de conférence,
-		<a href="https://fr.wikipedia.org/wiki/Alan_Turing" target="_blank">Alan Turing</a>
+		<img class="parchemin" src={urlImg+"ff-7/turing-ordinateur.jpg"} style="width:20%; float:right" alt="" />
+		Pff, je continue le résumé de la conférence.
+		<div class="br"></div>
+		Alors que se terminaient ces brillants exposés, au fond de la salle, l'Immense Peluche, le Génial
+		<a href="https://lejournal.cnrs.fr/articles/alan-turing-genie-au-destin-brise" target="_blank">
+			Alan Turing
+		</a>
 		s'est levé et s'est exclamé:
 		<br/>
 		<span class="blinkMsg">Je sais déchiffrer le langage des Nouveaux Anciens !</span>
 		<div class="br"></div>
-		Tous les orateurs, spectateurs et moi, nous nous
+		Tous les orateurs, les chercheurs de toutes disciplines, toute l'assistance et moi, nous nous
 		sommes tous retournés vers lui comme d'une seule Peluche et lui avons simplement demandé: comment?
 		<br/>
 		<Btn bind:refStep={epiqStep} video="ff-7-alan-decryptage" step=10 val="Et alors? Qu'a dit Alan?" />
+		<div style="clear:both" />
 	</div>
 {/if}
 {#if epiqStep==10}
 	<div class="reveal">
-		<a href="https://fr.wikipedia.org/wiki/Alan_Turing" target="_blank">Alan Turing</a>
+		<Btn video="ff-7-alan-decryptage" step=10 val="Revoir la vidéo d'Alan" />
+		<br/>
+		<a href="https://lejournal.cnrs.fr/articles/alan-turing-genie-au-destin-brise" target="_blank">
+			Alan
+		</a>
 		nous alors indiqué la traduction du feuillet du Grimoire de la Magie qui a brulé!
 		<div class="br"></div>
 		Les nombres se traduisent comme suit: 
@@ -143,13 +232,13 @@
 		<br/>
 		<i>Aux environs de la guilde des pêcheurs, un maître de guilde saura...</i>
 		<div class="br"></div>
-		Ensuite il nous a indiqué comment traduire le language des Nouveaux Ansciens:
+		Ensuite il nous a indiqué comment traduire le language des Nouveaux Anciens:
 		<div class="br"></div>
-		Les mots sont conservés, mais chaque nombre doit être décomposé selon la 
-		<a href="https://fr.wikipedia.org/wiki/Conjecture_de_Syracuse" target="_blank">Conjecture de Syracuse</a>
-		et obtenir un nombre que l'on peut alors associer selon la 
+		Les mots sont conservés, mais chaque nombre doit être itéré selon la 
+		<a href="https://fr.wikipedia.org/wiki/Conjecture_de_Syracuse" target="_blank">Conjecture de Syracuse</a>.
+		Le nombre d'itérations est alors l'indice à utiliser pour examiner la
 		<a href="https://fr.wikipedia.org/wiki/Pierre_de_Rosette" target="_blank">Pierre de Qarn</a>
-		à un autre nombre, une lettre ou un mot.
+		et en déduire un autre nombre, une lettre ou un mot.
 		<br/>
 		<Btn bind:refStep={epiqStep} step=30 val="Ho, mais c'est très compliqué!" />
 	</div>
@@ -157,6 +246,7 @@
 
 {#if epiqStep==30}
 	<div class="reveal">
+		<img class="parchemin" src={urlImg+"ff-7/turing-bombe.jpg"} style="width:30%; float:right" alt="" />		
 		Tu as raison, c'est très compliqué. Mais Alan est tellement surprenant!
 		<div class="br"></div>
 		Il a même imaginé
@@ -166,12 +256,13 @@
 		permettant à tout le monde de traduire le Nouvel Ancien en Eorzéen.
 		<br/>
 		<Btn bind:refStep={epiqStep} step=40 val="Je peux en avoir une?" />
+		<div style="clear:both" />
 	</div>
 {/if}
 
 {#if epiqStep==40}
 	<div class="reveal">
-		<div class="br"></div>
+		<img class="parchemin" src={urlImg+"ff-7/Human_brainstem2.gif"} style="width:30%; float:right" alt="" />		
 		Hélas, crafter une bombe électromécanique restera encore longtemps une
 		<a href="https://fr.wikipedia.org/wiki/Exp%C3%A9rience_de_pens%C3%A9e" target="_blank">expérience de pensée</a>
 		car les composants nécessaires n'ont pas encore été découverts:
@@ -180,6 +271,7 @@
 		10 tonnes de poils de Kikiadoc.
 		<br/>
 		<Btn bind:refStep={epiqStep} step=50 val="Alors c'est mort?" />
+		<div style="clear:both" />
 	</div>
 {/if}
 
@@ -207,7 +299,7 @@
 
 {#if epiqStep==55}
 	<div class="reveal">
-		<img src={urlImg+"ff-7/Tablette-anime.gif"} style="width:30%; float:right" alt="" />
+		<img class="parchemin" src={urlImg+"ff-7/Tablette-anime.gif"} style="width:30%; float:right" alt="" />
 		C'est fantastique, tu as grugé un Nouvel Ancien et tu as récupéré une Tablette de Traduction!
 		<div class="br"></div>
 		Tu mérites un Grimoire du Savoir Personnel.
@@ -219,7 +311,7 @@
 
 {#if epiqStep==57}
 	<div class="reveal">
-		<img src={urlImg+"ff-7/Grimoire-anime.gif"} style="width:30%; float:right" alt="" />
+		<img class="parchemin" src={urlImg+"ff-7/Grimoire-anime.gif"} style="width:30%; float:right" alt="" />
 		Oui, je n'en ai que quelques-uns, mais tu le mérites bien!
 		<div class="br"></div>
 		Ton Grimoire du Savoir Personnel note automatiquement tes Hauts-faits,
@@ -232,6 +324,7 @@
 
 {#if epiqStep==60}
 	<div class="reveal">
+		<img class="parchemin" src={urlImg+"ff-7/engrenage.webp"} style="width:30%; float:right" alt="" />
 		Haha, pour cela, je te propose de vérifier que ta Tablette de Traduction et ton Grimoire du Savoir Personnel
 		fonctionnent bien.
 		<div class="br"></div>
@@ -239,6 +332,7 @@
 		pour réaliser la traduction selon la Conjecture de Syracuse?
 		<br/>
 		<Btn bind:refStep={epiqStep} step=70 val="Oui, bien sur!" />
+		<div style="clear:both" />
 	</div>
 {/if}
 
@@ -252,14 +346,16 @@
 	<div class="reveal">
 		C'est fabuleux, la Tablette de Traduction des Anciens fonctionne parfaitement et
 		ton Grimoire du Savoir Personnel note automatiquement tes traductions!
-		<div class="br"></div>
+		<div class="br"/>
 		Quand cela sera nécessaire, tu pourras à nouveau les utiliser pour
 		comprendre les écrits des Nouveaux Anciens.
-		<div class="br"></div>
+		<div class="br"/>
+		Il semble que les Mathématiques nous aideront à sauver Eorzéa de l'Hégémonie.
+		<div class="br"/>
 		<div class="info">
 			Tu as terminé ce challenge,
 			tu peux revoir le lore en cliquant sur 'Revoir le Lore'
-			et les résultats en cliquant sur 'résultats'
+			et les résultats en cliquant sur 'Résultats'.
 		</div>
 		<Btn bind:refPage={page} bind:refPageDone={pageDone} page=0 pageDone={pageDesc.n} val="Merci Grande Peluche" />
 		<div style="clear:both"></div>

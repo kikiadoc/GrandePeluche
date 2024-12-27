@@ -154,13 +154,13 @@
 		},
 		{n: 350, texte: "La Torchère", music: "ShadowArgonath",
 		 start: geUtcMsFrom(2025, 1, 13, 19, 0, 0),
-		 end: geUtcMsFrom(2025, 1, 17, 19, 0, 0),
+		 end: geUtcMsFrom(2025, 1, 19, 19, 0, 0),
 		 viewAfter: true,
 		 component: P350
 		},
 		{n: 355, texte: "Station Alpha", music: "Gift",
 		 start: geUtcMsFrom(2025, 1, 15, 19, 0, 0),
-		 end: geUtcMsFrom(2025, 1, 17, 19, 0, 0),
+		 end: geUtcMsFrom(2025, 1, 19, 19, 0, 0),
 		 viewAfter: true,
 		 component: P355
 		},

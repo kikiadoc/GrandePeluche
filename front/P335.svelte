@@ -2,7 +2,7 @@
 	import { onMount, onDestroy  } from 'svelte';
 	import {
 		loadIt, storeIt, newInfoPopup, apiCall, apiCallExtern, addNotification,
-		urlImg, envName,
+		urlImg, envName, urlCdn, markClick,
 		playSound, playVideo, jjmmhhmmss, countDownTo, scrollTop, getEpsilon
 	} from './storage.js'
 	import Btn from './z/Btn.svelte';
@@ -210,6 +210,8 @@
 
 </style>
 <!-- svelte-ignore element_invalid_self_closing_tag -->
+<!-- svelte-ignore a11y_click_events_have_key_events -->
+<!-- svelte-ignore a11y_no_static_element_interactions -->
 <div>
 {#if pseudo.startsWith('Kikiadoc')}
 	<div class="adminCadre">
@@ -234,26 +236,51 @@
 
 {#if epiqStep==0}
 	<div class="reveal">
+		<img class="parchemin" style="float: right; width:30%" src="{urlCdn+'ff-7/eorzea-carte.png'}" alt="" />
+
 		{pseudo}, tu sais que j'étudie très attentivement le Grimoire de la Magie.
 		<div class="br"></div>
 		Il y est fait référence d'une Doctrine qui semble être le mot d'ordre des Nouveaux Anciens.
-		<br/>
+		<div class="br"></div>
 		Selon le Grimoire des Savoirs, de nombreux documents des Anciens ont été éparpillés en Eorzéa
 		lors de la Fragmentation. La Doctrine doit en faire partie.
 		<div class="br"></div>
-		Un habitant (pnj) pourrait avoir récupéré une des Runes composant la Doctrine.
-		<br/>
-		<Btn bind:refStep={epiqStep} step=10 val="Trouver un pnj, c'est facile!" />
-		<div style="clear:both" class="br"></div>
+		Un 
+		<span onclick={markClick}
+			gpHelp="Un habitant est un PNJ de FF14 dont les caractéristiques ont été sélectionnées pour ce challenge"
+			style="cursor: pointer" >
+			habitant
+			<sup>🛈</sup>
+		</span>
+		pourrait avoir récupéré une des Runes composant la Doctrine.
+		<div class="br"/>
+		<Btn bind:refStep={epiqStep} step=10 val="Trouver un habitant, c'est facile!" />
+		<div class="info">
+			Lors de ce challenge, le serveur accède à des sites externes (Lodestone, Garland, xivApi)
+			pour amender sa propre base de connaissance.
+			<br/>
+			En cas de soucis d'intégrité sur les infos d'un PNJ, MP @Kikiadoc
+		</div>
+		<div style="clear:both" />
 	</div>
 {/if}
 
 {#if epiqStep==10}
 	<div class="reveal">
-		<img class="parchemin" src={urlImg+"ff-7/Tour80jours.png"} style="width:20%; float:right" alt="" />
+		<img class="parchemin" src={urlImg+"ff-7/Tour80jours.png"} style="width:30%; float:right" alt="" />
 		Détrompe-toi,
-		il y a des dizaines de milliers d'habitants (pnjs) en Eorzéa.
-		<div class="br"></div>
+		il y a des dizaines de milliers
+		<span onclick={markClick}
+			gpHelp="Un habitant est un PNJ de FF14 dont les caractéristiques ont été sélectionnées pour ce challenge"
+			style="cursor: pointer" >
+			d'habitants
+			<sup>🛈</sup>
+		</span>
+		en Eorzéa.
+		<div class="br"/>
+		Trouver des habitants ayant trouvé une des Runes de la Doctrine
+		ne me semble pas si simple que ça.
+		<div class="br"/>
 		Heureusement, lorsque 
 		<a href="https://fr.wikipedia.org/wiki/Phileas_Fogg" target="_blank">
 			Philéas Lodestone
@@ -262,18 +289,15 @@
 		identifier le nom des habitants et les a répertoriés
 		dans le Grimoire de Recensement que je conserve précieusement.
 		J'en ai réduit la liste à seulement 5400.
-		<br>
-		<Btn bind:refStep={epiqStep} step=20 val="Faudra-t-il en interroger des milliers?" />
-		<div class="info">
-			Le serveur accède à des bases de données externes au site de la Grande Peluche.
-			En cas de soucis MP @Kikiadoc
-		</div>
-		<div style="clear:both" class="br"></div>
+		<div class="br"/>
+		<Btn bind:refStep={epiqStep} step=20 val="5400! Et il faut tous les interroger?" />
+		<div style="clear:both" />
 	</div>
 {/if}
 
 {#if epiqStep==20}
 	<div class="reveal">
+		<img class="parchemin" style="float: right; width:30%" src="{urlCdn+'ff-7/echantillons.png'}" alt="" />
 		J'espère que non. Sinon, on va passer 25 ères australes et ombrales à tous les interroger!
 		<div class="br"></div>
 		La Peluche statisticienne
@@ -285,13 +309,15 @@
 		<a href="https://fr.wikipedia.org/wiki/Plan_d%27exp%C3%A9riences" target="_blank">plans d'expériences</a>
 		et
 		<a href="https://fr.wikipedia.org/wiki/%C3%89chantillon_(statistiques)" target="_blank">échantillonnages</a>
-		<br/>
+		<div class="br"/>
 		<Btn bind:refStep={epiqStep} step=30 val="Et c'est compliqué?" />
+		<div style="clear:both" />
 	</div>
 {/if}
 
 {#if epiqStep==30}
 	<div class="reveal">
+		<img class="parchemin" style="float: right; width:30%" src="{urlCdn+'ff-7/echantillons.png'}" alt="" />
 		Mais non!
 		<div class="br"></div>
 		Tu choisis une rune à découvrir,
@@ -299,33 +325,38 @@
 		tu choisis l'un d'entre eux,
 		tu vas le voir et
 		tu lui demandes s'il a des informations concernant la rune. Et c'est tout!
-		<br/>
+		<div class="br"/>
 		<Btn bind:refStep={epiqStep} step=40 val="Et il n'y a pas de lézard?" />
+		<div style="clear:both" />
 	</div>
 {/if}
 
 {#if epiqStep==40}
 	<div class="reveal">
-		En fait, il y a juste un petit truc...
-		<div class="br"></div>
+		<img class="parchemin" style="float: right; width:30%" src="{urlCdn+'ff-7/echantillons.png'}" alt="" />
+		En fait, il y a juste quelques petits trucs...
+		<div class="br" />
 		La Peluche Philéas Lodestone n'a pas indiqué les coordonnées exactes d'un habitant
 		dans le Grimoire de Recensement, seulement la zone où il se trouve.
 		Alors il faudra un peu explorer la zone concernée pour le trouver..
-		<div class="br"></div>
-		Pour compléter mon Grimoire du Recensement, tu devras m'indiquer les
+		<div class="br" />
+		Et pour compléter le Grimoire du Recensement, tu devras m'indiquer les
 		coordonnées de l'habitant et faire un screen de toi avec lui.
 		<div class="br"></div>
-		Selon ton charisme, et s'il a trouvé une rune, il te la donnera.
+		Enfin, selon ton charisme, et s'il a trouvé une rune, il te la donnera.
+		<br/>
 		Je compléterai alors la Doctrine.
 		<br/>
-		Mais attention, si l'habitant est possédé, tu risques la prison
-		<br/>
-		<Btn bind:refStep={epiqStep} step=50 val="Je m'en doutais" />
+		Mais attention, si l'habitant est possédé, tu risques la prison des âmes.
+		<div class="br"/>
+		<Btn bind:refStep={epiqStep} step=50 val="Pff, je m'en doutais" />
+		<div style="clear:both" />
 	</div>
 {/if}
 
 {#if epiqStep==50}
 	<div class="reveal">
+		<img class="parchemin" style="float: right; width:30%" src="{urlCdn+'ff-7/echantillons.png'}" alt="" />
 		Allez, et n'oublie pas que d'autres Aventuriers vont aussi aller à la rencontre d'habitants
 		mais ce ne seront pas les mêmes!
 		Pour chaque rune à découvrir, je donne à chacun un échantillon d'habitants différent.
@@ -335,8 +366,9 @@
 		<div class="br"></div>
 		Et si les voyages forment les Aventuriers, ca fatigue aussi, donc après chaque découverte,
 		tu devras te reposer. Plus tu auras fait de découvertes, plus tu devras te reposer.
-		<br/>
-		<Btn bind:refStep={epiqStep} step=99 val="OK, j'ai compris..." />
+		<div class="br"/>
+		<Btn bind:refStep={epiqStep} step=99 val="C'est bon, je peux explorer Eorzéa?" />
+		<div style="clear:both" />
 	</div>
 {/if}
 
@@ -356,10 +388,11 @@
 		{#if ctx.termine}
 			<div>
 				<Btn bind:refPage={page} bind:refPageDone={pageDone} page=0 pageDone={pageDesc.n} val="Le challenge est terminé" />
+				<Btn video="ff-7-doctrine-2" val="Revoir la video" />
 			</div>
 		{:else}
 			<div>
-				Les possibles:
+				Activités:
 			</div>
 			<div>
 				{#each Object.keys(ctx.pseudos) as pseudo,i}
@@ -438,6 +471,7 @@
 					Si tu as trouvé le PNJ nommé <u>{dspChoix.status.nom}</u>
 					en {dspChoix.status.loc},
 					indique moi ses coordonnées selon ta boussole IG et fait un screen de ton perso avec le PNJ.
+					<i>(tu peux faire une photo de ton écran avec ton smartphone)</i>
 					<table width="100%"><tbody><tr>
 						<td style="vertical-align: top; text-align: right; width:49%">
 							<div>X:<input bind:value={dspChoix.X} type="number" step="0.1" size=6 placeholder="xx.x" /></div>
@@ -488,13 +522,16 @@
 				{#if dspChoix.t == "infoErrDB"}
 					Hélas, la Peluche
 					<a href="https://fr.wikipedia.org/wiki/Phileas_Fogg" alt="" target="_blank">
-								 Philéas Garland,
+						Philéas Garland,
 					</a>
 					lors de son exploration d'Eorzéa,
 					n'a pas noté correctement toutes les informations pour {dspChoix.nom}
-					dans le Grimoire des Savoirs.
+					dans le Grimoire du Recensement.
 					<br/>
 					Je suis au regrêt de devoir te demander de choisir un autre PNJ
+					<div class="info">
+						Incohérence détectée entre le Lodestone, Garland et XIVapi
+					</div>
 				{/if}
 			</div>
 		</div>

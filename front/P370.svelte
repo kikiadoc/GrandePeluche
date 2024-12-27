@@ -241,7 +241,7 @@
 			ΔigSync:{Math.floor(Date.now() - (igImage.dth+igImage.epsilon))}ms
 			<sup>🛈</sup>
 		</span>
-		<span class="gpHelp info" gpHelp="Temp réseau de propagation depuis ACT (chaine complète)">
+		<span class="gpHelp info" gpHelp="Temp réseau de propagation sniff réseau->client - A FAIRE">
 			Δevt:n/a
 			<sup>🛈</sup>
 		</span>

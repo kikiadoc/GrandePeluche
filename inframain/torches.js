@@ -5,11 +5,11 @@ const collections = require('../infraback/collections.js');
 const discord = require('../infraback/discord.js');
 
 // Equilibrage final
-const RELAXNOUVELLE = 60 * 60000 // nombre de min en arrondi pour calcul nouvelle question --> doinne un delai entre 50 et 1H pour la nouvelle
-const RELAXBYREPONSE = 120 * 60000 // nombre de ms en delay par réponse déjà faite apres une reponse
-const RELAXBYERREUR = 30 * 60000 // nombre de ms en delay si erreur
-// Dth de premier pop (pour prod, reset lors d'un adminReset a +15sec
-let RELAXINIT = new Date(2025, 1-1, 13, 20, 15, 0).valueOf()
+const RELAXNOUVELLE = 30 * 60000 // nombre de min pour calcul nouvelle question
+const RELAXBYREPONSE = 180 * 60000 // nombre de ms en delay par réponse déjà faite apres une reponse
+const RELAXBYERREUR = 20 * 60000 // nombre de ms en delay si erreur
+// Dth de premier pop (pour prod à 20h15, reset lors d'un adminReset a +15sec ou 20h15 du jour sur ordre admin
+let RELAXINIT = Date.UTC(2025, 1-1, 13, 19, 15, 0)
 
 
 // liste des questions/reponses
@@ -190,9 +190,9 @@ exports.httpCallback = (req, res, method, reqPaths, body, pseudo, pwd) => {
 					etatTorches.relaxDthByPseudo[pseudo] = Date.now()+45000
 					syncClients(null)
 					gbl.exception("torches clear ok",200);
-				case "admReset20H30":
-					let nbSecJour = 24*60*60000
-					let h2030 = (19*60+30)*60000  // GMT+1 !!
+				case "admReset20H15":
+					const nbSecJour = 24*60*60000
+					const h2030 = (19*60+15)*60000  // GMT+1 !!
 					etatTorches.question.dth = (Math.floor(Date.now()/nbSecJour))*nbSecJour+ h2030
 					syncClients(null)
 					gbl.exception("torches clear ok",200);
