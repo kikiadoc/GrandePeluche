@@ -15,10 +15,10 @@ const REDUCAMEPARRUNE=2  // % de reduction d'ame par rune
 
 
 // etat du challenge
-let etatOmega = normalizeVis(collections.get(COLOMEGANAME, true))
+let etatOmega = normalizeEtat(collections.get(COLOMEGANAME, true))
 
 // normalize etat
-function normalizeVis(v) {
+function normalizeEtat(v) {
 	v.nbVisDevissees ??= 0
 	v.lastDevisseeDth ??= 0
 	v.malus ??= 0 // malus actuel en ms
@@ -53,7 +53,7 @@ function getEtatPseudo(p) {
 }
 
 // sycnho les clients sur l'état des vis
-function syncClientsEtatVis() {
+function syncClientEtat() {
 	collections.save(etatOmega)
 	// broadcast sur le WS
 	wsserver.broadcastSimpleOp(COLOMEGANAME,etatOmega)
@@ -61,8 +61,8 @@ function syncClientsEtatVis() {
 
 // reinitialize le challenge
 function admResetVis() {
-  etatOmega = normalizeVis(collections.reset(COLOMEGANAME))
-	syncClientsEtatVis()
+  etatOmega = normalizeEtat(collections.reset(COLOMEGANAME))
+	syncClientEtat()
 }
 
 // EQUILIBRAGE DE LA PHASE DES VIS
@@ -132,11 +132,12 @@ function devisser(pseudo,iVis) {
 	// recalcule les dth des devissages
 	updateDthVis(p)
 	// sync
-	syncClientsEtatVis()
+	syncClientEtat()
 	wsserver.broadcastSimpleText(pseudo+" a retiré une vis de la rune #"+(i+1),true)
 	gbl.exception("devissage vis ok ",200);
 }
 
+// passage d'une étape par un joueur
 function etape(pseudo,iEtape) {
 	const i = gbl.checkInt(iEtape,1,3)
 	// si le challenge n'est pas commencé, marque le debut du challenge pour le timer
@@ -144,7 +145,7 @@ function etape(pseudo,iEtape) {
 	// indique l'étape si supérieure a l'etape actuelle
 	if (i>etatOmega.etape) {
 		etatOmega.etape=i
-		syncClientsEtatVis()
+		syncClientEtat()
 	}
 	gbl.exception( "via ws", 200) 
 }
@@ -163,11 +164,6 @@ exports.httpCallback = (req, res, method, reqPaths, body, pseudo, pwd) => {
 					p.nextVisDth = Date.now() + DELAIVISINIT // apres reset/reload il y a un delai
 					// retourne l'etat du challenge
 					gbl.exception( etatOmega , 200) 
-				case "debut":
-						wsserver.broadcastSimpleText(pseudo+" a démarré la phase de dévissage!"),true)
-						syncClientsEtatVis()
-					}
-					gbl.exception( "via ws", 200) 
 			}
 			gbl.exception("omega get",400);
 		case "PUT": 
