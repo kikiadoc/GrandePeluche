@@ -1,8 +1,8 @@
 <script>
 	import { onMount, onDestroy } from 'svelte';
 	import { 
-		loadIt, storeIt, apiCall,
-		addNotification, newInfoPopup, playVideo, urlCdn, countDownTo, jjmmhhmmss
+		loadIt, storeIt, apiCall, markClick,
+		addNotification, newInfoPopup, playVideo, urlImg, countDownTo, jjmmhhmmss
 	} from "./storage.js"
 
 	import Btn from './z/Btn.svelte'
@@ -75,7 +75,8 @@
 	}
 	function recalcEtat() {
 		// si challenge termine
-		if (!etat.question) return cEtat.dspDth = cEtat.dspDthDiffered = cEtat.dspNbSieverts = null
+		if (!etat.question) 
+			return cEtat.dspDth = cEtat.dspDthDiffered = cEtat.dspNbSieverts = null
 		// calcul des éléments d'IHM
 		const now = Date.now()
 		cEtat.dspDth = (etat.question.dth > now)? countDownTo(etat.question.dth) : null
@@ -115,41 +116,63 @@
 	  <input type="button" onclick={()=> confirm("Reset torche?") && apiCall('/torches/admReset','PATCH')} value="Adm Reset" />
 	  <input type="button" onclick={()=> confirm("Go next torche?") && apiCall('/torches/admNext','PATCH')} value="Adm Next" />
 	  <input type="button" onclick={()=> confirm("Reset timer?") && apiCall('/torches/admResetTimer','PATCH')} value="Reset Timer" />
-	  <input type="button" onclick={()=> confirm("Reset 20h30?") && apiCall('/torches/admReset20H30','PATCH')} value="Reset 20h30" />
+	  <input type="button" onclick={()=> confirm("Reset 20h15?") && apiCall('/torches/admReset20H15','PATCH')} value="Reset 20h15" />
 	</div>
 {/if}
 
+<!-- svelte-ignore a11y_click_events_have_key_events -->
+<!-- svelte-ignore a11y_no_static_element_interactions -->
 <div>
   <input type="button" onclick={()=> epiqStep=0} value="Revoir le lore" />
   <input type="button" onclick={()=> dspResultats = etat && etat.historique} value="Résultats" />
 	{#if etat && cEtat}
 		{@const cls = (cEtat.dspNbSieverts >0) ? "rouge" : "vert"}
-		<span class="gpHelp" gpHelp="Nombre d'envois de la torchère dans les limbes">
-			🏆: {etat.historique.length}/{etat.NBQUESTIONS}<sup>🛈</sup>
+		<span onclick={markClick} class="gpHelp" gpHelp="Nombre d'envois de la torchère dans les limbes">
+			🏆{etat.historique.length}/{etat.NBQUESTIONS}<sup>🛈</sup>
 		</span>
 		<a class={cls} href="https://fr.wikipedia.org/wiki/Liste_des_unit%C3%A9s_de_mesure_de_radioactivit%C3%A9" target="_blank" >
-			☢: {cEtat.dspNbSieverts} µSv
+			☢{cEtat.dspNbSieverts} µSv
 		</a>
+		<span onclick={markClick} class="gpHelp" gpHelp="Délai avant la prochaine chute de la Torchère en Eorzéa">
+			{cEtat && cEtat.dspDth || "--:--:--"}<sup>🛈</sup>
+		</span>
 	{/if}
 </div>
 
 {#if epiqStep==0}
 	<div class="reveal">
+		<img class="parchemin" src={urlImg+"ff-7/gaz.jpg"} style="width:20%; float:right" alt="" />
+		<div class="info">
+			Ce challenge est un challenge de rapidité avec handicap.
+			<div class="br"/>
+			Il va aussi stresser ta patience!
+			<div class="br"/>
+			Il comporte {etat && etat.NBQUESTIONS} étapes.
+			<div class="br"/>
+			Le temps restant avant le départ d'une étape est indiqué en haut de la page.
+		</div>
+		<Btn bind:refStep={epiqStep} step=5 val="Je suis déjà impatient" />
+		<div style="clear:both" />
+	</div>
+{/if}
+{#if epiqStep==5}
+	<div class="reveal">
+		<img class="parchemin" src={urlImg+"ff-7/gaz.jpg"} style="width:20%; float:right" alt="" />
 		<div>
-			{pseudo}, tu le sais déjà, de nombreuses Peluches ont été lobotomisées. 
+			{pseudo}, tu le sais déjà, de nombreuses Peluches ont été lobotomisées.
+			<br/>
 			C'est un grand danger pour l'Univers Connu et je pense que la cause est le Gaz de Possession.
 		</div>
-		<div class="info">
-			Prends le temps de bien lire le lore, le challenge ne commence que dans quelques minutes.
-		</div>
 		<Btn bind:refStep={epiqStep} step=10 val="Le Gaz de Possession?" />
+		<div style="clear:both" />
 	</div>
 {/if}
 {#if epiqStep==10}
 	<div class="reveal">
-		Oui le Gaz de Possession. La Doctrine du Mal en parle.
+		<img class="parchemin" src={urlImg+"ff-7/oss-117.png"} style="width:20%; float:right" alt="" />
+		Oui le Gaz de Possession. Tu n'as pas lu la Doctrine du Mal?
 		<div class="br"></div>
-		Selon le dernier rapport de la peluche espionne 
+		Selon le dernier rapport de la Peluche-espionne 
 		<a href="https://fr.wikipedia.org/wiki/Hubert_Bonisseur_de_La_Bath" target="_blank">OSS117</a>,
 		il existe un laboratoire secret
 		fabriquant une nouvelle arme de destruction massive: la Torchère de l'Hégémonie.
@@ -159,36 +182,44 @@
 		le pire des neurotoxiques,
 		le fameux Gaz de Possession, sur toute la surface d'Eorzéa.
 		<br />
-		<Btn bind:refStep={epiqStep} step=20 val="Que faire?" />
+		<Btn bind:refStep={epiqStep} step=20 val="Mais que faire?" />
+		<div style="clear:both" />
 	</div>
 {/if}
 {#if epiqStep==20}
 	<div class="reveal">
+		<img class="parchemin" src={urlImg+"ff-7/oss-117.png"} style="width:20%; float:right" alt="" />
 		Je suis en communication avec 
 		<a href="https://fr.wikipedia.org/wiki/Hubert_Bonisseur_de_La_Bath" target="_blank">OSS117</a>
 		<br/>
-		Elle indique que la dissipation du neurotoxique est sans danger s'il est effectue dans les limbes,
+		Elle indique que la dispersion du neurotoxique est sans danger si elle est effectue dans les limbes,
 		au delà de l'atmosphère d'Eorzéa.
 		<br/>
 		Elle me dit vouloir envoyer la Torchère dans les limbes afin qu'elle s'y consume,
-		mais si la Torchère retombe en Eorzéa, il faudra la renvoyer dans les limbes.
+		<span class="blinkMsg">
+			mais si la Torchère retombe en Eorzéa, il faudra la renvoyer dans les limbes.
+		</span>
 		<div calss="br"></div>
 		Mais mais heu...
 		<br />
 		<Btn bind:refStep={epiqStep} step=25 val="Quoi mais mais heu..????" />
+		<div style="clear:both" />
 	</div>
 {/if}
 {#if epiqStep==25}
 	<div class="reveal">
+		<img class="parchemin" src={urlImg+"ff-7/oss-117.png"} style="width:20%; float:right" alt="" />
 		Je ne comprend pas...
 		<br />
 		J'ai entendu une énorme explosion et j'ai perdu la transmission d'OSS117.
 		<br />
 		<Btn bind:refStep={epiqStep} step=26 val="Ha merde!" />
+		<div style="clear:both" />
 	</div>
 {/if}
 {#if epiqStep==26}
 	<div class="reveal">
+		<img class="parchemin" src={urlImg+"ff-7/radome-cornet.jpg"} style="width:40%; float:right" alt="" />
 		Attend
 		<span style="color:red">
 			<countdown dth={dthAttenteStep26} oncdTimeout={()=>epiqStep=27}></countdown>
@@ -197,50 +228,55 @@
 		<br />
 		<Btn ifFct={()=>{dthAttenteStep26+=20000; return false}}
 			val="Grouille-toi!" koMsg="Mais laisse moi écouter, j'espère qu'ils vont répéter le message" />
+		<div style="clear:both" />
 	</div>
 {/if}
 {#if epiqStep==27}
 	<div class="reveal">
+		<img class="parchemin" src={urlImg+"ff-7/radome-cornet.jpg"} style="width:40%; float:right" alt="" />
+		Voici le message que j'ai reçu:
+		<div class="br" />
 		Selon les astro-peluches du  
 		<a href="https://www.pleumeur-bodou.com/Le-Radome.html" target="_blank">
 			radôme de Peluche-Bodou
 		</a>
 		un objet non identifié a été projété dans les limbes depuis Station Neuf.
-		<br />
+		<div class="br" />
 		<Btn bind:refStep={epiqStep} step=30 val="Qu'en penses-tu?" />
+		<div style="clear:both" />
 	</div>
 {/if}
 {#if epiqStep==30}
 	<div class="reveal">
+		<img class="parchemin" src={urlImg+"ff-7/oss-117.png"} style="width:20%; float:right" alt="" />
 		Je suis sure que c'est OSS117 qui a provoqué ce lancement
 		afin d'envoyer la Torchère de l'Hégémonie dans les limbes.
-		<br/>
-		J'espère que mon espionne préférée n'est pas blessée.
-		<br/>
+		<div class="br" />
+		J'espère que ma Peluche-espionne préférée n'est pas blessée.
+		<div class="br" />
 		<Btn bind:refStep={epiqStep} step=40 val="Que faire maintenant?" />
+		<div style="clear:both" />
 	</div>
 {/if}
 {#if epiqStep==40}
 	<div class="reveal">
+		<img class="parchemin" src={urlImg+"ff-7/gali-marie.png"} style="width:20%; float:right" alt="" />
 		Je m'en vais quérir les Peluches
 		<a href="https://fr.wikipedia.org/wiki/Galil%C3%A9e_(savant)" target="_blank">Galileo Galilei</a>
 		et
 		<a href="https://fr.wikipedia.org/wiki/Marie_Curie" target="_blank">Marie Curie</a>
 		afin d'analyser la situation.
-		<br/>
+		<div class="br" />
 		Je suis sur qu'elles te seront d'une grande aide si tu souhaites contribuer à la destruction de la Torchère.
-		<div class="info">
-			Ce challenge est une compétition avec handicap:
-			Plus tu auras envoyé la torchère dans les limbes,
-			plus tu seras irradié et devras attendre.
-			Quand la torchère retombe en Eorzéa, tous les joueurs non irradiés à cet instant là sont en compétition.
-		</div>
+		<div class="br" />
 		<Btn bind:refStep={epiqStep} step=99 val="Tu peux compter sur moi!" />
+		<div style="clear:both" />
 	</div>
 {/if}
 
 {#if epiqStep==99 && etat && cEtat}
 	<div class="reveal">
+		<img class="parchemin" src={urlImg+"ff-7/gali-marie.png"} style="width:20%; float:right" alt="" />
 		{#if !etat.question}
 			<div class="blinkMsg">La Torchère de l'Hégémonie s'est consumée dans les limbes éthérées.</div>
 			<i>Ce challenge est terminé, tu peux revoir le lore en cliquant sur 'revoir le Lore'</i>
@@ -290,6 +326,7 @@
 				</div>
 			{/if}
 		{/if}
+		<div style="clear:both" />
 	</div>
 {/if}
 

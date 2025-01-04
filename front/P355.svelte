@@ -138,19 +138,20 @@
 
 {#if epiqStep==0}
 	<div class="reveal">
-		<div>
-			Souviens-toi {pseudo},
-			<br/>
-			OSS117 a envoyé la torchère dans les Limbes et détruit le site qui la fabriquait.
-			<div class="br"></div>
-			Elle m'a envoyé de nombreux débris de l'explosion.
-			Six d'entre-eux ont attiré mon attention car ils indiquent des lieux d'Eorzéa:
-			Ils cachent peut-être un message des Nouveaux Anciens.
-			<div class="br"></div>
-			Je les ai exposés sous la forme des 6 tableaux que tu peux voir dans la Crypte des Valeureux, au sous-sol de la maison de CL de Kikiadoc.
-			Sauras-tu m'aider en identifiant les lieux associés?
-		</div>
+		<img class="parchemin" src={urlImg+"ff-7/peinture.png"} style="width:30%; float:right" alt="" />
+		Souviens-toi {pseudo},
+		<br/>
+		OSS117 a envoyé la torchère dans les Limbes et détruit le site qui la fabriquait.
+		<div class="br"></div>
+		Elle m'a envoyé de nombreux débris de l'explosion.
+		Six d'entre-eux ont attiré mon attention car ils indiquent des lieux d'Eorzéa:
+		Ils cachent peut-être un message des Nouveaux Anciens.
+		<div class="br"></div>
+		Je les ai exposés sous la forme des 6 tableaux que tu peux voir dans la Crypte des Valeureux, au sous-sol de la maison de CL de Kikiadoc.
+		Sauras-tu m'aider en identifiant les lieux associés?
+		<br/>
 		<Btn bind:refStep={epiqStep} step=10 val="J'en suis sûr" />
+		<div style="clear:both" />
 	</div>
 {/if}
 
@@ -180,6 +181,7 @@
 
 {#if epiqStep==15}
 	<div class="reveal">
+		<img class="parchemin" src={urlImg+"ff-7/geomaticien.jpg"} style="width:30%; float:right" alt="" />
 		Merci {pseudo}.
 		<div class="br"></div>
 		J'ai indiqué ces différents lieux aux
@@ -202,7 +204,10 @@
 
 {#if epiqStep==17}
 	<div class="reveal">
-		Bien {pseudo}, décris moi un peu ce qui se trouve ici. Combien y-a-t-il de...
+		<img class="parchemin" src={urlImg+"ff-7/chambre4eme.png"} style="width:30%; float:right" alt="" />
+		Bien {pseudo}, décris moi un peu ce qui s'y trouve.
+		<div class="br"/>
+		Il y a...
 		<br/>
 		<input type="number" min=0 max=10 size=5 bind:value={saisies.p4NbTableaux} />tableaux sur les murs
 		<br/>
@@ -221,7 +226,7 @@
 
 {#if epiqStep==20}
 	<div class="reveal">
-		Ok, je suppose que les Peluche de Bunbuku sont disposés de facon géométriques sur les tables tactiques.
+		Ok, je suppose que les Peluches de Bunbuku sont disposées de façon géométrique sur les tables tactiques.
 		<br/>
 		Selon le Grimoire des Savoirs, les Anciens utilisaient parfois le 
 		<span class="videoLink" onclick={()=>playVideo('ff-7-boulier')} role='button' onkeypress={null} tabindex=0>
@@ -288,7 +293,7 @@
 
 {#if epiqStep==45}
 	<div class="reveal">
-		<img class="parchemin" src={urlImg+"ff-7/lasource-cartes.png"} style="width:40%; float:right" alt="" />
+		<img class="parchemin" src={urlImg+"ff-7/lasource-cartes.png"} style="width:50%; float:right" alt="" />
 		La Source.. J'ai trouvé !
 		<br/>
 		<Btn bind:refStep={epiqStep} step=50 val="Explique-moi!" />

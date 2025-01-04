@@ -144,29 +144,33 @@ async function definePseudo(body, ipFor) {
 
 // definition du pwd de session en validant par la clef eliptic
 // metadata sont les metadata du ws ou null
-// si mode eliptic non activé, bascule avec la clef proposée (oldpwd,newPublicKey)
 // si pas de clef proposée, retourne null
-async function asyncSetPwdSession(pseudo,oldPwd,newPwd,hexSignature,newPublicKey,metadata) {
+async function asyncSetPwdSession(pseudo,newPwd,hexSignature,newPublicKey,metadata) {
 	const pseudoDesc = pseudos[pseudo];
 	if ( !pseudoDesc ) gbl.exception("pseudo introuvable, contacte Kikiadoc", 403);
 	// si pas de clef proposée, problème de version
 	if (!newPublicKey) return null;
-	// mode de bsculement entre classique et eliptic
-	if ( !pseudoDesc.jwkPublicKey) {
-		checkPseudo(pseudo,oldPwd);
-		pseudoDesc.jwkPublicKey = newPublicKey
-		savePseudo(pseudoDesc);
-	}
 	// verification du pseudo+newPwd selon le signature
 	if (! await pseudoCheckSignature(pseudo, newPwd, pseudoDesc.jwkPublicKey, hexSignature)) gbl.exception("Signature crypto elliptique invalide, contacte Kikiadoc", 403);
 	// Note le login et ip eventuel (save pseudo AVANT maj du pwd de session)
 	pseudoDesc.lastLogin = Date.now();
-	pseudoDesc.pwd = "transient"
+	pseudoDesc.pwd = "transient" // pas de danger, le pwd ne passera pas le filtrage sémantique
 	pseudoDesc.ip = metadata && metadata.ip
 	savePseudo(pseudoDesc);
 	// commit du pwd de session
 	pseudoDesc.pwd = newPwd
 	return pseudoDesc
+}
+
+// Invalidation du pwd ephémère du pseudo
+function invalidatePwd(pseudo) {
+	const pseudoDesc = pseudos[pseudo];
+	if ( !pseudoDesc ) 
+		console.log("** Erreur d'invalisation session de",pseudo) 
+	else {
+		pseudoDesc.pwd = "close"	// pas de danger, le pwd ne passera pas le filtrage sémantique
+		console.log("*** Password ephémère invalidé pour",pseudo);
+	}
 }
 
 // verification du mot de passe de session
@@ -279,6 +283,7 @@ exports.asyncSetPwdSession = asyncSetPwdSession;
 exports.httpCallback = httpCallback;
 exports.clearServerPublicKey = clearServerPublicKey;
 exports.deletePseudoByFf14Id = deletePseudoByFf14Id
+exports.invalidatePwd = invalidatePwd
 
 console.log("Pseudos loaded");
 

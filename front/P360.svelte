@@ -58,8 +58,8 @@
 	// etape de l'epique
 	let epiqStep = $state(loadIt(pageEpiqLbl,0))
 	$effect(()=>storeIt(pageEpiqLbl,epiqStep))
-	// etat des saisies
-	let saisies = $state(loadIt(pageSaisiesLbl,{}))
+	// etat des saisies ATTNETION faut aussi init configRate pour qu'il soit reactif sur un $derived
+	let saisies = $state(loadIt(pageSaisiesLbl,{configRate:0}))
 	$effect(()=>storeIt(pageSaisiesLbl,saisies))
 
 
@@ -75,7 +75,12 @@
 		{ proba:100, tick:2, fail:15000, lbl: "(3) Roxxor du PC"},
 		{ proba:100, tick:1, fail:10000, lbl: "(4) Roxxor du Smartphone"},
 	]
-	let rate = $derived(caractRate[ (saisies.configRate!==null)? saisies.configRate : 3])
+
+	// attention, bug ici peut etre
+	// pour le $derived fonctionne il faut que saisies.configRate existe
+	// impossible de faire un saisies && saisies.configRate
+	// ca ne toggle dans ce cas uniquement sur un maj de saisie.. pas configRate
+	let rate = $derived(caractRate[saisies.configRate])
 
 	// chargement de l'état (mWs msg du websocket ou d'un autre requete null)
 	async function loadEtat(mWs) {
@@ -89,6 +94,7 @@
 	let dthLastFail = 0 //date du dernier fail de rapidité
 	let finalDejaVu = false
 	function recalcEtat() {
+		if (!etat || !rate) return console.log("*** RecalcEtat !etat || !rate")
 		let nbSurv = 0 // clacul du nombre de case surveillées par le réparateur alpha
 		let nbTrouve = 0 // nombre de trouves
 		let trouveMax = 0 // calcul le dth de dernier trouve du pseudo
@@ -161,7 +167,7 @@
 	//timer
 	let currentTick= 0
 	function onTimer() {
-		if (!etat) return
+		if (!etat || !rate) return console.log("*** timer !etat || !rate")
 		if (++currentTick >= rate.tick) {
 			currentTick=0
 			if (Math.random()<0.40)	
@@ -308,7 +314,7 @@
 	</div>
 {/if}
 
-{#if etat}
+{#if etat && rate}
 	<div>
 	  <input type="button" onclick={()=> epiqStep=0} value="Revoir le lore" />
 	  <input type="button" onclick={()=> dspResultat=calcResultat()} value="Resultats" />

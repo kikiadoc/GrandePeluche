@@ -71,8 +71,20 @@ async function checkBeforeStart() {
 // Diagnostic périodique
 /////////////
 let lastMem=null
-function diagnostic() {
+let lastMemTick = 0
+function diagnosticMemory() {
 	let mem=""
+	lastMemTick++;
+	let usage=process.memoryUsage()
+	if (usage.external > 50000000 && lastMemTick > 5) {
+		lastMemTick=0
+		if (global.gc) {
+			console.log("*** Force GC *** external > 50M")
+			global.gc()
+		}
+		else
+			console.log("*** Force GC *** Non autorisé --expose-gc manqunt")
+	}
 	for (const [key,value] of Object.entries(process.memoryUsage())) {
 		mem += " "+key+"="+Math.floor(value/1000000)
 	}
@@ -80,6 +92,9 @@ function diagnostic() {
 		lastMem = mem
 		console.log("Memory (MB):" + mem)
 	}
+}
+function diagnostic() {
+	diagnosticMemory()
 }
 setInterval(diagnostic,1000)
 

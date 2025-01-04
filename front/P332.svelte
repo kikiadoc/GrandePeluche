@@ -55,7 +55,7 @@
 	// option de réponse (l=lbl, v=valeur de reponse)
 	const zoneReponse = [
 		{l:"Choisir...", v:0},
-		{l:"Lieu inacessible", v:1},
+		{l:"Lieu inaccessible", v:1},
 		{l:"Rien, de la végétation", v:8},
 		{l:"Des canons", v:5},
 		{l:"Un téléporteur", v:9},
@@ -325,7 +325,7 @@
 		<Btn bind:refPage={page} video="ff-7-epique-3" bind:refPageDone={pageDone} page=0 pageDone={pageDesc.n} val="Voir les préparatifs" />
 		<div class="br"></div>
 		<div class="info">
-			Ce challenge est terminé, tu peux cliquer sur les boutons en haut cette page pour
+			Tu peux cliquer sur les boutons en haut cette page pour
 			revoir le lore ou les résultats actuels.
 		</div>
 		<div style="clear:both" />

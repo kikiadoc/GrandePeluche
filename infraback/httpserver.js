@@ -30,7 +30,8 @@ function listenerFct(req, res) {
 			const reqDth= process.hrtime.bigint() // Date.now();
       let bodyData = "";
       req.on("data", (chunk) => {
-        bodyData = bodyData.concat(chunk);
+        // bodyData = bodyData.concat(chunk);
+        bodyData += chunk // += est le + optimum vs concat etc..
 				/// limite à 10M utile (20M en encode)
 				if (bodyData.length > 20000000) { 
 					console.log(">>>>>>>>>>>>>>>>> Taille upload invalide (max 20M)",req.url,"taille recue:",bodyData.length)
@@ -45,7 +46,7 @@ function listenerFct(req, res) {
       		const reqPaths = myUrl.pathname.split('/');
       		const pseudo = myUrl.searchParams.get('u');
       		const pwd = myUrl.searchParams.get('p');
-	  			console.log("-->Req",req.method,req.url);
+	  			console.log("-->Req",req.method,req.url,bodyData.length);
 	  			if (req.method=="HEAD") gbl.exception("Not available",404);
 	  			await standardHttpRequest(req,res,req.method,reqPaths,bodyData,pseudo,pwd);
 	  			await callBackHttp(req,res,req.method,reqPaths,bodyData,pseudo,pwd); 
@@ -72,6 +73,16 @@ function listenerFct(req, res) {
 	  				console.log("Ret=",req.method,req.url,e,"ms:", tr);
           }
         }
+				if (bodyData.length > 1000000 && global.gc) {
+					bodyData = null
+					let mem=""
+          for (const [key,value] of Object.entries(process.memoryUsage())) mem += " "+key+"="+Math.floor(value/1000000)
+					console.log("BigBody: Before GC", mem)
+					global.gc()
+					mem=""
+          for (const [key,value] of Object.entries(process.memoryUsage())) mem += " "+key+"="+Math.floor(value/1000000)
+					console.log("BigBody: After  GC", mem)
+				}
       });
     }
     catch(e) {

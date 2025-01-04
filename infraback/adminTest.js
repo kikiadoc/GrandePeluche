@@ -97,6 +97,17 @@ exports.httpCallback = async (req, res, method, reqPaths, body, pseudo, pwd) => 
 					pseudos.check(pseudo,pwd,true); // adm only
 					const synthese = collections.loadSimpleObject("benchmark_"+reqPaths[3])
 					gbl.exception(synthese,200);
+				case "forcegc":
+					// public acess en admin local
+					if (pseudo || pwd) gbl.exception( "Not local admin" ,400)
+					let mem=""
+					for (const [key,value] of Object.entries(process.memoryUsage())) mem += " "+key+"="+Math.floor(value/1000000)
+					console.log("*** beforeGc",mem)
+					global.gc()
+					mem=""
+					for (const [key,value] of Object.entries(process.memoryUsage())) mem += " "+key+"="+Math.floor(value/1000000)
+					console.log("*** afterGc",mem)
+					gbl.exception("gc done",200);
 				default:
 					gbl.exception("adminTest GET invalide",400);
 			}

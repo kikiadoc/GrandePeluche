@@ -110,11 +110,15 @@
 	}
 
 	// afficahge de l'assistant d'aide pour le calcul
-	function dspAideTimer()	{
+	function dspEuclideTimer()	{
 		const last = calculs.lastVal
 		const op = (last%2==0)? "/2=" : "x3+1="
 		const valid = (last%2==0)? last/2 : last*3+1
-		newInfoPopup("Euclide:",["J'ai consulté mon traité d'arithmétique",last+op+valid], "Ferme ce popup et Indique ce résultat sur la Tablette de Traduction")		
+		newInfoPopup("Euclide:",
+								 [
+									 "J'ai consulté mon traité d'arithmétique",last+op+valid
+								 ],
+								 "Ferme ce popup et Indique le résultat "+valid+" sur la Tablette de Traduction")		
 		playDing();
 	}
 	// afficahge de l'assistant d'aide pour le calcul
@@ -122,8 +126,50 @@
 		const last = calculs.lastVal
 		const op = (last%2==0)? "/2=" : "x3+1="
 		const valid = (last%2==0)? last/2 : last*3+1
-		newInfoPopup("Euclide:",["Tu as demandé mon aide!", "Attend une dizaine de secondes, je réfléchis"], "Patiente le temps qu'Euclide réfléchisse")		
-		setTimeout(dspAideTimer,10000)
+		newInfoPopup("Euclide:",["Tu as demandé mon aide!", "Attend quelques secondes, je réfléchis"], "Patiente le temps qu'Euclide réfléchisse")		
+		setTimeout(dspEuclideTimer,2000)
+	}
+	// afficahge de l'assistant d'aide pour le calcul
+	function dspAITimer()	{
+		const last = calculs.lastVal
+		const op = (last%2==0)? "/2" : "x3+1"
+		const valid = (last%2==0)? last/2 : last*3+1
+		newInfoPopup("Réponse de genAI:",
+								 [
+									 "👉Le résultat de "+last+op+
+									 " est "+
+									 (valid+99),
+									 "⚠ Du fait de ma stochastique, je ne peux te l'assurer. "+
+									 "Commme indiqué dans mes conditions générales d'utilisation, "+
+									 "dans le cas d'une erreur ou même un deepFake, je suis irresponsable et "+
+									 "l'entièreté des conséquences sont tiennes.",
+									 "👉Conformement à la législation Eorzéenne, voici mon bilan énergétique:",
+									 "✅J'ai consommé des milliards de fois plus d'énergie qu'Euclide alors qu'il donne un résultat prouvé mathématiquement et bien plus rapidement que moi.",
+									 "✅J'ai même consommé une infinité de fois plus d'énergie que toi si tu avais fait le calcul mentalement et obtenu la solution presque instantanément en utilisant ton cerveau et tes connaissances au lieu de poireauter benoîtement en attendant ma réponse.",
+									 "--",
+									 "Evidemment, cette réponse d'une genAI est parodique",
+									 "--",
+									 "Kikiadoc m'a glissé quelques conseils:",
+									 "Utiliser un service de genAI est souvent pertinent et source de réactivité, "+
+									 "mais il ne faut pas en sous-estimer ni les limites ni les coûts. ",
+									 "Un service de genAI ne s'utilise que de façon ciblée, "+
+									 "jamais pour des trivialités comme ici, "+
+									 "parfois pour confirmer ses connaissances ou étayer un propos, "+
+									 "souvent pour de simples informations sur un sujet peu maîtrisé "+
+									 "ou explorer Internet à la recherche d'informations difficilement accessibles.",
+									 "Un genAI peut aussi être un super outil pour générer des images...",
+									 "Peu importe l'usage, il faut toujours vérifier toutes les assertions péremptoires d'une genAI car les fakes sont parfois impressionants."
+								 ],
+								 "Ferme ce popup et indique ce résultat ("+(valid+99)+") sur la Tablette de Traduction")		
+		playDing();
+	}
+	function dspAI() {
+		newInfoPopup("genAI:",
+								 [
+									 "Tu as demandé l'aide de genAI!",
+									 "Attend une dizaine de secondes, je réfléchis."
+								 ], "Patiente le temps que genAI réfléchisse")		
+		setTimeout(dspAITimer,10000)
 	}
 	
 	/////////////////////////////////////////////////////////////////////////////////////////////
@@ -179,8 +225,9 @@
 							{calculs.lastVal}{(calculs.lastVal%2==0)? "/2=":"x3+1="}
 							<input type=number style="width: 6em" bind:value={calculs.propose} onkeypress={(e)=>{if (e.keyCode==13) calculPropose()}}/>
 							<input type=button value="►" onclick={calculPropose} />
-							<input type=button value="⌨" onclick={dspAide} />
 							<input type=button value="🛈" onclick={()=>dspInit=true} />
+							<input type=button value="⌨" onclick={dspAide} />
+							<input type=button value="⛭" onclick={dspAI} />
 						</div>
 					{:else}
 						<div>
@@ -189,7 +236,7 @@
 					{/if}
 					{#each calculs.ops as c, i}
 						<div>
-							#{calculs.ops.length - i}: {c.p}{#if c.op}{c.op}{c.r}{/if}
+							#{calculs.ops.length - (i+1)}: {c.p}{#if c.op}{c.op}{c.r}{/if}
 						</div>
 					{/each}
 				</div>
@@ -207,7 +254,7 @@
 								{@const trad = soluces[calculs.ops.length] || {}}
 								<text class="svgTextGreen" x=0 y=10 >Décodage effectuée du</text>
 								<text class="svgTextGreen" x=0 y=20 >nombre Ascien: {trad.nbAsc}</text>
-								<text class="svgTextGreen" x=0 y=30 >Itérations Syracuse: {calculs.ops.length}</text>
+								<text class="svgTextGreen" x=0 y=30 >Itérations Syracuse: {calculs.ops.length -1}</text>
 								<text class="svgTextGreen" x=0 y=50 >Selon la pierre de Qarn:</text>
 								<text class="svgTextGreen" x=0 y=60 >Nombre Eorzéen: {trad.nbEor}</text>
 								<text class="svgTextGreen" x=0 y=70 >Lettre Eorzéenne: {trad.chEor}</text>
@@ -250,7 +297,11 @@
 					<br />
 					Tu peux demander de l'aide à la
 					<a href="https://fr.wikipedia.org/wiki/Euclide" target="_blank">Peluche Euclide</a>
-					en cliquant sur sa calculette (⌨) à chaque opération demandée.
+					en cliquant sur sa calculette (⌨).
+					<br />
+					Tu peux aussi demander de l'aide d'une
+					<a href="https://fr.wikipedia.org/wiki/Intelligence_artificielle_g%C3%A9n%C3%A9rative" target="_blank">genAI</a>
+					en cliquant sur l'engrenage (⛭).
 				</div>
 			</div>
 		</div>

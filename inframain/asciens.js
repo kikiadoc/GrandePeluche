@@ -1,8 +1,6 @@
 const gbl = require('../infraback/gbl.js');
 const pseudos = require('../infraback/pseudos.js');
-const wsserver = require('../infraback/wsserver.js');
 const collections = require('../infraback/collections.js');
-const discord = require('../infraback/discord.js');
 
 const TRADUCTIONS = [
 		{ nbAsc: 0, nbEor: 0, chEor: " " }, 																			// tbl: [] },
@@ -35,32 +33,30 @@ const TRADUCTIONS = [
 ]
 const TRADUCTIONS_JSON = JSON.stringify(TRADUCTIONS)
 
-// retourne la traduction actuelle d'un pseudo avec normalisation eventuelle
-function getEtat(pseudo) {
-	let tmpEtat = collections.get("asciens_"+pseudo, true )
-	tmpEtat.tradTrouves ??= []
-	return tmpEtat
+// retourne le grimoire actuel d'un pseudo avec normalisation eventuelle
+function getGrimoire(pseudo) {
+	let grim = collections.get("grimoire_"+pseudo, true )
+	grim.tradTrouves ??= []
+	return grim
 }
 
 // propose un traduction reqpath[3]=nbAsc reqPath[4]=nbEor
-// 200: ok 201: mauvaise traduction
-// retourne la tradTrouve actuelle du pseudo
+// 200: ok 400: erreur client mauvaise traduction (calculée par le client avant requete server)
+// sauvegarde la traduction dans le grimoire perso
 function putTraduction(reqPaths,pseudo) {
 	const nbAsc = gbl.checkInt(reqPaths[3],1,99)
 	const nbEor = gbl.checkInt(reqPaths[4],1,26)
 	// vérification de la validité de la proposition
 	if (TRADUCTIONS[nbEor].nbAsc != nbAsc) gbl.exception('mauvaise réponse',400)
 	// ajoute le traduction pour le pseudo
-	let etat = getEtat(pseudo)
-	etat.tradTrouves[nbEor] = nbAsc
-	collections.save(etat)
-	gbl.exception(etat,200);
+	let grim = getGrimoire(pseudo)
+	grim.tradTrouves[nbEor] = nbAsc
+	collections.save(grim)
+	gbl.exception(grim,200);
 }
 
 exports.httpCallback = (req, res, method, reqPaths, body, pseudo, pwd) => {
-	// auth
-	pseudos.check(pseudo,pwd);
-
+	pseudos.check(pseudo,pwd) // authentication
 	switch(method) {
 		case "OPTIONS": 
 			res.setHeader('Access-Control-Allow-Methods', 'PUT, PATCH');
@@ -68,29 +64,31 @@ exports.httpCallback = (req, res, method, reqPaths, body, pseudo, pwd) => {
 		case "GET": 
 			switch(reqPaths[2]) {
 				case "traductions":
-					gbl.exception( getEtat(pseudo) ,200);
+					gbl.exception( getGrimoire(pseudo) ,200);
 				case "tradsEtSoluces":
-					gbl.exception( { etat: getEtat(pseudo), tradsString: TRADUCTIONS_JSON } ,200);
+					gbl.exception( { etat: getGrimoire(pseudo), tradsString: TRADUCTIONS_JSON } ,200);
 			}
-			gbl.exception("anciens get",400);
+			gbl.exception("bad get",400);
 		case "PUT": 
 			switch(reqPaths[2]) {
 				case "traduction":
 					putTraduction(reqPaths,pseudo);
 			}
-			gbl.exception("anciens put",400);
+			gbl.exception("bad put",400);
 		case "PATCH": 
 			pseudos.check(pseudo,pwd,true); // auth admin
 			switch(reqPaths[2]) {
 				case "admClearTrad":
-					let etat = getEtat(pseudo)
+					let etat = getGrimoire(pseudo)
 					delete etat.tradTrouves
 					collections.save(etat)
 					gbl.exception("ok trad pseudo cleared",200);
 			}
-			gbl.exception("anciens patch",400);
+			gbl.exception("bad patch",400);
 	}
-	gbl.exception("inv http op anciens",400);
+	gbl.exception("inv http meth",400);
 }
 
 console.log("anciens loaded")
+
+

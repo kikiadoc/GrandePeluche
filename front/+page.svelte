@@ -32,7 +32,7 @@
 
 	// compilerVersion=4.2.19
 	// compilerVersion=3.56.0
-	// divers caractères pour copier/coller : ➤▲⏸◀▶▼⏬🔎📽❓✅🆘⚠️⬇️✅➥📷ε🛈Δ
+	// divers caractères pour copier/coller : ➤▲⏸◀▶▼⏬🔎📽❓✅🆘⚠️⬇️✅➥📷ε🛈Δ⛭👉
 	// ne fonctionne pas sur android 🛈 ne pas confondre avec 🛈
 	// on:keypress={(e) => e.key=="Enter" && clickSur('domId')}
 
@@ -844,7 +844,7 @@
 		text-align: center;
 	}
 	:global(.info) { font-style: italic; font-size: 0.8em }
-	:global(.gpHelp) { cursor: pointer }
+	:global(.gpHelp) { color: lightgreen; cursor: pointer }
 	:global(.selOui) { border: 4px inset red; cursor: pointer }
 	:global(.selNon) { border: 4px outset #404040; cursor: pointer }
 	:global(.selBad) { border: 4px solid #303030; color: #404040 }

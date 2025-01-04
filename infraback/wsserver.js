@@ -160,7 +160,7 @@ exports.start = (wsCallback, port) => {
 						ws.send(clientPong);
 						break;
 					case "iam":
-						let pseudoDesc = await pseudos.asyncSetPwdSession(jMsg.pseudo,jMsg.pwd,jMsg.newPwd,jMsg.signature,jMsg.publicKey,metadata)
+						let pseudoDesc = await pseudos.asyncSetPwdSession(jMsg.pseudo,jMsg.newPwd,jMsg.signature,jMsg.publicKey,metadata)
 						if (pseudoDesc) {
 							metadata.pseudo = jMsg.pseudo;
 							ws.send(JSON.stringify( { op: "elipticKeyOk", pseudoDesc: pseudoDesc } ));
@@ -175,7 +175,7 @@ exports.start = (wsCallback, port) => {
 							broadcastPseudoList();
 						}
 						else {
-							ws.send(JSON.stringify( { op: "erreur", texte:"Version client invalide, recharge la page (F5)" } ));
+							ws.send(JSON.stringify( { op: "erreur", texte:"Pas de clef elliptique, contacte Kikiadoc" } ));
 							ws.close();
 						}
 						break;
@@ -200,6 +200,7 @@ exports.start = (wsCallback, port) => {
     ws.on("close", (e) => {
 			try {
  				console.log("WS Close:",metadata, "reason:", e);
+				pseudos.invalidatePwd(metadata.pseudo)
 				clients.delete(ws);
 				broadcastPseudoList();
 				exports.broadcastNotification(metadata.pseudo+ " s'est déconnecté");

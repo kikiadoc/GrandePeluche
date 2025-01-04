@@ -2,7 +2,7 @@
 	import { onMount, onDestroy } from 'svelte';
 	import {
 		loadIt, storeIt, apiCall, addNotification, playVideo, urlImg,
-		jjmmhhmmss, setHautFait, getHautFait
+		jjmmhhmmss, setHautFait, getHautFait, markClick, newInfoPopup
 	} from "./storage.js"
 
 	import Btn from './z/Btn.svelte'
@@ -64,6 +64,8 @@
 <style>
 </style>
 <!-- svelte-ignore element_invalid_self_closing_tag -->
+<!-- svelte-ignore a11y_click_events_have_key_events -->
+<!-- svelte-ignore a11y_no_static_element_interactions -->
 <div>
 {#if pseudo.startsWith("Kikiadoc")}
 	<div class="adminCadre"> 
@@ -86,20 +88,22 @@
 			Il se fait en solo, sans contrainte de rapidité, 
 			sans compétition, sans besoin de coopération et est, malgré les apparences, très facile.
 			<div class="br"/>
-			Kikiadoc l'appelle son challenge sentimental<sup>(*)</sup>
+			<div class="gpHelp" onclick={markClick} gpHelp="Regarde en bas de page">
+				Kikiadoc l'appelle son challenge sentimental<sup>(*)</sup>
+			</div>
+			<div class="br"/>
+			Laisse-toi porter par la fantasy du Lore,
+			suis les liens et découvre le background historique IRL de ce challenge.
 			<div class="br"/>
 			En cas de difficulté, tu pourras demander l'aide 
 			d'<a href="https://fr.wikipedia.org/wiki/Euclide" target="_blank">Euclide</a>
 			qui te donnera alors les solutions grâce à sa règle et son compas,
-			ou consulter les résultats de l'intelligence artificielle
+			ou consulter les résultats d'une
 			<a href="https://fr.wikipedia.org/wiki/Intelligence_artificielle_g%C3%A9n%C3%A9rative" target="_blank">
-				genAI
-			</a> chatGPT<sup>(**)</sup>
+				 intelligence artificielle genAI
+			</a>
 			<div class="br"/>
-			Prends le temps de lire le lore, de suivre les liens et ainsi 
-			<u>découvrir le background historique IRL de ce challenge</u>.
-			<div class="br"/>
-			Tu vas utiliser une conjecture mathématique des plus célèbres.
+			Sache que tu vas utiliser une conjecture mathématique des plus célèbres.
 			<div class="br"/>
 			Sa démonstration (ou son infirmation) résiste aux super-ordinateurs, aux ordinateurs quantiques
 			d'aujourd'hui et à toutes les intelligences humaines depuis des décennies.
@@ -111,20 +115,40 @@
 			<a href="https://fr.wikipedia.org/wiki/M%C3%A9daille_Fields" alt="" target="_blank">médaille Fields</a>
 		</div>
 		<div class="br"/>
-		<Btn bind:refStep={epiqStep} step=1 val="Ca a l'air passionant, je vais tout lire" />
-		<Btn bind:refStep={epiqStep} step=1 msg="Profite de ce challenge pour changer d'avis!" val="Moi et les maths..." />
+		<Btn bind:refStep={epiqStep} val="Moi et les maths..." ifFct={ ()=> {
+				newInfoPopup(" ",[],null,
+										 {imgFull: "ff-7/isocrate-2.png", back:"papier" }
+										 )
+				return false
+		}} />
+		<Btn bind:refStep={epiqStep} step=1 val="Si tu dis que c'est passionnant..." ifFct={ ()=> {
+				newInfoPopup(" ",["Mais oui,tu vas voir.","Profite du Lore et suis les liens!"],null,
+										 {img: "ff-7/isocrate-2.png", back:"papier" }
+										 )
+				return true
+		}} />
+		<Btn bind:refStep={epiqStep} step=1 val="Ca a l'air passionant, je vais tout lire!" ifFct={ ()=> {
+				newInfoPopup(" ",["Fais-toi plaisir.","Profite du Lore et suis les liens!"],null,
+										 {img: "ff-7/isocrate-2.png", back:"papier" }
+										 )
+				return true
+		}} />
 		<div class="br" />
 		<div class="info">
 			(*) Dans ce challenge se retrouvent deux de mes passions: l'Informatique et les Mathématiques.
 			<br />
-			Et j'ai versé quelques larmes en le concevant car j'ai pensé à ma première rencontre avec
-			mon premier Mentor IRL, 
+			Et j'ai versé quelques larmes en le concevant car j'ai pensé à
+			<a href="https://fr.wikipedia.org/wiki/Jour_du_Premier_Contact" target="_blank">
+				mon premier contact
+			</a>
+			avec
 			<a href="https://www.palais-decouverte.fr/fr/explorer-nos-contenus/revue-decouverte/archives/n-409-mars-avril-2017/hommage-a-jean-brette-1946-2017"
 				target="_blank" alt="" >
 				Jean Brette
-			</a>, Mathématicien, Informaticien et prodigieux vulgarisateur.
+			</a>, Mathématicien, Informaticien et prodigieux vulgarisateur:
 			<br />
-			Je n'étais qu'un gamin de 11 ans.
+			Je n'étais qu'un gamin d'à peine 11 ans.
+			<br />
 			En quelques minutes,
 			il m'a transmis ses passions et constellé mon imaginaire.
 			<br />
@@ -136,27 +160,16 @@
 			lors de 
 			<span class="imgLink" gpImg="ff-7/expo-palais-1974.png">
 			l'exposition "Micro"
-			</span>,
-			et je m'en souviens comme si c'était hier.
-		</div>
-		<div class="info">
-			(**) L'usage des API des genAI n'est pas gratuit.
-			Aussi, j'ai demandé à 
-			<a href="https://chatgpt.com/" target="_blank">chatGPT</a>
-			tous les calculs et j'ai stocké les résultats afin de limiter les couts d'usage.
-			C'est ce résultat précalculé pas forcement bien lisible qui te sera présenté.
+			</span>.
 			<br/>
-			Les outils de genIA sont nombreux, chatGPT, Gemini, Copilot, Grok...
-			Dans tous les cas, il faut vérifier les éléments et ne pas prendre les informations
-			comme des "vérités vraies".
-			Certains sont très pertinents	et certains colportent des fakes.
-			A titre d'exemple, quand on demande la démonstration de la Conjecture,
-			c'est une question idiote car une conjecture n'est justement pas démontrée.
-			chatGPT, gemini ne tombent pas dans le panneau et indique qu'il n'y a aucune preuve
-			mais Grok présente des démonstrations ineptes: Grok n'est vraiment qu'un
-			<a href="https://en.wikipedia.org/wiki/Stochastic_parrot" target="_blank">
-				perroquet stochastique
-			</a>.
+			Je m'en souviens comme si c'était hier.
+			<br/>
+			Encore merci à
+			<a href="https://www.palais-decouverte.fr/fr/explorer-nos-contenus/revue-decouverte/archives/n-409-mars-avril-2017/hommage-a-jean-brette-1946-2017"
+				target="_blank" alt="" >
+				Jean Brette
+			</a>, 
+			mon premier Mentor IRL.
 		</div>
 		<div style="clear:both" />
 	</div>
@@ -186,9 +199,13 @@
 		Il nous a indiqué qu'une fonction mathématique ne se limite pas à calculer un résultat
 		en fonction de ses paramètres car celui-ci peut même être déjà connu. Il a illustré son propos avec la 
 		<a href="https://fr.wikipedia.org/wiki/Conjecture_de_Syracuse" target="_blank">Conjecture de Syracuse</a>:
+		<div class="br" />
 		Son résultat est connu, c'est toujours 1 et ensuite le cycle 4, 2, 1.
+		Pour obtenir ce résultat, il suffit de diviser un nombre par 2 s'il est pair
+		ou de le multiplier par 3 et ajouter 1 s'il est impair,
+		puis de refaire ce calcul jusqu'à obtenir 1.
 		<br/>
-		<Btn bind:refStep={epiqStep} step=5 val="Super mais je fais quoi, moi?" />
+		<Btn bind:refStep={epiqStep} step=5 val="Ok, mais je fais quoi, moi?" />
 		<div style="clear:both" />
 	</div>
 {/if}
@@ -196,7 +213,7 @@
 {#if epiqStep==5}
 	<div class="reveal">
 		<img class="parchemin" src={urlImg+"ff-7/turing-ordinateur.jpg"} style="width:20%; float:right" alt="" />
-		Pff, je continue le résumé de la conférence.
+		Ne sois pas impatient, je continue le résumé de la conférence.
 		<div class="br"></div>
 		Alors que se terminaient ces brillants exposés, au fond de la salle, l'Immense Peluche, le Génial
 		<a href="https://lejournal.cnrs.fr/articles/alan-turing-genie-au-destin-brise" target="_blank">
@@ -246,10 +263,23 @@
 
 {#if epiqStep==30}
 	<div class="reveal">
+		<img class="parchemin" src={urlImg+"ff-7/qarn.png"} style="width:60%; float:right" alt="" />		
+		Tu as raison, c'est compliqué.
+		<br/>
+		Regarde ci-contre un extrait du code informatique gravé sur la Pierre de Qarn!
+		<br/>
+		<Btn bind:refStep={epiqStep} step=35 val="Waou, c'est ca ?" />
+		<div style="clear:both" />
+	</div>
+{/if}
+
+{#if epiqStep==35}
+	<div class="reveal">
 		<img class="parchemin" src={urlImg+"ff-7/turing-bombe.jpg"} style="width:30%; float:right" alt="" />		
-		Tu as raison, c'est très compliqué. Mais Alan est tellement surprenant!
+		Oui, c'est ça la véritable Pierre de Qarn!
 		<div class="br"></div>
-		Il a même imaginé
+		Mais Alan est tellement surprenant!
+		Il a imaginé
 		<a href="https://fr.wikipedia.org/wiki/Bombe_(%C3%A9lectrom%C3%A9canique)" alt="" target="_blank">
 			une bombe électromécanique
 		</a>
@@ -300,6 +330,8 @@
 {#if epiqStep==55}
 	<div class="reveal">
 		<img class="parchemin" src={urlImg+"ff-7/Tablette-anime.gif"} style="width:30%; float:right" alt="" />
+		<Btn video="ff-7-maitrepecheur" step=10 val="Revoir ton Haut-Fait" />
+		<br/>
 		C'est fantastique, tu as grugé un Nouvel Ancien et tu as récupéré une Tablette de Traduction!
 		<div class="br"></div>
 		Tu mérites un Grimoire du Savoir Personnel.
@@ -331,7 +363,8 @@
 		Selon Alan, le nombre 12 se traduit par Guilde. Peux-tu utiliser ta Tablette
 		pour réaliser la traduction selon la Conjecture de Syracuse?
 		<br/>
-		<Btn bind:refStep={epiqStep} step=70 val="Oui, bien sur!" />
+		<Btn bind:refStep={epiqStep} step=70 val="Je vais essayer" />
+		<Btn bind:refStep={epiqStep} step=70 val="J'en suis sur" />
 		<div style="clear:both" />
 	</div>
 {/if}
