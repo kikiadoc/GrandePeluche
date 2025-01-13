@@ -92,7 +92,7 @@
 		cEtat.proposition = null
 		if (ret.status==200) { playVideo("ff-7-torches-1") } // la sync se fera par le WS
 		if (ret.status==201) { playVideo("ff-7-torches-2") } // la sync se fera par le WS
-		if (ret.status==202) { addNotification("Mauvaise réponse, tu as été irradié","yellow",10,"prout-long"); loadEtat(ret) } // mauvaise réponse
+		if (ret.status==202) { newInfoPopup("Mauvaise réponse","tu as été irradié",null,{ding:"prout-long"}); loadEtat(ret) } // mauvaise réponse
 	}
 	
 	// affichage des hautfaits/résultats
@@ -127,14 +127,16 @@
   <input type="button" onclick={()=> dspResultats = etat && etat.historique} value="Résultats" />
 	{#if etat && cEtat}
 		{@const cls = (cEtat.dspNbSieverts >0) ? "rouge" : "vert"}
-		<span onclick={markClick} class="gpHelp" gpHelp="Nombre d'envois de la torchère dans les limbes">
-			🏆{etat.historique.length}/{etat.NBQUESTIONS}<sup>🛈</sup>
-		</span>
-		<a class={cls} href="https://fr.wikipedia.org/wiki/Liste_des_unit%C3%A9s_de_mesure_de_radioactivit%C3%A9" target="_blank" >
-			☢{cEtat.dspNbSieverts} µSv
-		</a>
-		<span onclick={markClick} class="gpHelp" gpHelp="Délai avant la prochaine chute de la Torchère en Eorzéa">
-			{cEtat && cEtat.dspDth || "--:--:--"}<sup>🛈</sup>
+		<span style="font-size:0.8em">
+			<span onclick={markClick} class="gpHelp" gpHelp="Nombre d'envois de la torchère dans les limbes">
+				🏆{etat.historique.length}/{etat.NBQUESTIONS}<sup>(ℹ)</sup>
+			</span>
+			<a class={cls} href="https://fr.wikipedia.org/wiki/Sievert" target="_blank" >
+				☢{cEtat.dspNbSieverts} µSv
+			</a>
+			<span onclick={markClick} class="gpHelp" gpHelp="Délai avant la prochaine chute de la Torchère en Eorzéa">
+				{cEtat && cEtat.dspDth || "--:--:--"}<sup>(ℹ)</sup>
+			</span>
 		</span>
 	{/if}
 </div>
@@ -143,15 +145,20 @@
 	<div class="reveal">
 		<img class="parchemin" src={urlImg+"ff-7/gaz.jpg"} style="width:20%; float:right" alt="" />
 		<div class="info">
-			Ce challenge est un challenge de rapidité avec handicap.
-			<div class="br"/>
-			Il va aussi stresser ta patience!
+			Ce challenge de rapidité va aussi stresser ta patience!
 			<div class="br"/>
 			Il comporte {etat && etat.NBQUESTIONS} étapes.
 			<div class="br"/>
-			Le temps restant avant le départ d'une étape est indiqué en haut de la page.
+			Tu peux voir l'heure de début de la prochaine étape en haut de cette page.
+			<div class="br"/>
+			Hildiscord t'informera de l'avancement sur Discord à chaque étape.
+			<div class="br"/>
+			Si tu ne souhaites pas de notification Discord à chaque étape, 
+			<span class="imgLink" gpImg="ff-7/discord-param-notif-2.png">
+				modifie ton parametre de notification	du channel de l'événement.
+			</span>
 		</div>
-		<Btn bind:refStep={epiqStep} step=5 val="Je suis déjà impatient" />
+		<Btn bind:refStep={epiqStep} step=5 val="Je m'impatiente déjà" />
 		<div style="clear:both" />
 	</div>
 {/if}
@@ -159,9 +166,9 @@
 	<div class="reveal">
 		<img class="parchemin" src={urlImg+"ff-7/gaz.jpg"} style="width:20%; float:right" alt="" />
 		<div>
-			{pseudo}, tu le sais déjà, de nombreuses Peluches ont été lobotomisées.
+			{pseudo}, tu le sais déjà, de nombreuses Peluches sont possédées.
 			<br/>
-			C'est un grand danger pour l'Univers Connu et je pense que la cause est le Gaz de Possession.
+			C'est un grand danger pour Eorzéa et je pense que la cause est le Gaz de Possession.
 		</div>
 		<Btn bind:refStep={epiqStep} step=10 val="Le Gaz de Possession?" />
 		<div style="clear:both" />
@@ -169,8 +176,9 @@
 {/if}
 {#if epiqStep==10}
 	<div class="reveal">
-		<img class="parchemin" src={urlImg+"ff-7/oss-117.png"} style="width:20%; float:right" alt="" />
-		Oui le Gaz de Possession. Tu n'as pas lu la Doctrine du Mal?
+		<img class="parchemin" src={urlImg+"ff-7/oss-117.png"} style="width:30%; float:right" alt="" />
+		Oui le Gaz de Possession. Tu n'as pas lu la 
+		<span class="videoLink" gpVideo="ff-7-doctrine-2">Doctrine du Mal</span>?
 		<div class="br"></div>
 		Selon le dernier rapport de la Peluche-espionne 
 		<a href="https://fr.wikipedia.org/wiki/Hubert_Bonisseur_de_La_Bath" target="_blank">OSS117</a>,
@@ -188,18 +196,30 @@
 {/if}
 {#if epiqStep==20}
 	<div class="reveal">
-		<img class="parchemin" src={urlImg+"ff-7/oss-117.png"} style="width:20%; float:right" alt="" />
+		<img class="parchemin" src={urlImg+"ff-7/oss-117.png"} style="width:30%; float:right" alt="" />
 		Je suis en communication avec 
 		<a href="https://fr.wikipedia.org/wiki/Hubert_Bonisseur_de_La_Bath" target="_blank">OSS117</a>
 		<br/>
-		Elle indique que la dispersion du neurotoxique est sans danger si elle est effectue dans les limbes,
+		Elle me décrit la Torchère. Elle ressemble à s'y méprendre à une 
+		<a href="https://fr.finalfantasyxiv.com/lodestone/playguide/db/item/ef2a3f80662" target="_blank" alt="">
+			Lampe cénote
+		</a>	
+		<br/>
+		Elle m'indique aussi que la dispersion du neurotoxique est sans danger si elle est effectue dans les limbes,
 		au delà de l'atmosphère d'Eorzéa.
 		<br/>
 		Elle me dit vouloir envoyer la Torchère dans les limbes afin qu'elle s'y consume,
-		<span class="blinkMsg">
-			mais si la Torchère retombe en Eorzéa, il faudra la renvoyer dans les limbes.
-		</span>
-		<div calss="br"></div>
+		<u>mais si la Torchère retombe en Eorzéa, il faudra la renvoyer dans les limbes.</u>
+		<div class="info">
+			Si la Torchère retombe dans une chambre, une maison, un appartement,
+			la torchère est dissimulée, et c'est un mobilier de table de type
+			<a href="https://fr.finalfantasyxiv.com/lodestone/playguide/db/item/ef2a3f80662" target="_blank" alt="">
+				Lampe cénote
+			</a>.	
+			Si la chute est dans une autre zone, la torchère n'est pas visible
+			(impossible de placer des objets dans les zones hors logements).
+		</div>
+		<div class="br"></div>
 		Mais mais heu...
 		<br />
 		<Btn bind:refStep={epiqStep} step=25 val="Quoi mais mais heu..????" />
@@ -208,13 +228,14 @@
 {/if}
 {#if epiqStep==25}
 	<div class="reveal">
-		<img class="parchemin" src={urlImg+"ff-7/oss-117.png"} style="width:20%; float:right" alt="" />
+		<img class="parchemin" src={urlImg+"ff-7/oss-117.png"} style="width:30%; float:right" alt="" />
 		Je ne comprend pas...
 		<br />
-		J'ai entendu une énorme explosion et j'ai perdu la transmission d'OSS117.
+		J'ai entendu une série d'énormes explosions et j'ai perdu la transmission d'OSS117.
 		<br />
 		<Btn bind:refStep={epiqStep} step=26 val="Ha merde!" />
 		<div style="clear:both" />
+		<audio src="{urlImg+'ff-7/sf_explosion_01.mp3'}" repeat=true loop=true autoplay=true  />
 	</div>
 {/if}
 {#if epiqStep==26}
@@ -226,8 +247,9 @@
 		</span>
 		, j'ai un message urgent.
 		<br />
-		<Btn ifFct={()=>{dthAttenteStep26+=20000; return false}}
-			val="Grouille-toi!" koMsg="Mais laisse moi écouter, j'espère qu'ils vont répéter le message" />
+		<Btn ifFct={()=>{dthAttenteStep26+=40000; return true}}
+			bind:refStep={epiqStep} step=0
+			val="Grouille-toi!" msg="Mais laisse moi écouter, j'espère qu'ils vont répéter le message, en attendant, relis le Lore." />
 		<div style="clear:both" />
 	</div>
 {/if}
@@ -248,8 +270,8 @@
 {/if}
 {#if epiqStep==30}
 	<div class="reveal">
-		<img class="parchemin" src={urlImg+"ff-7/oss-117.png"} style="width:20%; float:right" alt="" />
-		Je suis sure que c'est OSS117 qui a provoqué ce lancement
+		<img class="parchemin" src={urlImg+"ff-7/oss-117.png"} style="width:30%; float:right" alt="" />
+		Je suis sûre que c'est OSS117 qui a provoqué ce lancement
 		afin d'envoyer la Torchère de l'Hégémonie dans les limbes.
 		<div class="br" />
 		J'espère que ma Peluche-espionne préférée n'est pas blessée.
@@ -267,7 +289,7 @@
 		<a href="https://fr.wikipedia.org/wiki/Marie_Curie" target="_blank">Marie Curie</a>
 		afin d'analyser la situation.
 		<div class="br" />
-		Je suis sur qu'elles te seront d'une grande aide si tu souhaites contribuer à la destruction de la Torchère.
+		Je suis sûre qu'elles te seront d'une grande aide si tu souhaites contribuer à la destruction de la Torchère.
 		<div class="br" />
 		<Btn bind:refStep={epiqStep} step=99 val="Tu peux compter sur moi!" />
 		<div style="clear:both" />
@@ -279,10 +301,12 @@
 		<img class="parchemin" src={urlImg+"ff-7/gali-marie.png"} style="width:20%; float:right" alt="" />
 		{#if !etat.question}
 			<div class="blinkMsg">La Torchère de l'Hégémonie s'est consumée dans les limbes éthérées.</div>
-			<i>Ce challenge est terminé, tu peux revoir le lore en cliquant sur 'revoir le Lore'</i>
-			<br/>
-			<Btn bind:refPage={page} page=0 val="Merci Grande Peluche" />
-			<Btn video="ff-7/ff-7-torches-2" val="Revoir la vidéo finale" />
+			<div class="info">
+				Ce challenge est terminé,
+				tu peux revoir le lore en cliquant sur 'Revoir le Lore'
+				et les résultats en cliquant sur 'Résultats'.
+			</div>
+			<Btn video="ff-7-torches-2" bind:refPage={page} page=0 val="Merci Grande Peluche" />
 		{:else}
 			<div>
 				Selon la Peluche
@@ -306,7 +330,7 @@
 			{/if}
 			{#if cEtat.dspDth==null && cEtat.dspDthDiffered==null}
 				<div>
-					Tu peux localiser précisement la Torchère en répondant à la question suivante:
+					Tu peux récupérer la Torchère en répondant à la question suivante:
 					<br/>
 					{etat.question.q}
 					<br/>
@@ -336,11 +360,14 @@
 		<div class="close" onclick={()=>dspResultats=false} onkeypress={null} role="button" tabindex=0>X</div>
 		<div class="popupZone">
 			<div class="popupContent">
-				Voici les étapes actuelles du renvoi dans les limbes éthérées de la torche de l'Hégémonie
-				<br/>
-				{#each historique as h,i}
-					<div>{h[1].pseudo} {jjmmhhmmss(h[1].dth)}</div>
-				{/each}
+				Historique du renvoi de la Torchère de l'Hégémonie dans les limbes éthérées:
+				<hr/>
+				<div style="font-size:0.8em">
+					{#each historique as h,i}
+						<div>{h[1].pseudo} {jjmmhhmmss(h[1].dth)}</div>
+					{/each}
+				</div>
+				<hr/>
 			</div>
 			<div>Total: {dspResultats.length}</div>
 		</div>

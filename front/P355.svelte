@@ -162,7 +162,7 @@
 		{#each tableaux as _,n}
 			<div>
 				{n+1}:
-				<select bind:value={saisies.tableaux[n]}>
+				<select style="width:40%" bind:value={saisies.tableaux[n]}>
 					<option value=0>Choisir...</option>
 					{#each tableaux as t,i}
 						<option value={t.t}>{t.n}</option>
@@ -206,7 +206,7 @@
 	<div class="reveal">
 		<img class="parchemin" src={urlImg+"ff-7/chambre4eme.png"} style="width:30%; float:right" alt="" />
 		Bien {pseudo}, décris moi un peu ce qui s'y trouve.
-		<div class="br"/>
+		<div class="info">Tous les objets sont visibles</div>
 		Il y a...
 		<br/>
 		<input type="number" min=0 max=10 size=5 bind:value={saisies.p4NbTableaux} />tableaux sur les murs
@@ -219,7 +219,6 @@
 			ifFct={()=>saisies.p4NbTableaux==4 && saisies.p4NbTables==6 && saisies.p4NbPeluches==37}
 			koMsg="Recompte encore!"
 			/>
-		<div class="info">Tous les objets sont visibles</div>
 		<div style="clear:both" class="br"></div>
 	</div>
 {/if}
@@ -233,12 +232,11 @@
 			code du Boulier Bunbuku
 		</span>.
 		<div class="br"></div>
-		Examine les tables tactiques qui s'y trouvent et note ci-dessous les nombres indiqués
-		par les Nouveaux Anciens selon le code du Boulier.
-		<br/>
-		Pour chaque nombre, traduit le en langage Eorzéen en cliquant sur "➤".
-		<br/>
 		<img class="parchemin" src={urlImg+"ff-7/ChambrePouvoir.png"} style="width:30%; float:right" alt="" />
+		Examine les tables tactiques qui s'y trouvent et note ci-dessous les nombres indiqués
+		par les Nouveaux Anciens.
+		<br/>
+		<div class="info">Pour chaque nombre, traduit le en langage Eorzéen en cliquant sur "➤".</div>
 		{#each peluches as _,i}
 			<div>
 				{i+1}: 
@@ -267,7 +265,7 @@
 		<div class="br"></div>
 		Vas-y et indique-moi comment ce lieu est nommé par les Nouveaux Anciens.
 		<div class="info">(c'est indiqué sur le livre de correspondance par un nombre Ancien)</div>
-		<input type="number" placeholder="nombre" size=4 bind:value={saisies.nombres[6]} />
+		<input type="number" placeholder="nombre" min=0 max=99 bind:value={saisies.nombres[6]} />
 		<input type="button" value="➤" onclick={()=>traduire(6)} />
 		{saisies.traductions[6] || "??"}
 		<br/>
@@ -306,19 +304,19 @@
 		<img class="parchemin" src={urlImg+"ff-7/lasource-cartes.png"} style="width:40%; float:right" alt="" />
 		<div style="br"></div>
 		{pseudo}, c'est un endroit TRES dangereux.
-		C'est là que se trouve le générateur de Gaz de la Possession.
+		C'est là que se trouve le générateur du Gaz de Possession.
 		<br/>
 		Surtout, ne t'en n'approche pas, il est au fond de La Source!
 		<br/>
-		La diffusion du Gaz se fait par des cartes de diffusion.
+		La diffusion du Gaz se fait par des cartes à Avaloirs.
 		Elles ressemblent à des 
 		<a target="_blank" href="https://fr.finalfantasyxiv.com/lodestone/playguide/db/item/cc090f63109/" alt="">
 			cartes astrales.
 		</a>
 		<br/>
-		Combien y-a-t-il de cartes de diffusion dans La Source ?
+		Combien y-a-t-il de cartes à Avaloirs dans La Source ?
 		<br/>
-		<input type="number" placeholder="nombre" size=4 bind:value={saisies.nbCartes} />
+		<input type="number" placeholder="nombre" min=0 max=99 bind:value={saisies.nbCartes} />
 		<Btn bind:refStep={epiqStep} step=60 val="➤" ifFct={()=> saisies.nbCartes==10 }
 			bind:refPageDone={pageDone} pageDone={pageDesc.n}
 			hautFait="decouvreurDeLaSource"
@@ -345,8 +343,9 @@
 			Ce challenge est terminé, tu peux le rebalayer en cliquant sur 'revoir le Lore'
 			et voir les résultats actuels en cliquant sur 'Résultats'.
 			<br/>
-			Hildiscord t'indiquera le début du prochain challenge.
+			Tu peux revenir ici en cliquant sur <b>{pageDesc.texte}</b> dans ta liste des possibles
 		</div>
+		<div style="clear:both" class="br"></div>
 	</div>
 {/if}
 
@@ -374,9 +373,11 @@
 		<div class="popupZone">
 			<div class="popupContent">
 				<div>Découvreurs de la Station Alpha</div>
+				<hr/>
 				{#each pseudos as p,i}
 					<div>{p[0]} {jjmmhhmmss(p[1].dth)}</div>
 				{/each}
+				<hr/>
 				<div>Total: {pseudos.length}</div>
 			</div>
 		</div>

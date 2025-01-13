@@ -301,6 +301,7 @@
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore element_invalid_self_closing_tag -->
+<!-- svelte-ignore a11y_no_static_element_interactions -->
 <div>
 	
 {#if pseudo.startsWith("Kikiadoc")}
@@ -320,16 +321,16 @@
 	  <input type="button" onclick={()=> dspResultat=calcResultat()} value="Resultats" />
 		<span style="font-size:0.7em" role="button" tabindex=0 onclick={markClick}
 			class="gpHelp" gphelp="Delai à respecter avant de pouvoir perturber le Réparateur de la Station Alpha afin d'inspecter un avaloir à gaz">
-			⏳<countdown dth={etat.unlockMax}/><sup>🛈</sup>
+			⏳<countdown dth={etat.unlockMax}/><sup>(ℹ)</sup>
 		</span>
 		<span style="font-size:0.7em" role="button" tabindex=0 onclick={markClick}
 			class="gpHelp" gphelp="Delai à respecter avant de pouvoir identifier l'extrémité d'un avaloir à gaz bouché" >
-			🔎<countdown dth={etat.trouveMax}/><sup>🛈</sup>
+			⏳<countdown dth={etat.trouveMax}/><sup>(ℹ)</sup>
 		</span>
 		<span style="font-size:0.7em" role="button" tabindex=0 onclick={markClick}
 			class="gpHelp" gphelp="Rapidité du réparateur de la station Alpha: {rate.lbl}">
 			<input type="range" min=0 max={caractRate.length-1} bind:value={saisies.configRate} style="width: 3em; height:0.4em" />
-			<sup>🛈</sup>
+			<sup>(ℹ)</sup>
 		</span>
 	</div>
 {/if}
@@ -340,22 +341,23 @@
 		<div class="br"></div>
 		Au fond de la station Alpha se trouve le Générateur de Gaz, il ne faut pas s'en approcher!
 		<br/>
-		Il s'y trouve aussi le Réparateur-Alpha et les 40 Avaloirs situés aux 4 coins de chacune des 10 cartes astrales.
-		<br/>
-		Les Avaloirs sont donc organisés selon 10 lignes et 4 colonnes.
+		Près de l'entrée se trouve le Réparateur-Alpha et au centre de la station
+		les 40 Avaloirs situés aux 4 coins de chacune des 10 cartes.
 		<div class="br"></div>
-		Chaque Avaloir diffuse du Gaz de Possession vers un lieu d'Eorzéa.
+		Chaque Avaloir va bientôt diffuser du Gaz de Possession vers un lieu d'Eorzéa.
+		<div class="br"></div>
+		En distrayant le Réparateur, tu peux augmenter ton facteur de chance.
+		Quand ta chance est suffisante, tu peux tenter de voir un lieu et
+		boucher temporairement l'Avaloir associé.
+		<div class="br"></div>
+		Quand le lieu associé à un Avaloir est rendu visible, <u>même par un autre Aventurier</u>,
+		tu peux le voir, t'y rendre et m'indiquer les coordonnées de ce lieu.
 		<br/>
-		En distrayant le Reparateur, tu peux augmenter ta chance d'identifier l'extrémité d'un Avaloir.
-		Quand ta chance est suffisante, tu peux tenter de voir ce lieu et boucher temporairement l'Avaloir.
-		<br/>
-		Quand le lieu associé à un Avaloir est identifié, <u>même par un autre Aventurier</u>,
-		tu peux t'y rendre et m'indiquer les coordonnées de ce lieu.
-		Je bloquerai alors l'extrémité de l'Avaloir.
+		Je bloquerai alors l'extrémité de l'Avaloir dans Eorzéa et il sera définitivement détruit.
 		<div class="br"></div>
 		<div>
 			J'y reviendrai en détail mais tu peux déjà
-			<span class="videoLink" gpVideo="ff-7/ff-7-usines-intro-1">voir la démo</span>
+			<span class="videoLink" gpVideo="ff-7-usines-intro-1">voir la démo</span>
 		</div>
 		<Btn bind:refStep={epiqStep} step=10 val="Et on fait ca tous ensemble?" />
 		<div style="clear:both"></div>
@@ -365,23 +367,25 @@
 	<div class="reveal">
 		<img class="parchemin" src="{urlCdn}ff-7/lasource-infos.png" alt="" style="width:20%; float: right"/>
 		Oui, il y a 40 Avaloirs, chaque opération est périlleuse, délicate et tu dois te reposer souvent.
-		<div class="br"></div>
+		<div class="br" />
 		C'est pourquoi j'ai sollicité tous les Aventuriers.
 		<div class="br"></div>
 		Tu l'as compris, il y a deux phases pour bloquer définitivement un avaloir mais
 		tous les aventuriers peuvent faire un peu tout en même temps sur différents avaloirs!
+		<div class="br" />
+		<div>
+			Mais tout d'abord, 
+			<span class="imgLink" gpImg="ff-7/lasource-matrice.png">examine la matrice des Avaloirs</span>
+		</div>
+		<div>
+			Tu peux aussi
+			<span class="videoLink" gpVideo="ff-7-usines-intro-1">revoir la démo</span>
+		</div>
+		<Btn bind:refStep={epiqStep} step=20 val="Il y a deux phases?" />
 		<div class="br"></div>
+		<div class="info">
 		Ca a l'air compliqué, mais tu verras que ce n'est pas le cas quand tu te lanceras dans l'Aventure!
-		<div class="br"></div>
-		Quelques explications avant que je ne te les détaille:
-		<div class="imgLink" gpImg="ff-7/lasource-matrice.png">
-			Voir la matrice des Avaloirs et ses principaux éléments
 		</div>
-		<div class="videoLink" gpVideo="ff-7/ff-7-usines-intro-1">
-			Revoir la démo
-		</div>
-		<div class="br"></div>
-		<Btn bind:refStep={epiqStep} step=20 val="Deux phases?" />
 		<div style="clear:both"></div>
 	</div>
 {/if}
@@ -392,19 +396,34 @@
 		<div style="font-weight: bold; text-decoration: underline">
 			Phase d'obturation d'un Avaloir dans la Station Alpha
 		</div>
+		<div class="br"></div>
 		Pour identifier l'extrémité d'un Avaloir tout en le bouchant, il faut d'abord distraire le Réparateur:
-		<br/>
-		C'est une phase de rapidité "solo", répétable toutes les {etat && etat.UNLOCKDELAI/60000}
-		minutes en cas de réussite et quasi immédiatement en cas de défaillance.
-		<br/>
+		<div>
+			C'est une phase de rapidité solo, répétable toutes les {etat && etat.UNLOCKDELAI/60000}
+			minutes avec un 
+			<span class="gpHelp" onclick={markClick} gpHelp="Chaque avaloir que tu as bouché ajoute 5 minutes">
+				petit malus<sup>(ℹ)</sup>
+			</span>
+			et quasi immédiatement en cas de défaillance.
+		</div>
 		Lorsque cette phase est possible, des flèches ⬇️ et ➡️ sont affichées autour de la
 		<span class="imgLink" gpImg="ff-7/lasource-matrice.png">Matrice des Avaloirs</span>.
-		En cliquant sur ces flèches, tu va perturber le Réparateur,
-		et dès que ta probabilité d'identification est "suffisante", tu peux cliquer sur la case d'un Avaloir.
-		<br/>
-		Si tu as de la chance, tu pourras visualiser le lieu d'Eorzéa à l'extrémité de cet Avaloir et
-		boucheras temporairement cet Avaloir dans la station Alpha.
-		<div class="videoLink" gpVideo="ff-7/ff-7-usines-intro-1">Revoir la démo</div>
+		<div>
+			En cliquant sur ces flèches, tu va perturber le Réparateur,
+			et dès que ta probabilité d'identification est 
+			<span class="gpHelp" onclick={markClick} gpHelp="Ton niveau de chance est capé selon la vélocité du Réparateur-Alpha">
+				suffisante<sup>(ℹ)</sup>,
+			</span>
+		tu peux cliquer sur la case d'un Avaloir.
+		</div>
+		<div>
+			Si tu as de la chance, tu pourras visualiser le lieu d'Eorzéa à l'extrémité de cet Avaloir et
+			boucheras temporairement cet Avaloir dans la station Alpha.
+		</div>
+		<div>
+			Tu peux 
+			<span class="videoLink" gpVideo="ff-7-usines-intro-1">revoir la démo</span>
+		</div>
 		<div class="br"></div>
 		<Btn bind:refStep={epiqStep} step=30 val="Et la deuxième phase?" />
 		<div style="clear:both"></div>
@@ -457,7 +476,7 @@
 			style="width: 6em; height:0.4em" />
 		<br/>
 		<div class="info">{rate.lbl}</div>
-		<div class="info">Probabilité maximum={rate.proba}%</div>
+		<div class="info">Chance maximale={rate.proba}%</div>
 		<div class="info">Tick du réparateur={rate.tick*0.5}s</div>
 		<div class="info">Repos si vu par le réparateur={rate.fail/1000}s</div>
 		<Btn bind:refStep={epiqStep} step=99 val="GO GO GO!" />

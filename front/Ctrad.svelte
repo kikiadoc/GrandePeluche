@@ -36,8 +36,8 @@
 		etat = ret.o.etat
 		// verif que ascVal c'est un nombre ancien valide
 		if (!soluces.find( (e) => e.nbAsc==ascVal) ) {
-			cbResolve(null)
 			newInfoPopup("Vérifie le nombre que tu as indiqué",ascVal+" n'apparait dans aucun document Ancien connu","Si tu es sûr de ton nombre alors contacte Kikiadoc immédiatement")
+			cbResolve(null)
 			return;
 		}
 		calculStart(ascVal)
@@ -215,15 +215,16 @@
 {#if soluces && etat && calculs}
 	{@const svgObj= convertArrayToSvg(calculs.ops,0,calculs.altitude)}
 	<table>
-		<tbody>
+		<tbody style="font-size:0.8em">
 		<tr>
 			<td class="tdTop">
 				<div class=" adminCadre papier">
-					<div style="text-align: center">Traduction de {calculs.init}</div>
+					<!-- <div style="text-align: center">Traduction de {calculs.init}</div> -->
+					<div style="text-align: center">Tablette de Traduction</div>
 					{#if calculs.lastVal!=1}
 						<div>
 							{calculs.lastVal}{(calculs.lastVal%2==0)? "/2=":"x3+1="}
-							<input type=number style="width: 6em" bind:value={calculs.propose} onkeypress={(e)=>{if (e.keyCode==13) calculPropose()}}/>
+							<input type=number style="width: 4em" min=0 max=999 bind:value={calculs.propose} onkeypress={(e)=>{if (e.keyCode==13) calculPropose()}}/>
 							<input type=button value="►" onclick={calculPropose} />
 							<input type=button value="🛈" onclick={()=>dspInit=true} />
 							<input type=button value="⌨" onclick={dspAide} />

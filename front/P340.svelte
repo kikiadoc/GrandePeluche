@@ -84,62 +84,49 @@
 		<img class="parchemin" src={urlImg+"ff-7/Euklid2.jpg"} style="width:20%; float:right" alt="" />
 		<div class="info">
 			Ce challenge est d'un type un peu singulier.
+			<div class="gpHelp" onclick={markClick} gpHelp="Regarde en bas de page">
+				Kikiadoc l'appelle son challenge sentimental<sup>(ℹ)</sup>
+			</div>
 			<div class="br"/>
 			Il se fait en solo, sans contrainte de rapidité, 
 			sans compétition, sans besoin de coopération et est, malgré les apparences, très facile.
 			<div class="br"/>
-			<div class="gpHelp" onclick={markClick} gpHelp="Regarde en bas de page">
-				Kikiadoc l'appelle son challenge sentimental<sup>(*)</sup>
-			</div>
-			<div class="br"/>
-			Laisse-toi porter par la fantasy du Lore,
-			suis les liens et découvre le background historique IRL de ce challenge.
-			<div class="br"/>
-			En cas de difficulté, tu pourras demander l'aide 
-			d'<a href="https://fr.wikipedia.org/wiki/Euclide" target="_blank">Euclide</a>
-			qui te donnera alors les solutions grâce à sa règle et son compas,
-			ou consulter les résultats d'une
-			<a href="https://fr.wikipedia.org/wiki/Intelligence_artificielle_g%C3%A9n%C3%A9rative" target="_blank">
-				 intelligence artificielle genAI
-			</a>
-			<div class="br"/>
-			Sache que tu vas utiliser une conjecture mathématique des plus célèbres.
+			Tu vas utiliser une conjecture mathématique des plus célèbres.
 			<div class="br"/>
 			Sa démonstration (ou son infirmation) résiste aux super-ordinateurs, aux ordinateurs quantiques
 			d'aujourd'hui et à toutes les intelligences humaines depuis des décennies.
 			<div class="br"/>
-			Elle est paradoxalement terriblement simple à mettre en oeuvre.
-			<div class="br"/>
-			Tu vas l'utiliser alors que des mathématiciens parmi les plus célèbre du monde s'attèlent à sa démonstration
+			Tu vas l'utiliser de façon naturelle
+			alors que des mathématiciens parmi les plus célèbre du monde s'attèlent à sa démonstration
 			et en espèrent l'équivalent d'un prix Nobel, la 
 			<a href="https://fr.wikipedia.org/wiki/M%C3%A9daille_Fields" alt="" target="_blank">médaille Fields</a>
 		</div>
 		<div class="br"/>
 		<Btn bind:refStep={epiqStep} val="Moi et les maths..." ifFct={ ()=> {
-				newInfoPopup(" ",[],null,
-										 {imgFull: "ff-7/isocrate-2.png", back:"papier" }
+				newInfoPopup(" ",["Si tu joues à FF14, tu aimes le fantastique, l'irréel..."],null,
+										 {imgBot: "ff-7/ernest-renan.png", back:"papier" }
 										 )
 				return false
 		}} />
 		<Btn bind:refStep={epiqStep} step=1 val="Si tu dis que c'est passionnant..." ifFct={ ()=> {
 				newInfoPopup(" ",["Mais oui,tu vas voir.","Profite du Lore et suis les liens!"],null,
-										 {img: "ff-7/isocrate-2.png", back:"papier" }
+										 {imgBot: "ff-7/ernest-renan.png", back:"papier" }
 										 )
 				return true
 		}} />
 		<Btn bind:refStep={epiqStep} step=1 val="Ca a l'air passionant, je vais tout lire!" ifFct={ ()=> {
 				newInfoPopup(" ",["Fais-toi plaisir.","Profite du Lore et suis les liens!"],null,
-										 {img: "ff-7/isocrate-2.png", back:"papier" }
+										 {imgBot: "ff-7/ernest-renan.png", back:"papier" }
 										 )
 				return true
 		}} />
 		<div class="br" />
 		<div class="info">
-			(*) Dans ce challenge se retrouvent deux de mes passions: l'Informatique et les Mathématiques.
+			<sup>(ℹ)</sup>Dans ce challenge se retrouvent deux de mes passions: l'Informatique et les Mathématiques.
 			<br />
-			Et j'ai versé quelques larmes en le concevant car j'ai pensé à
+			Et j'ai versé quelques larmes en le concevant car j'ai pensé au
 			<a href="https://fr.wikipedia.org/wiki/Jour_du_Premier_Contact" target="_blank">
-				mon premier contact
+				jour de mon premier contact
 			</a>
 			avec
 			<a href="https://www.palais-decouverte.fr/fr/explorer-nos-contenus/revue-decouverte/archives/n-409-mars-avril-2017/hommage-a-jean-brette-1946-2017"
@@ -147,7 +134,7 @@
 				Jean Brette
 			</a>, Mathématicien, Informaticien et prodigieux vulgarisateur:
 			<br />
-			Je n'étais qu'un gamin d'à peine 11 ans.
+			Je n'étais alors qu'un gamin d'à peine 11 ans.
 			<br />
 			En quelques minutes,
 			il m'a transmis ses passions et constellé mon imaginaire.
@@ -155,7 +142,7 @@
 			C'était le 14 décembre 1974, il y a 50 ans, au
 			<a href="https://www.palais-decouverte.fr/fr/venir-nous-voir/les-etincelles/les-exposes/informatique-et-sciences-du-numerique"
 				target="_blank" alt="" >
-				Palais de la découverte
+				Palais de la Découverte
 			</a>
 			lors de 
 			<span class="imgLink" gpImg="ff-7/expo-palais-1974.png">
@@ -195,7 +182,7 @@
 		Ensuite, la Peluche
 		<a href="https://fr.wikipedia.org/wiki/Lothar_Collatz" target="_blank">Lothar Collatz</a>
 		nous a parlé de chiffrement.
-		Il nous a démontré qu'une série mathématique peut servir à chiffrer ou déchiffrer une information.
+		Il nous a démontré qu'une suite mathématique peut servir à chiffrer ou déchiffrer une information.
 		Il nous a indiqué qu'une fonction mathématique ne se limite pas à calculer un résultat
 		en fonction de ses paramètres car celui-ci peut même être déjà connu. Il a illustré son propos avec la 
 		<a href="https://fr.wikipedia.org/wiki/Conjecture_de_Syracuse" target="_blank">Conjecture de Syracuse</a>:
@@ -263,7 +250,7 @@
 
 {#if epiqStep==30}
 	<div class="reveal">
-		<img class="parchemin" src={urlImg+"ff-7/qarn.png"} style="width:60%; float:right" alt="" />		
+		<img class="parchemin" src={urlImg+"ff-7/qarn.png"} style="width:45%; float:right" alt="" />		
 		Tu as raison, c'est compliqué.
 		<br/>
 		Regarde ci-contre un extrait du code informatique gravé sur la Pierre de Qarn!
@@ -321,7 +308,7 @@
 		<p class="parchemin">
 			Parchemin épique:
 			<br/>
-			<input type="text" bind:value={ctx.maitrePecheur} placeholder="maître pêcheur" onkeyup={(e) => e.key=="Enter" && validationMaitrePecheur()} />
+			<input type="text" bind:value={ctx.maitrePecheur} placeholder="maître pêcheur" onkeyup={(e) => e.key=="Enter" && validationMaitrePecheur(55)} />
 			<input type="button" value=">" onclick={(e) => validationMaitrePecheur(55)} />
 		</p>
 	</div>
@@ -385,12 +372,14 @@
 		<div class="br"/>
 		Il semble que les Mathématiques nous aideront à sauver Eorzéa de l'Hégémonie.
 		<div class="br"/>
+		<Btn bind:refPage={page} bind:refPageDone={pageDone} page=0 pageDone={pageDesc.n} val="Merci Grande Peluche" />
 		<div class="info">
 			Tu as terminé ce challenge,
 			tu peux revoir le lore en cliquant sur 'Revoir le Lore'
 			et les résultats en cliquant sur 'Résultats'.
+			<br/>
+			Tu peux revenir ici en cliquant sur <b>{pageDesc.texte}</b> dans ta liste des possibles
 		</div>
-		<Btn bind:refPage={page} bind:refPageDone={pageDone} page=0 pageDone={pageDesc.n} val="Merci Grande Peluche" />
 		<div style="clear:both"></div>
 	</div>
 {/if}

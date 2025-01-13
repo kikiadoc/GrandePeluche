@@ -1,7 +1,7 @@
 const APITYPE='test';
 
 // constante de description de l'environnement d'execution
-export const isProd = (APITYPE=='test')
+export const isProd = (APITYPE!='test')
 export const envName = (APITYPE=='test')? "Staging" : "Prod"
 
 export const urlRaw = 'https://filedn.eu/lxYwBeV7fws8lvi48b3a3TH/'
@@ -185,7 +185,8 @@ export function sortCmp(a,b) {
 
 export function clickSur(idName) {
 	let domElt = document.getElementById(idName)
-	if (domElt)	domElt.dispatchEvent(new Event("click"));
+	console.log("clickSur dom:",idName,domElt!=null)
+	if (domElt)	domElt.dispatchEvent(new Event("click"))
 }
 ///////////////////////////////////////////////////////////////////////////////////////
 // Détection du type d'équipement
@@ -585,6 +586,8 @@ const audioDescs = {
 	"medium": { mp3: urlMp3+"ff-7/Medium.mp3", vol: 0.9, repeat: 1},
 	"guardians": { mp3: urlMp3+"ff-7/Guardians.mp3", vol: 0.9, repeat: 1},
 	"godofwar": { mp3: urlMp3+"ff-7/GodOfWar.mp3", vol: 0.8, repeat: 1},
+	"mission-impossible": { mp3: urlMp3+"ff-7/mission-impossible.mp3", vol: 3.0, repeat: 1},
+	"like-a-melody": { mp3: urlMp3+"ff-7/like-a-melody.mp3", vol: 3.0, repeat: 1},
 };
 
 // test si un DOM e est en cours d'audio playing
@@ -684,6 +687,7 @@ const videoDesc = {
 	"ff-7-alan-decryptage": { mp4: "ff-7/ff-7-alan-decryptage", vol: 1.5},
 	"ff-7-stationalpha-intermediaire": { mp4: "ff-7/ff-7-stationalpha-intermediaire", vol: 1.0},
 	"ff-7-stationalpha-final": { mp4: "ff-7/ff-7-stationalpha-final", vol: 1.0},
+	"ff-7-usines-intro-1": { mp4: "ff-7/ff-7-usines-intro-1", vol: 1.4},
 }
 
 let videoCb=null; // callback actuelle de la video

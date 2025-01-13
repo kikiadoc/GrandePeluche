@@ -245,7 +245,7 @@
 			Δevt:n/a
 			<sup>🛈</sup>
 		</span>
-		<span role="button" style="cursor:pointer" 
+		<span role="button" style="cursor:pointer" gpHelp="Diagnostic technique, ne pas utiliser sans Kikiadoc"
 			onclick={()=>{ 
 				if (pseudo=="Orodus" || pseudo.startsWith('Kikiadoc') || pseudo.startsWith('Grande')) modeSOS=true;
 				dspObject=getSynthese()}}>
@@ -331,10 +331,17 @@
 			<br/>
 			Pour cela, il faudra laisser ton navigateur communiquer avec moi, la Grande Peluche, 
 			en <u>permanence</u> pendant cette mécanique, <u>alors même que tu es sur FF14</u>.
-			<br/>
-			Tu pourras minimiser/occulter ton navigateur, utiliser alt-tab etc...
+			<div class="br" />
+			Sur PC, tu pourras minimiser ou occulter la fenêtre de ton navigateur, utiliser alt-tab etc...
 			<u>mais ne ferme en aucun cas ton navigateur lors de la phase d'immersion</u>.
 			<br/>
+			Sur Smartphone,
+			<u>laisse cette page affichée sur ton écran.</u>
+			Il ne devrait pas passer en veille car j'active le mode
+			<a href="https://developer.mozilla.org/en-US/docs/Web/API/WakeLock" target="_blank">
+				WakeLock
+			</a>
+			<div class="br" />
 			Pour éviter une erreur de ta part, si tu tentes de fermer cette fenêtre pendant
 			le challenge, tu devras confirmer la fermeture
 			en validant un <u>popup d'alerte inadapté</u>(*) comme ci-contre.
@@ -352,7 +359,8 @@
 			<br/>
 			Si tu vois une popup d'alerte comme ci-contre, c'est que tu vas 
 			<u>interrompre les dialogues et	les notifications</u> avec moi.
-			C'est un soucis pour toi uniquement lors de la phase immersive temps-réel.
+			C'est un soucis uniquement lors de la phase immersive temps-réel
+			(tu pourras te reconnecter, évidemment).
 		</div>
 		<div style="clear:both" />
 	</div>
@@ -362,9 +370,7 @@
 		<Btn video="ff-7-spartaci-1" val="Rappelle moi ta situation" />
 		<div class="br"></div>
 		<div class="info">
-			Tu sais déjà que la Grande Peluche va te parler, t'expliquer vocalement ce que tu dois faire,
-			et que tes actions in-game vont te permettre de réaliser des actions
-			lors de ce challenge.
+			Tu sais déjà que la Grande Peluche va te parler et t'expliquer ce que tu dois faire,
 		</div>
 		<div class="info">
 			Pour profiter d'une expérience immersive optimale, je te propose de
@@ -391,10 +397,20 @@
 
 {#if epiqStep==10 && igImage}
 	<div class="reveal">
-		<Btn video="ff-7-spartaci-1" val="Rappelle moi ta situation" />
 		<div>Tu connais maintenant mes mésaventures, alors {pseudo}, aide-moi!</div>
-		<div class="info" style="color:red">
-			Tu devras entrer dans la maison dans
+		<div class="info">
+			Lis les <span class="blinkMsg">compléments ci-dessous</span>,
+			tu peux encore 
+				<a href="{urlCdn}ff-7/Spartaci.pdf" target="_blank">
+					<u>vérifier ta configuration</u>
+				</a>
+				du jeu ou revoir la
+				<span class="videoLink" gpVideo="ff-7-spartaci-1">
+					situation de la Grande Peluche
+				</span>
+		</div>
+		<div style="color:red">
+			Dans
 			<countdown dth={igImage.effectiveStartDth+getEpsilon()}
 				oncdTimeout={()=>{
 					newInfoPopup('Le challenge est en cours',
@@ -404,21 +420,11 @@
 					epiqStep=99
 				}}
 			/>
+			tu devras entrer dans la maison de CL de Kikiadoc
 			et garder ton navigateur ouvert sur cette page.
 		</div>
 		<div class="info">
-			Pour l'instant, patiente encore un peu: 
-				<a href="{urlCdn}ff-7/Spartaci.pdf" target="_blank">
-					<u>Vérifie ta configuration</u>
-				</a>
-				 du jeu et du site pour le challenge.
-			Lis les <u>compléments ci-dessous</u>
-			ou vaque à d'autres occupations.
-			Reviens dans le jardin de la maison de CL de Kikiadoc quelques minutes avant  le
-			début de la phase immersive.
-		</div>
-		<div class="info">
-			<u>Quelques compléments très utiles</u>:
+			<div><u>Quelques compléments très utiles</u>:</div>
 			<div>
 				👉Savoir calculer une Distance de Manhattan
 				<span class="imgLink" gpImg="ff-7/Distance-manhattan.png">

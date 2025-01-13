@@ -9,8 +9,8 @@ const uploadFile = require('../inframain/uploadFile.js');
 
 const DELAYRECHERCHE= 30*60000 // temps allouer pour trouver le pnj
 const DELAYPRISON= 24*60*60000 // delai de sortie automatique de la prison
-const DELAYTROUVEBASE= 10*60000
-const DELAYTROUVECOEF= 30*60000 // delai selon le nombre de runes trouvees
+const DELAYTROUVEBASE= 5*60000
+const DELAYTROUVECOEF= 15*60000 // delai selon le nombre de runes trouvees
 const DELAYFAIL=30000 // 30 secondes pour reessai en cas de sortie prison ou de pnj non intéressant
 const CHANCEPRISON=0.10
 const CHANCEGAGNE=0.65
@@ -138,7 +138,7 @@ async function proposition(pseudo,pX,pY,imageBody) {
 		: "\nIl reste "+nbRestant+" runes à découvrir"; 
 	discord.postMessage("hegemonie","**Challenge de la Doctrine**\n\n"+pseudo+" a découvert la rune #"+(ctxPseudo.iRune+1)+trailer)
 	// publication de l'image Attention, utilisation du iRune du ctxPseudo reférencé au début
-	await uploadFile.uploadFileByName( (gbl.isProd()?"Prod":"Staging")+"-doctrineDuMal-"+ctxPseudo.iRune,imageBody, pseudo)
+	await uploadFile.uploadFileByName( ( (gbl.isProd())?"Prod":"Staging")+"-doctrineDuMal-"+ctxPseudo.iRune,imageBody, pseudo)
 	gbl.exception(ctx.trouves[ctxPseudo.iRune],200)
 }
 

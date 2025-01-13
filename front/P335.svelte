@@ -250,16 +250,16 @@
 			gpHelp="Un habitant est un PNJ de FF14 dont les caractéristiques ont été sélectionnées pour ce challenge"
 			style="cursor: pointer" >
 			habitant
-			<sup>🛈</sup>
+			<sup>(ℹ)</sup>
 		</span>
 		pourrait avoir récupéré une des Runes composant la Doctrine.
 		<div class="br"/>
 		<Btn bind:refStep={epiqStep} step=10 val="Trouver un habitant, c'est facile!" />
 		<div class="info">
 			Lors de ce challenge, le serveur accède à des sites externes (Lodestone, Garland, xivApi)
-			pour amender sa propre base de connaissance.
+			pour amender sa propre base de connaissance et vérifie l'intégrité des données.
 			<br/>
-			En cas de soucis d'intégrité sur les infos d'un PNJ, MP @Kikiadoc
+			En cas de soucis d'intégrité non détecté sur les infos d'un PNJ, MP @Kikiadoc
 		</div>
 		<div style="clear:both" />
 	</div>
@@ -274,7 +274,7 @@
 			gpHelp="Un habitant est un PNJ de FF14 dont les caractéristiques ont été sélectionnées pour ce challenge"
 			style="cursor: pointer" >
 			d'habitants
-			<sup>🛈</sup>
+			<sup>(ℹ)</sup>
 		</span>
 		en Eorzéa.
 		<div class="br"/>
@@ -302,9 +302,6 @@
 		<div class="br"></div>
 		La Peluche statisticienne
 		<a href="https://fr.wikipedia.org/wiki/William_Cochran" target="_blank">William Cochran</a>
-		(ne pas confondre avec 
-		<a href="https://fr.wikipedia.org/wiki/Zefram_Cochrane" target="_blank">Zephram Cochrane</a>
-		)
 		m'a indiqué que pour trouver les runes, il faut procéder par
 		<a href="https://fr.wikipedia.org/wiki/Plan_d%27exp%C3%A9riences" target="_blank">plans d'expériences</a>
 		et
@@ -387,8 +384,14 @@
 		</div>
 		{#if ctx.termine}
 			<div>
-				<Btn bind:refPage={page} bind:refPageDone={pageDone} page=0 pageDone={pageDesc.n} val="Le challenge est terminé" />
-				<Btn video="ff-7-doctrine-2" val="Revoir la video" />
+				<Btn video="ff-7-doctrine-2" val="Revoir la vidéo finale" />
+				<Btn bind:refPage={page} bind:refPageDone={pageDone} page=0 pageDone={pageDesc.n} val="Merci Grande Peluche" />
+			</div>
+			<div class="info">
+				Le Challenge est terminé, tu peux en revoir le Lore en cliquant sur "Revoir le Lore"
+				et les résultats en cliquant sur "Résultats".
+				<br/>
+				Tu peux revenir ici en cliquant sur <b>{pageDesc.texte}</b> dans ta liste des possibles
 			</div>
 		{:else}
 			<div>
@@ -473,9 +476,9 @@
 					indique moi ses coordonnées selon ta boussole IG et fait un screen de ton perso avec le PNJ.
 					<i>(tu peux faire une photo de ton écran avec ton smartphone)</i>
 					<table width="100%"><tbody><tr>
-						<td style="vertical-align: top; text-align: right; width:49%">
-							<div>X:<input bind:value={dspChoix.X} type="number" step="0.1" size=6 placeholder="xx.x" /></div>
-							<div>Y:<input bind:value={dspChoix.Y} type="number" step="0.1" size=6 placeholder="yy.y" /></div>
+						<td style="vertical-align: top; text-align: right">
+							<div>X:<input bind:value={dspChoix.X} type="number" step="0.1" min=0 max=100 placeholder="xx.x" /></div>
+							<div>Y:<input bind:value={dspChoix.Y} type="number" step="0.1" min=0 max=100 placeholder="yy.y" /></div>
 							{#if dspChoix.X && dspChoix.Y && dspChoix.imageDataRaw}
 								<input type="button" style="background-color:lightgreen" value="Je valide >" onclick={reponseTentative} />
 							{:else if dspChoix.X && dspChoix.Y}
@@ -484,7 +487,7 @@
 								<div style="color:red">Coordonnées?</div>
 							{/if}
 						</td>
-						<td style="width:50%">
+						<td style="width:50vw">
 							<Cupload cbImageRaw={(raw)=>dspChoix.imageDataRaw=raw}/>
 						</td>
 					</tr></tbody></table>
@@ -544,10 +547,12 @@
 		<div class="popupZone">
 			<div class="popupContent">
 				<div>Découvreurs de runes:</div>
+				<hr/>
 				{#each Object.keys(dspResultat.pseudos) as pseudo,i }
 					<div>{pseudo}: {dspResultat.pseudos[pseudo]}</div>
 				{/each}
-				<div>Runes trouvées {dspResultat.nb}/{dspResultat.total}:</div>
+				<hr/>
+				<div>Runes trouvées {dspResultat.nb}/{dspResultat.total}</div>
 			</div>
 		</div>
 	</div>

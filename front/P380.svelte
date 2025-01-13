@@ -2,10 +2,11 @@
 	import { onMount, onDestroy  } from 'svelte';
 	import {
 		loadIt, storeIt, newInfoPopup, apiCall, addNotification, 
-		urlCdn, getEpsilon, markClick
+		urlCdn, getEpsilon, markClick, playSound, clickSur
 	} from './storage.js'
 	
 	import Btn from './z/Btn.svelte'
+	import Ctrad from './Ctrad.svelte'
 
 	let {
 		wsCallComponents,
@@ -34,16 +35,13 @@
 
 	// constantes divers 
 	const indexes = [0,1,2,3,4] // for les #each
-	const C_AME_REDUC_PAR_RUNE = 2 // % de réduc d'ame par rune
-	const C_AME_NB_VIS_MAX = 20 // nombre de runes découvrables
-	const C_AME_REDUC_MAX = 100 - (C_AME_NB_VIS_MAX*C_AME_REDUC_PAR_RUNE) // niveau d'ame min sinon mort
 
 	let timerId = null
 	onMount(() => { 
 		console.log('*** mount P380')
 		wsCallComponents.add(myWsCallback)
 		init()
-		timerId = setInterval(timer,5000)
+		timerId = setInterval(timer,1000)
 	})
 	onDestroy(() => {
 		console.log('*** destroy P380')
@@ -53,67 +51,83 @@
 
 	async function myWsCallback(m) {
 		// console.log('ws P380',m.op,m)
-		if (m.op=="omega_vis") etatVis=m.o
+		if (m.op=="omega_etat") { etatOmega=m.o; return true }
+		if (m.op=="omega_etape") {
+			switch(m.o.etape) {
+				case 1: // go etape carac
+					epiqStep = 50
+					newInfoPopup("Attention, nouvelle phase",m.o.pseudo+" a lancé la phase de rapidité",null,
+											 {autoClose:20, ding: "call-to-attention"})
+					break
+				case 2: // go etape vis
+					epiqStep = 60
+					newInfoPopup("Attention, nouvelle phase",
+											[
+												m.o.pseudo+" m'a indiqué toutes les caractéristiques des runes",
+												"Tu peux tenter de retirer les vis (attention aux malus de Méphistophélès)"
+											], null,{autoClose:20, ding: "call-to-attention", mp3:"mission-impossible"})
+					break
+				case 3: // go etape appartement
+					epiqStep = 70
+					newInfoPopup("Attention, nouvelle phase",
+											[
+												"Toutes les vis on été retirées, j'ai enlevé les couvercles de toutes les runes",
+												"Analyse le message écrit sur le fond des runes"
+											], null,{autoClose:20, ding:"call-to-attention", mp3:"mission-impossible"})
+					break
+				case 4: // go etape final evenement
+					epiqStep = 80
+					dspTraduire=null // ferme popup
+					dspCodesOmega=null // ferme opup
+					newInfoPopup("Sequence de Désactivation acceptée",
+											[
+												"La bombe de l'Hégémonie a été désactivée",
+												"Attention à bien laisser un message sur le livre"
+											], null,{autoClose:20, ding:"call-to-attention", mp3:"like-a-melody"})
+					break
+				default:
+					addNotification("Etape "+m.o.etape+" invalide, contacte Kikiadoc")
+			}
+			return true
+		}
+		return false
 	}
 
 	async function init() {
-		let ret= await apiCall("/omega/vis")
-		if (!etatVis && ret && ret.status==200) etatVis = ret.o
-		// execute le timer une fois
-		timer()
+		console.log("P380 init")
+		let ret= await apiCall("/omega/etat")
+		if (ret && ret.status==200) {
+			etatOmega = ret.o
+			ameReducMax=100 - etatOmega.NBMAXVISPARPSEUDO*etatOmega.REDUCAMEPARRUNE
+		}
 	}
 
-	// etat des vis { runes: [ { pseudos: [ {pseudo:, dth:} ]  }]
-	let etatVis = $state(null)
-	let nbVisRef = $state(0) // nombre de reference du pseudo dans les vis
-	let visDth = $state(0) // dernière dth de vis du pseudo
-	let ameRestant = $state(100) // % ame restante
-	let resteGains = $state(null) // reste des gains
-	$inspect("etatVis",etatVis)
+	// etat
+	let etatOmega = $state(null) // calculé lors de l'init et de l'effect
+	let ameReducMax = $state(null) // calculé lors de l'init
+	let resteGains = $state(null) // reste des gains recalulé sur timer
 	$effect(()=> {
-		if (!etatVis) return;
-		// il y a un nouvel etatVis...
-		// calcul des elements liés au pseudo
-		let t_nbVisRef = 0
-		let t_visDth = 0
-		etatVis.runes.forEach((rune) => {
-			if (rune) rune.pseudos.forEach((p) => {
-				if (p && p.pseudo==pseudo) {
-					t_nbVisRef++
-					if (p.dth > t_visDth) t_visDth=p.dth
-				}
-			})
-		})
-		nbVisRef = t_nbVisRef
-		ameRestant = Math.floor(100-(C_AME_REDUC_PAR_RUNE* t_nbVisRef))
-		// calcul dth de prochain devissage (30 sec si pas dernier, 10 minutes si dernier)
-		t_visDth += t_nbVisRef*((etatVis.lastDevisseeDth > t_visDth)? 30000 : 600000 )
-		// mini 30 sec apres le dernier, ajuste heure local sur serveur (-epsilon)
-		visDth = Math.max(etatVis.lastDevisseeDth+30000,t_visDth) - getEpsilon()
+		if (!etatOmega) { console.log("** integrite: pas encore d'etatOmega"); return; }
+		if (!etatOmega.pseudos[pseudo]) { console.log("** integrité: etatOmega.pseudos[pseudo] null"); return }
+		etatOmega.flagInit=true
+		console.log("*** etatOmega changed")
 	})
 
 	// actulise le resteGains toutes les 5 secondes
 	function timer() {
+		if (!etatOmega) { console.log("**pas d'etatOmega sur timer"); return }
+		// si pas commencé
+		if (!etatOmega.dthStart) { resteGains = etatOmega.GAINMAX; return }
 		// recalcul le reste des gains
-		// si callenge en cours, decompte les gains
-		// valeur pour info, sera recalculée par le serveur lorsque le challenge est termine pour pseudo
-		const nbMinutes = (Date.now() - (etatVis.dthStart+getEpsilon())) / 60000
-		const decote = etatVis.decoteParMin * nbMinutes
-		resteGains = Math.max(Math.floor(etatVis.gainMax - decote),etatVis.gainMin)
+		const nbMinutes = (Date.now() - (etatOmega.dthStart+getEpsilon())) / 60000
+		const decote = etatOmega.DECOTEPARMIN * nbMinutes
+		resteGains = Math.max(Math.floor(etatOmega.GAINMAX - decote),etatOmega.GAINMIN)
 	}
 	
-	async function clickRuneVis(idx) {
-		let ret= await apiCall("/omega/vis/"+idx,"PUT")
-		// pas de notif en cas de 200, sera fait via le WS
-		// if (ret.status==200) addNotification("Tu as retiré une vis de la rune #"+(idx+1))
-		if (ret.status==201) addNotification("Tu as déjà retiré une vis de la rune #"+(idx+1),"orange",10,"prout-long")
-		if (ret.status==202) addNotification("Toutes les vis de la rune #"+(idx+1)+" ont déjà été retirées","orange",10,"prout-long")
-	}
-
 	// caractéristiques et reponses
-	const tblCarac = [
+	const TBLCARAC = [
 		{desc: "Ses 4 vis fendues", r:false, uWiki: "https://fr.wikipedia.org/wiki/Vis_fendue"},
-		{desc: "Sa striure horizontale", r:false, uWiki: "https://www.dictionnaire-academie.fr/article/A9S3040"},
+		{desc: "Sa striure horizontale", r:false, uWiki: "https://www.dictionnaire-academie.fr/article/A9S3030"},
 		{desc: "Une vis au Suroît", r:true, uWiki: "https://fr.wiktionary.org/wiki/suro%C3%AEt"},
 		{desc: "Sa teinte rougeâtre", r:false, uWiki: "https://fr.wiktionary.org/wiki/rouge%C3%A2tre"},
 		{desc: "Une vis à l'ouest", r:false, uWiki: "https://fr.wikipedia.org/wiki/Rose_des_vents"},
@@ -138,22 +152,106 @@
 		{desc: "Son périmètre est un polygone concave", r:false, uWiki: "https://fr.wikipedia.org/wiki/Polygone_convexe"},
 		{desc: "Ses 4 vis Phillips", r:true, uWiki: "https://fr.wikipedia.org/wiki/Vis_cruciforme"},
 		{desc: "Sa symétrie parfaite autour d'un axe horizontal", r:false, uWiki: "https://fr.wikipedia.org/wiki/Sym%C3%A9trie"},
-		{desc: "Sa striure verticale", r:true, uWiki: "https://www.dictionnaire-academie.fr/article/A9S3040"},
+		{desc: "Sa striure verticale", r:true, uWiki: "https://www.dictionnaire-academie.fr/article/A9S3030"},
 		{desc: "Une vis à l'est", r:false, uWiki: "https://fr.wikipedia.org/wiki/Rose_des_vents"}
 	]
 	// return true/false si toutes les saisies sont ok
-	function validateCarac() {
+	// et passe a l'etape suivante
+	async function validateCarac() {
 		let nbOk = 0
 		let nbErr = 0
-		for (let i=0; i<tblCarac.length; i++)
-			if (tblCarac[i].r == saisies.caracs[i])
+		for (let i=0; i<TBLCARAC.length; i++)
+			if (TBLCARAC[i].r == saisies.caracs[i])
 				nbOk++
 			else
 				nbErr++
-		let ok = nbOk == tblCarac.length
-		if (!ok) newInfoPopup("Tu n'as pas indiqué les bonnes caractéristiques","Tu as une ou plusieurs erreurs",null, {mp3: "prout-long"})
+		let ok = nbOk == TBLCARAC.length
+		if (!ok)
+			newInfoPopup("Tu n'as pas indiqué les bonnes caractéristiques","Tu as une ou plusieurs erreurs",null, {mp3: "prout-long"})
+		else {
+			// Passage a l'etape des vis
+			await apiCall("/omega/etape/2","POST")
+		}
 		return ok
 	}
+
+	// Passage à letape 1 (caractéristiques)
+	async function validateStart() {
+		await apiCall("/omega/etape/1","POST")
+	}
+
+	// tentative de retrait d'une vis
+	async function clickRuneVis(i) {
+		// vérifications...
+		let p = etatOmega.pseudos[pseudo]
+		let r = etatOmega.runes[i]
+		console.log("timing:",p.nextVisDth,Date.now(),(p.nextVisDth+getEpsilon()) > Date.now())
+		let ret= await apiCall("/omega/vis/"+i,"POST")
+		if (ret.o && ret.o.txt)
+			newInfoPopup("😈 Méphistophélès a ressenti ton action",
+									 [
+										 "Tu as provoqué un malus du groupe de "+(ret.o.t/1000)+" secondes",
+										 "car "+ret.o.txt,
+									 ]
+									 ,null, {back: "papier", ding: "prout-long"} )
+	}
+
+	const INDICES=[
+		{t:"Om", c:false },
+		{t:"éga", c:false },
+		{t:"se", c:false },
+		{t:"tro", c:false },
+		{t:"uve", c:false },
+		{t:"en", c:false },
+		{t:"xxxx", c:false },
+		{t:"xxxx", c:false },
+		{t:"dans", c:false },
+		{t:"l'app", c:false },
+		{t:"arte", c:false },
+		{t:"ment", c:false },
+		{t:"nommé", c:false },
+		{t:"Hégé", c:false },
+		{t:"monie", c:false },
+		{t:"Trouve", c:false },
+		{t:"le sec", c:false },
+		{t:"teur", c:false },
+		{t:"puis", c:false },
+		{t:"cons", c:false },
+		{t:"ulte", c:false },
+		{t:"le li", c:false },
+		{t:"vre", c:false },
+		{t:"xx", c:false },
+		{t:"yy", c:false },
+	]
+
+	let dspSecteurOmega = $state(null) // affichage de la demande clef Omega
+	let dspCodesOmega = $state(null) // affichage de la demande clef Omega
+	let dspTraduire = $state(null) // affichage tablette de traudction
+
+	// fonction de lancement du calcul du code numero "i"
+	function dspCalcCode(i) {
+		dspTraduire = { i: i, nbAsc: dspCodesOmega.valInput[i] }
+	}
+
+	// tentative de tourner la clef #i
+	async function clefTry(i) {
+		// verif que les codes sont valides
+		// console.log($state.snapshot(etatOmega.codesOmega))
+		if ( etatOmega.codesOmega.includes( null ) )
+			return newInfoPopup("Patience...","Tous les codes ne sont pas trouvés",null,{ding: "prout-long"})
+		let ret = await apiCall('/omega/clefTry/'+i,'POST')
+		if (ret.status==201)
+			return newInfoPopup("Trop lent","Tu n'as pas tourné cette clef suffisamment rapidement",null,{ding: "prout-long"})
+		// if (ret.status==200) ....
+	}
+	
+	// fonction d'admin
+	async function admAction(type) {
+		if (!confirm(type)) return
+		dspObject= await apiCall('/omega/'+type,'PATCH')
+		init()
+	}
+
 </script>
 
 <style>
@@ -165,8 +263,8 @@
 		border-image-slice: 2% 2% fill;
 		cursor: pointer;
 		position: relative;
-		height: 4em;
-		width: 4em;
+		height: 3em;
+		width: 3em;
 		aspect-ratio: 1 / 1;
 	}
 	.rivet { position: absolute; font-size: 1.5em; color: lightgreen	}	
@@ -174,7 +272,17 @@
 	.r2 { top: -0.5em; right: 0 }
 	.r3 { bottom: -0.3em; right: 0 }
 	.r4 { bottom: -0.3em; left: 0 }
-	
+
+	.oeuil0 { }
+	.oeuil1 { color: lightgreen }
+	.oeuil2 { color: orange}
+	.oeuil3 { color: red}
+
+	.clef0 { color: red; font-size: 2.5em}
+	.clef1 { color: red; font-size: 2.5em }
+	.clef2 { color: orange; font-size: 2.5em}
+	.clef3 { color: lightgreen; font-size: 2.5em }
+
 	label {
 		cursor: pointer
 	}
@@ -184,89 +292,158 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <!-- svelte-ignore a11y_interactive_supports_focus -->
 <!-- svelte-ignore a11y_click_events_have_key_events -->
+<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 
 <div>
 	{#if pseudo.startsWith('Kikiadoc')}
 		<div class="adminCadre">
 			<div>
 				Admin:
-				<input type="button" value="resetVis" onclick={async ()=>dspObject= confirm('ResetVis?') && await apiCall('/omega/admResetVis','PATCH')}/>
+				<input type="button" value="resetVis" onclick={async ()=>admAction('admResetVis')}/>
+				<input type="button" value="resetTimer" onclick={async ()=>admAction('admResetTimer')}/>
+				<input type="button" value="fullVis" onclick={async ()=>admAction('admFullVis')}/>
 			</div>
 		</div>
 	{/if}
 
-	<input type="button" value="Revoir le Lore" onclick={() => epiqStep=0} />
-	<input type="button" value="Resultats TBD" onclick={() => epiqStep=0} />
-	{#if etatVis}
-		<span onclick={markClick} gpHelp="Niveau d'âme restant (plus de {C_AME_REDUC_MAX}% pour pouvoir retirer une vis)" style="cursor: pointer">
-			{#if ameRestant > C_AME_REDUC_MAX}❤️{:else}💔{/if}{ameRestant}%<sup>🛈</sup>
-		</span>
-		{#if ameRestant > C_AME_REDUC_MAX}
-			<span onclick={markClick} gpHelp="Délai avant possibilité de retirer une vis" style="cursor: pointer">
-				🪛<countdown dth={visDth} /><sup>🛈</sup>
+	<div>
+		<input type="button" value="Revoir le Lore" onclick={() => epiqStep=0} />
+		<input type="button" value="Resultats TBD" onclick={() => epiqStep=0} />
+		<span style="font-size: 0.8em">
+		{#if etatOmega && etatOmega.flagInit}
+			{@const p=etatOmega.pseudos[pseudo] }
+			{@const ameRestant=100 - p.nbVisDevissees*etatOmega.REDUCAMEPARRUNE }
+			<span onclick={markClick} gpHelp="Ton niveau d'âme restant: un niveau faible peut provoquer l'ire de Méphistophélès" style="cursor: pointer">
+				{#if ameRestant > ameReducMax}❤️{:else}💔{/if}{ameRestant}%<sup>🛈</sup>
+			</span>
+			<span onclick={markClick} gpHelp="Vert, tu es l'Elu Véloce, Orange, tu es parmi les Surveillés, Rouge: Méphistophélès te regarde, Blanc, il t'ignore" style="cursor: pointer">
+				<span class="{'oeuil'+p.oeuil}">👁<sup>🛈</sup></span>
+			</span>
+			<span onclick={markClick} gpHelp="Délai avant possibilité de retirer une vis sans danger.. Quoique..." style="cursor: pointer">
+				🪛<countdown dth={p.nextVisDth} txtTimeout="Possible"/><sup>🛈</sup>
+			</span>
+			<span onclick={markClick} gpHelp="Reste du trésor de Méphistophélès (en milliers de Gils par participant)" style="cursor: pointer">
+				🪙{resteGains}<sup>🛈</sup>
+			</span>
+			<span onclick={()=>dspObject= etatOmega} gpHelp="Diagnostic technique (ne pas utiliser sans Kikiadoc)" style="cursor: pointer">
+				🆘
 			</span>
 		{/if}
-		<span onclick={markClick} gpHelp="Reste du trésor de Méphistophélès (en millions de Gils par participant)" style="cursor: pointer">
-			🪙{resteGains}<sup>🛈</sup>
 		</span>
-	{/if}
+	</div>
 	
-	{#if epiqStep==0}
+	{#if epiqStep==0 && etatOmega}
 		<div class="reveal">
 			<div>
 				<div class="info">
-					Ce challenge est un challenge de coopération avec rapidité collégiale
-					pour maximiser les gains:
+					Ce challenge est un challenge de coopération avec rapidité collégiale.
 					<br/>
-					Le gain maximum est de XXX millions de Gils
-					<u>par participant terminant ce challenge</u> mais ce gain diminue au fil du temps.
+					Le gain maximum <u>par participant terminant ce challenge</u>
+					est de {etatOmega.GAINMAX/1000} millions de Gils
+					mais ce gain diminue de {etatOmega.DECOTEPARMIN}000 Gils par minute
+					dès que la phase de rapidité est commencée.
 					<br/>
-					Pour éviter qu'il diminue beaucoup, il faut terminer ce challenge rapidement:
-					Plus le nombre de participants est important, plus la coopération est facile,
-					et chaque minute qui passe diminue le gain de chacun de 25K Gils...
+					Plus nombreux vous serez à collaborer, plus rapide sera le challenge.
 					<br/>
-					La réduction de tes gain s'arrête lorsque tu termines ce challenge
-					(le gain mini est d'un million de gils)
+					La réduction de tes gains s'arrête lorsque tu termines ce challenge.
 					<br/>
-					N'hésite pas à partager sur Discord et si possible en vocal.
+					Toutes tes actions vont exposer ton âme à Méphistophélès,
+					et tu risques d'en perdre un peu à chaque fois!
+					<div>
+						Attention, une action, si elle est faite dans de mauvaises conditions, peut aussi provoquer un 
+						<span class="blinkMsg gpHelp"
+							gpHelp="Un malus de groupe empêche tout le groupe de réaliser une action pendant quelques dizaines de seconde"
+							onclick={markClick} 
+							>
+							Malus de Groupe<sup>🛈</sup>
+						</span>,
+					</div>
+					Découvre tes capacités en cliquant sur les <sup>🛈</sup> en haut à droite du bouton résultat.
 				</div>
 			</div>
-			<Btn bind:refStep={epiqStep} step=5 val="Un pour tous, tous pour un!" />
+			<Btn bind:refStep={epiqStep} step=10 val="Un pour tous, tous pour un!" />
+			<div style="clear:both" />
 		</div>
 	{/if}
-	{#if epiqStep==5}
+
+	{#if epiqStep==10}
 		<div class="reveal">
 			<div>
 				{pseudo}, je ne perçois plus le flux UniCast de la Possession des âmes à mon encontre.
 				Je suis à nouveau libre. Encore Merci.
 				<div class="br" />
-				Je penses que Méphistophélès est derrière tout cela,
-				et qu'il a été troublé par la découverte des runes Oméga.
+				Je sais que Méphistophélès est derrière tout cela,
+				et qu'il a été effrayé par notre découverte des runes Oméga.
 				<div class="br" />
-				Je pense qu'il a perçu le danger, qu'il déménage progressivement son trésor
-				depuis la station Oméga vers un lieu inaccessible et qu'il fera ensuite exploser
-				la Bombe de la Possession: <u>cela annihilera toute volonté des vivants sur Eorzéa</u>.
+				Il sait que sa défaîte est proche. Je suis sûre qu'il déménage son trésor
+				depuis la station Oméga vers un lieu inaccessible et fera ensuite exploser
+				une Bombe de la Possession qui annihilera toute volonté des vivants sur Eorzéa.
 				<div class="br" />
-				Peut-être as tu remarqué que les 25 runes Omega semblent identiques?
-				<br />
-				Hélas, je n'ai pas recouvré toutes mes capacités,
-				sauras-tu identifier pour moi leurs caractéristiques communes?
+				Encore faut-il que nous nous rendions à la station Omega et désamorcions la Bombe...
 			</div>
-			<Btn bind:refStep={epiqStep} step=10 val="Bien sur!" />
+			<Btn bind:refStep={epiqStep} step=20 val="Comment peut-on faire?" />
+			<div style="clear:both" />
 		</div>
 	{/if}
 	
-	{#if epiqStep==10}
+	{#if epiqStep==20}
 		<div class="reveal">
-			<div class="br"></div>
 			<div>
-				<div>Quels sont les caractéristiques remarquables d'une rune Oméga?</div>
+				<img style="float:right; width:40%" src="{urlCdn}ff-7/runemetal.png" alt="" />
+				Pour celà, il faut que j'examine le contenu de chaque rune Omega
+				et reconstitue le message secret destiné aux Nouveaux Anciens d'Eorzéa.
+				<div class="br" />
+				Peut-être as tu remarqué que les 25 runes Omega semblent identiques?
+				<br />
+				Peut-être as tu remarqué qu'il y a 4 vis sur chaque rune?
+				<div class="br"/>
+				Je suis sûre que les runes ont des mécanismes de défense.
+				Je ne les connais pas, alors tu devras les découvrir par toi-même.
+				<br />
+				Je n'ai pas encore recouvré toutes mes capacités,
+				sauras-tu identifier pour moi leurs caractéristiques communes
+				puis retirer les vis?
+			</div>
+			<Btn bind:refStep={epiqStep} step=30 val="Bien sur!" />
+			<div style="clear:both" />
+		</div>
+	{/if}
+	
+	{#if epiqStep==30}
+		<div class="reveal">
+			<div>
+				{pseudo}, j'ai tellement confiance en toi, voici les connectés:
+				<br/>
+				{#each pseudoList as p}
+					<span>{p.toString()}</span> <span> </span>
+				{/each}
+			</div>
+			{#if etatOmega && etatOmega.etape >= 1}
+				<div>Le challenge a démarré. Passe à l'étape suivante</div>
+				<Btn bind:refStep={epiqStep} step=50 val="Etape suivante" />
+			{:else}
+				<div class="blinkMsg" style="color:red">
+					Vérifie bien que tout le monde est prêt avant de lancer.
+					<br/>
+					Tu vas alors nous amener instantanément sous le Regard de Méphistophélès
+				</div>
+				<Btn bind:refStep={epiqStep} ifFct={async ()=> validateStart()} val="Top départ!" />
+			{/if}
+			<div style="clear:both" />
+		</div>
+	{/if}
+	
+	{#if epiqStep==50 && etatOmega && TBLCARAC}
+		<div class="reveal">
+			<div>
 				<div class="info">
-					De multiples réponses sont possibles.
-					Tu peux partager tes idées ou demander de l'aide sur Discord.
+					Peu importe si c'est toi ou quelqu'un d'autre qui trouve en premier les bonnes réponses,
+					l'important est de le faire le plus vite possible.
+					Partage tes questions et solutions sur discord.
 				</div>
 				<img style="float:right; width:40%" src="{urlCdn}ff-7/runemetal.png" alt="" />
-				{#each tblCarac as carac,i}
+				<div>Quels sont les caractéristiques remarquables d'une rune Oméga?</div>
+				{#each TBLCARAC as carac,i}
 					<div>
 						<input bind:checked={saisies.caracs[i]} type="checkbox" id="omegaS{i}" />
 						<label for="omegaS{i}">{carac.desc}</label>
@@ -276,64 +453,30 @@
 					</div>
 				{/each}
 			</div>
-			<Btn bind:refStep={epiqStep} step=20 ifFct={()=>validateCarac()} val="C'est mon dernier mot, Grande Peluche" />
+			{#if etatOmega && etatOmega.etape >= 2}
+				<Btn bind:refStep={epiqStep} step=60 val="Cette étape est terminée" />
+			{:else}
+				<Btn bind:refStep={epiqStep} ifFct={async ()=> validateCarac()} val="C'est mon dernier mot, Grande Peluche" />
+			{/if}
+			<div style="clear:both" />
 		</div>
 	{/if}
 	
-	{#if epiqStep==20 && etatVis}
-		<div class="reveal">
-			Merci {pseudo}.
-			<div class="br" />
-			Je crois pouvoir localiser la station Oméga.
-			Pour celà, il faut que j'examine le contenu de chaque rune Oméga masquée par les plaques striées
-			et reconstituer le message.
-			<br />
-			Grâce à tes informations, j'ai déterminé le mode opératoire suivant:
-			Il faut que j'accède au contenu de chaque rune Omega en retirant la plaque striée la recouvrant.
-			Pour cela, il faut d'abord en retirer les 4 vis dans l'ordre: Noroît, Nordé, Suet, Suroît.
-			<div class="br" />
-			Je n'ai pas encore suffisamment récupéré pour le faire, peux-tu le faire pour moi ?
-			<Btn bind:refStep={epiqStep} step=25 val="Je suis impatient!" />
-		</div>
-	{/if}
-	
-	{#if epiqStep==25 && etatVis}
-		<div class="reveal">
-			Attention, l'influence de Mephistophéles est telle que tu perdras {C_AME_REDUC_PAR_RUNE}% de ton âme à chaque action!
-			Si ton âme est possédée à plus de {C_AME_REDUC_MAX}% de son éther, tu meurs.
-			Tu ne peux donc retirer plus de {C_AME_NB_VIS_MAX} vis.
-			<div class="br" />
-			Voici le mode opératoire pour retirer les vis:
-			<br/>
-			- Tu ne peux retirer plus d'une vis par rune, sinon, tu meurs:
-			ton âme serait alors immédiatement identifiée et possédée par Mephistophélès.
-			<br/>
-			- Tu dois te reposer de façon importante après avoir retirée une vis car
-			il faut te faire oublier de Méphistophélès. 
-			Ton repos est alors important et fonction du nombre de vis que tu as déjà retirées.
-			<br/>
-			- MAIS si un autre Aventurier retire une vis après toi, c'est son âme que Mehistophélès va focus,
-			ton repos sera alors réduit et tu pourras plus rapidement retirer une nouvelle vis.
-			<br/>
-			<div class="info">
-				En cliquant sur une rune, tu peux tenter d'en dévisser une vis dans le bon ordre.
-				Pour optimiser les temps de repos, synchronise toi avec les autres joueurs.
-			</div>
-			<div class="br" />
-			<Btn bind:refStep={epiqStep} step=30 ifFct={()=>validateCarac()} val="Je peux le faire" />
-		</div>
-	{/if}
-	
-	{#if epiqStep==30 && etatVis && etatVis.nbVisDevissee < 100}
+	{#if epiqStep==60 && etatOmega}
 		<div class="reveal">
 			<div style="margin: auto; text-align: center">
+				<div>Retire prudemment les vis</div>
+				<div class="info blinkMsg">Note bien celles que tu retires, attention aux malus</div>
+				{#if etatOmega.nbVisDevissees >= 100}
+					<div><Btn bind:refStep={epiqStep} step=70 val="Next!" /></div>
+				{/if}
 				<table class="parchemin" style="margin: auto; font-size:0.7em">
 					<tbody style="text-align: center">
 						{#each indexes as _,l }
-							<tr style="height:4em">
+							<tr>
 								{#each indexes as _,c }
 									{@const idx=l*indexes.length+c}
-									{@const rune=etatVis.runes[idx]}
+									{@const rune=etatOmega.runes[idx]}
 									{@const n= (rune)? rune.pseudos.length : 0}
 									<td class="rune" onclick={()=>clickRuneVis(idx)}>
 										{#if n>0}<div class="rivet r1">o</div>{/if}
@@ -348,15 +491,117 @@
 					</tbody>
 				</table>
 			</div>
+			<div style="clear:both" />
 		</div>
 	{/if}
 
-	{#if epiqStep==30 && etatVis && etatVis.nbVisDevissee >= 100}
+	{#if epiqStep==70 && etatOmega}
 		<div class="reveal">
-			vis OK
+			<div style="margin: auto; text-align: center">
+				<div>Contenu des Runes Oméga</div>
+				{#if false}
+					<div><Btn bind:refStep={epiqStep} step=80 val="Next!" /></div>
+				{/if}
+				<table class="parchemin" style="margin: auto; font-size:0.7em">
+					<tbody style="text-align: center" onclick= {()=> {dspCodesOmega={valInput:[null,null,null]}}}>
+						{#each indexes as _,l }
+							<tr>
+								{#each indexes as _,c }
+									{@const idx=l*indexes.length+c}
+									{@const rune=etatOmega.runes[idx]}
+									{@const n= (rune)? rune.pseudos.length : 0}
+									<td class="rune blinkRune">
+										<div>{INDICES[idx].t}</div>
+									</td>
+								{/each}
+							</tr>
+						{/each}
+					</tbody>
+				</table>
+			</div>
+			<div style="clear:both" />
 		</div>
 	{/if}
 	
+	{#if epiqStep==80 }
+		<div class="reveal">
+			revoitr la video 
+			challenge terminé etc...
+			<div style="clear:both" />
+		</div>
+	{/if}
+
+	{#if etatOmega && dspCodesOmega}
+		{@const dejaTrouve = etatOmega.codesOmega.find((e) => e && e.pseudo==pseudo)  }
+		{@const nbTrouve = etatOmega.codesOmega.reduce( (a,c) => a+ ((c)? 1:0), 0)}
+		<div class="popupCadre papier">
+			<div class="close" onclick={()=>dspCodesOmega=null} role="button" tabindex=0>X</div>
+			<div class="popupZone">
+				<div class="popupContent" style="margin: auto; text-align:center">
+					<div>Désamorçage de l'Hégémonie</div>
+					<div class="info" style="font-size:0.7em">
+						Pour arrêter le timer,
+						{etatOmega.codesOmega.length} joueurs doivent tourner
+						les clefs en même temps.
+					</div>
+					<table class="parchemin" style="margin: auto; font-size:0.7em">
+						<tbody>
+							<tr>
+								{#each etatOmega.codesOmega as c,i}
+									<td style="cursor:pointer; width: 4em">
+										{#if c}
+											<div onclick={markClick} gpHelp="Code déjà indiqué">
+												<div>{c.pseudo}</div>
+												<div style="color:lightgreen">✅</div>
+												<div>{c.phrase}</div>
+											</div>
+										{:else if dejaTrouve}
+											<div onclick={markClick} gpHelp="Code à trouver par un autre que toi.">
+												<div gpHelp="">-----</div>
+												<div style="color:red; cursor: pointer">⛭</div>
+												<div>{c && c.phrase || "???"}</div>
+											</div>
+										{:else}
+											<div>
+												<input bind:value={dspCodesOmega.valInput[i]} type="number" min=1 max=999
+													onkeypress={(e) => e.key=="Enter" && dspCalcCode(i) }	/>
+											</div>
+											<div style="color:lightgreen; cursor: pointer" onclick={()=>dspCalcCode(i)}>⛭</div>
+											<div>{c && c.phrase}</div>
+										{/if}
+										<div class="clef{nbTrouve}" onclick={()=>clefTry(i)}>🗝</div>
+										<countdown dth={c && c.lastTryDth} txtTimeout="--:--:--">--:--:--</countdown>
+									</td>
+								{/each}
+							</tr>
+						</tbody>
+					</table>
+					<div class="info">Les codes sont sur le livre de correspondance</div>
+					<div class="info">Tu ne peux déverouiller qu'un seul code</div>
+				</div>
+			</div>
+		</div>
+	{/if}
+
+	{#if dspTraduire}
+		<div class="popupCadre papier">
+			<div class="close" onclick={()=>dspTraduire=null} onkeypress={null} role="button" tabindex=0>X</div>
+			<div class="popupZone">
+				<div class="popupContent">
+					<Ctrad ascVal={dspTraduire.nbAsc} cbResolve={async (r)=> {
+							if (r) {
+								let ret = await apiCall('/omega/codeTrouve/'+dspTraduire.i,'POST',r)
+								if (ret.status==201) newInfoPopup("Erreur","Ce n'est pas le bon code",null,{ding:"prout-long"})
+								// 200 via WS
+							}
+							dspTraduire=null
+						} }
+					/>
+				</div>
+			</div>
+		</div>
+	{/if}
+
 </div>
 
 <!-- p380.svelte -->

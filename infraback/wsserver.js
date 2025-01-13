@@ -108,12 +108,14 @@ exports.broadcastRaw = (o) => {
 	broadcastClient(o);
 }
 
-exports.broadcastSimpleText = (texte, ding) => {
+exports.broadcastSimpleText = (texte, ding, couleur, duree) => {
 	broadcastClient({
 		op : "notif",
-		mp3: (ding)? "Ding" : null,
+		mp3: (typeof ding === "string")? ding : (ding)? "Ding" : null,
 		texte : texte,
-		dth: Date.now()
+		dth: Date.now(),
+		couleur: couleur,
+		duree: duree
 	});
 }
 

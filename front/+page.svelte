@@ -8,7 +8,7 @@
 		addNotification, newInfoPopup, scrollTop, urlImg, urlRaw,
 		connectToServer, disconnectFromServer, apiCall,
 		getDynMetro, getEpsilon,
-		hhmmss, jjmmhhmmss, hhmmssms, countDownTo, geUtcMsFrom,
+		hhmmss, jjmmhhmmss, hhmmssms, countDownTo, geUtcMsFrom, mmssms,
 		playSound, playDing, audioPause, audioResume,
 		playVideo, closeVideo, clickSur,
 		startWakeLock, stopWakeLock, crypoCreateKeyPair
@@ -32,7 +32,7 @@
 
 	// compilerVersion=4.2.19
 	// compilerVersion=3.56.0
-	// divers caractères pour copier/coller : ➤▲⏸◀▶▼⏬🔎📽❓✅🆘⚠️⬇️✅➥📷ε🛈Δ⛭👉
+	// divers caractères pour copier/coller : ➤▲⏸◀▶▼⏬🔎📽❓✅🆘⚠️⬇️✅➥📷εΔ⛭👉😈ⓘ(ℹ)🛈႞⒤
 	// ne fonctionne pas sur android 🛈 ne pas confondre avec 🛈
 	// on:keypress={(e) => e.key=="Enter" && clickSur('domId')}
 
@@ -423,13 +423,10 @@
 		// console.log("chatNotif",m)
 		if (m.fromPseudo) {
 			flagChat=true;
-			addNotification(m.fromPseudo+": "+m.texte,"orange");
-			playDing(); 
+			addNotification(m.fromPseudo+": "+m.texte, "orange", m.duree, m.mp3 || "Ding");
 		}
-		else {
-			addNotification(m.texte);
-			
-		}
+		else
+			addNotification(m.texte, m.couleur, m.duree, m.mp3)
 		if (m.admin) { 
 			dspAdminMsg = m.texte;
 			playDing("call-to-attention");
@@ -438,9 +435,9 @@
 			newInfoPopup("Message personnel de "+((m.fromPseudo)? m.fromPseudo : "la Grande Peluche"),m.toTexte,"")
 			playDing("call-to-attention");
 		}	
-		if (m.mp3) playDing(m.mp3);
 		chatMsgList.push(m);
-		chatMsgList = chatMsgList; // forece refresh
+		if (chatMsgList.length > 100) chatMsgList.slice(50)
+		// chatMsgList = chatMsgList; // forece refresh inutile en runes5
 		// console.log("chatNotifEnd",m)
 	}
 	
@@ -589,7 +586,7 @@
 		if (gpHelp) dspInfo={titre: "Explication", body: [gpHelp], trailer:"Ferme ce popup", img: "ff-7/ff-7-help.gif", back:"papier" }
 		let gpImg = e.target.getAttribute("gpImg")
 		if (!gpImg) gpImg=e.gpImgMark
-		if (gpImg) dspInfo={ titre:"", body: [], trailer: "Ferme ce popup", imgFull: gpImg, back:"papier" }
+		if (gpImg) dspInfo={ titre:"", body: [], trailer: "Ferme ce popup", imgTop: gpImg, back:"papier" }
 		let gpVideo = e.target.getAttribute("gpVideo")
 		if (!gpVideo) gpVideo=e.gpVideoMark
 		if (gpVideo) playVideo(gpVideo)
@@ -598,6 +595,7 @@
 		// console.log(e)
 		dspInfo = e.detail
 		if (dspInfo.ding) { playDing(dspInfo.ding) }
+		if (dspInfo.mp3) { playSound(dspInfo.mp3) }
 	}
 	function startBlinkGlobal() {
 		const elt=document.getElementById('blinkGlobal')
@@ -784,7 +782,7 @@
 		padding: 1.5em 0.5em 1.0em 1.0em;
 	}
 	div :global(.popupContent) {
-		max-height: 69vh; 
+		max-height: 59vh; 
 		min-height: 4em;
 		min-width: 10em;
 		scrollbar-color: white grey;
@@ -942,9 +940,9 @@
 				<div>Voici la liste de tes Possibles:</div>
 				<div>
 					<a class="active" target="_blank" 
-						href="https://docs.google.com/spreadsheets/d/1IFig4FDv1lN5biAz7I9oOKUY2TKgv31qiatovx1UEpw/edit?usp=sharing"
+						href="https://docs.google.com/spreadsheets/d/1_hho3TD2dr0kqIE-XBVhf6OW62lo2s3RAz_xc_Tkd2Y/edit?usp=sharing"
 						onclick={() => playSound("Money")}	>
-						👉 Consulter le grimoire des gains
+						👉 Consulter le grimoire des gains et plannings
 					</a>
 				</div>
 				{#each pageList as page, i}
@@ -976,6 +974,17 @@
 						👉
 						<a class="active" href={urlRaw+'securite/index.html'} target="_blank">
 							Affichage de la page de diagnostic et assistance du site
+						</a>
+					</div>
+					<hr />
+					<div>
+						Utilise l'option suivante si des vidéos, des images ou des musiques
+						ne semblent pas se télécharger normalement
+					</div>
+					<div>
+						👉
+						<a class="active" href="/adminTest/clearClientCache">
+							Affichage de la page de purge du cache de ton navigateur
 						</a>
 					</div>
 					<hr />
@@ -1073,7 +1082,7 @@
 			<div class="close" onclick={() => { dspMultiPopup = false; flagChat=false}} role="button" tabindex=0>X</div>
 			<div class="popupZone">
 				<div class="popupContent">
-					<div>
+					<div style="font-size: 0.8em">
 						{pseudoList.length} connecté{#if pseudoList.length > 1}s{/if} :
 						{#each pseudoList as name, i}
 							{name} &nbsp;
@@ -1081,7 +1090,7 @@
 					</div>
 					<div bind:this={messageScrollArea} class="messageCadre scrollbar" style="height: 7em" >
 						{#each chatMsgList as o,i}
-							<div>{hhmmss(o.dth)} ({(o.fromPseudo)? o.fromPseudo : "Grande Peluche"}) {o.texte}</div>
+							<div style="font-size: 0.8em">{hhmmss(o.dth)} ({(o.fromPseudo)? o.fromPseudo : "Grande Peluche"}) {o.texte}</div>
 						{/each}
 					</div>
 					<div>
@@ -1095,7 +1104,6 @@
 			</div>
 		</div>
 	{/if}
-
 	
 	{#if dspPseudo}
 		{@const desc = loadIt("pseudoDesc",{})}
@@ -1208,13 +1216,16 @@
 					{#if dspInfo.img}
 						<img src={urlImg+dspInfo.img} style="float: right; width: 50%" alt="">
 					{/if}
-					{#if dspInfo.imgFull}
-						<img src={urlImg+dspInfo.imgFull} style="width: 100%" alt="">
+					{#if dspInfo.imgTop}
+						<img src={urlImg+dspInfo.imgTop} style="width: 100%" alt="">
 					{/if}
 					<div class="info">{dspInfo.titre}</div>
 					{#each dspInfo.body as p}
 						<div>{p}</div>
 					{/each}
+					{#if dspInfo.imgBot}
+						<img src={urlImg+dspInfo.imgBot} style="width: 100%" alt="">
+					{/if}
 					<div style="clear:both"></div>
 				</div>
 				<div class="info">
@@ -1245,8 +1256,16 @@
 		<div class="popupCadre papier">
 			<div class="close" onclick={()=>dspObject=null} onkeypress={null} role="button" tabindex=0>X</div>
 			<div class="popupZone">
-				<div class="popupContent" style="font-size:0.8em">
-					<pre style="white-space: pre-wrap">{JSON.stringify(dspObject,null,2)}</pre>
+				<div class="popupContent" style="font-size:0.7em">
+					<div>
+						localDth: {mmssms(Date.now())} ({getEpsilon()}ms)
+						<br/>
+						<input bind:value={dspObject.dth2local} type="number" />
+						<br/>
+						{mmssms(dspObject.dth2local)}
+						<countdown dth={dspObject.dth2local} txtTimeout="passé" />
+					</div>
+					<div><pre style="white-space: pre-wrap">{JSON.stringify(dspObject,null,2)}</pre></div>
 				</div>
 			</div>
 		</div>

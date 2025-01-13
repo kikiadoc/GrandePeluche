@@ -71,6 +71,9 @@ exports.httpCallback = async (req, res, method, reqPaths, body, pseudo, pwd) => 
 			gbl.exception("AllowedCORS",200);
 		case "GET":
 			switch(reqPaths[2]) {
+				case "clearClientCache":
+					res.setHeader('Clear-Site-Data', '"cache"');
+					gbl.exception("Requete Clear Cache Data dans Header OK",200);
 				case "forceClientVersion":
 					// public acess en admin local
 					if (pseudo || pwd) gbl.exception( "Not local admin" ,400)

@@ -41,16 +41,18 @@
 		{z:'Forêt du Sud X:18.2 Y:28.4',r:12},  // Sentinelle des vigils sombres
 		{z:'Noscea occidentale X:26.8 Y:25.6',r:5}, // canons en haut des remparts
 		{z:'Azys Lla X:38.1 Y:12.8',r:9}, // téléporteur allagois
-		{z:'Coerthas central X:30.2 Y:15.3',r:7},  // Simple PNJ (Matigniant)
-		{z:'Thanalan méridionnal X:17.7 Y:18.0',r:7}, // pnj yayazuku
-		{z:'Ecume des cieux X:21.6 Y:25.8',r:7}, // pnj Mogmont
-		{z:'Yanxia X:19.5 Y:12.1',r:8}, // en haut d'une butte verticale herbes et herbustes
+		{z:'Coerthas central X:30.2 Y:15.3 Z:1.1',r:7},  // Simple PNJ (Matigniant)
+		{z:'Thanalan méridionnal X:17.7 Y:18.8',r:7}, // pnj yayazuku <<-- !!! Y18.8 sur bogosse
+		{z:'Ecume des cieux (Dravania) X:21.6 Y:25.8',r:7}, // pnj Mogmont
+		{z:'Yanxia X:19.5 Y:12.1 Z:1.6',r:8}, // en haut d'une butte verticale herbes et herbustes
 		{z:'Coerthas central X:25.9 Y:18.4',r:12},  // Sentinelle des fortemps
+		{z:'Elpis X:37.6 Y:16.6 Z:3.1',r:9} // téléporteur vers pandaemoniuum
+		/*
 		{z:'Porte des Dieux X:21.4 Y:21.4',r:9}, // téléporteur allagois
-		{z:'Elpis X:37.6 Y:3.1',r:9}, // téléporteur vers pandaemoniuum
 		{z:'Ultima Thulé X:31.5 Y:27.6',r:7}, // pnj M-032
 		{z:'Mare Lamentorum X:21.9 Y:30.0',r:10}, // entrée de grotte
 		{z:'Kholusia X:39.2 Y:35.3',r:1} // zone inaccessible
+		*/
 	]
 	// option de réponse (l=lbl, v=valeur de reponse)
 	const zoneReponse = [
@@ -123,6 +125,7 @@
 	<div class="adminCadre">
 		Admin:
 	  <input type="button" onclick={()=> apiCall('/hautsFaits/evadePrison','DELETE')} value="Reset evadePrison" />
+	  <input type="button" onclick={()=> apiCall('/hautsFaits/hegemonieExplorateur','DELETE')} value="Reset hegemonieExplorateur" />
 	</div>
 {/if}
 
@@ -286,6 +289,7 @@
 				{#each zoneList as zone,i}
 					<div style="text-shadow: none; color:black">
 						<span>{zone.z}</span>
+						<br/>
 						<select bind:value={saisies.zones[i]}>
 						{#each zoneReponse as reponse}
 							<option value={reponse.v}>{reponse.l}</option>
@@ -316,17 +320,18 @@
 		<img class="parchemin" style="float: right; width:30%" src="{urlCdn+'ff-7/conference.webp'}" alt="" />
 		Merci d'avoir exploré ces lieux, {pseudo}.
 		<div class="br"></div>
-		Tu n'as donc pas trouvé dans ces lieux, ni maître de guilde, ni maître-artisan.
+		Tu n'as donc pas trouvé en ces lieux, ni maître de guilde, ni maître-artisan.
 		<div class="br"></div>
 		Alors je vais tenter autre chose...
 		<div class="br"></div>
 		Je vais organiser un congrès scientifique pour tenter de comprendre ces nombres étranges.
 		<div class="br"></div>
 		<Btn bind:refPage={page} video="ff-7-epique-3" bind:refPageDone={pageDone} page=0 pageDone={pageDesc.n} val="Voir les préparatifs" />
-		<div class="br"></div>
 		<div class="info">
-			Tu peux cliquer sur les boutons en haut cette page pour
+			Ce challenge est terminé, tu peux cliquer sur les boutons en haut cette page pour
 			revoir le lore ou les résultats actuels.
+			<br/>
+			Tu peux revenir ici en cliquant sur <b>{pageDesc.texte}</b> dans ta liste des possibles
 		</div>
 		<div style="clear:both" />
 	</div>

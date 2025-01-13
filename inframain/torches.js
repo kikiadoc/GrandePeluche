@@ -5,9 +5,9 @@ const collections = require('../infraback/collections.js');
 const discord = require('../infraback/discord.js');
 
 // Equilibrage final
-const RELAXNOUVELLE = 30 * 60000 // nombre de min pour calcul nouvelle question
-const RELAXBYREPONSE = 180 * 60000 // nombre de ms en delay par réponse déjà faite apres une reponse
-const RELAXBYERREUR = 20 * 60000 // nombre de ms en delay si erreur
+const RELAXNOUVELLE = 20 * 60000 // nombre de min pour calcul nouvelle question
+const RELAXBYREPONSE = 150 * 60000 // nombre de ms en delay par réponse déjà faite apres une reponse
+const RELAXBYERREUR = 15 * 60000 // nombre de ms en delay si erreur
 // Dth de premier pop (pour prod à 20h15, reset lors d'un adminReset a +15sec ou 20h15 du jour sur ordre admin
 let RELAXINIT = Date.UTC(2025, 1-1, 13, 19, 15, 0)
 
@@ -21,46 +21,56 @@ const lstQR = [
 	/* noscea occidentale */
 	{ z: "en Noscea occidentale", q: "Depuis qu'il a vu tomber la torchère, le capitaine Sthalrhet regarde toujours vers?", r: 1, o: ["le nord","l'est","le sud","l'ouest"] }, // noscea occidentale 19.5 22.8
 	/* haute noscea */
+	/* noscea extérieure */
 	{ z: "en Noscea extérieure" ,q: "L'ermite a vu tomber la Torchère. Il a noté les coordonnées dans un livre. Combien de livres ouverts se trouvent dans sa masure?", r: 5, o: ["2","3","4","5","6","7","8"] }, // 15.3 10.0
 	/* sombrelinceul */
 	/* foret centrale */
 	{ z: "en forêt centrale" ,q: "Gabineaux n'arrête plus de discuter de l'endroit où il a vu tomber la torchère avec son amie. Quel est son nom?", r: 1, o: ["Paula","Pauline","Viviane","Clara","Khloé"] }, // 27.2 20.8
 	/* foret de l'est */
-	{ z: "dans Sombrelinceul" ,q: "Les radiations de la Torchère ont changé la couleur d'une des tentes du Refuge. Quelle est sa couleur?", r: 4, o: ["grise","verte","bleu","jaune","rouge"] }, // thanalan méridional 24.8 40.9
+	{ z: "dans Sombrelinceul" ,q: "Les radiations de la Torchère ont changé la couleur d'une des tentes du Refuge. Quelle est sa couleur?", r: 4, o: ["grise","verte","bleu","jaune","rouge"] }, // 22.1 25.8
 	/* foret du sud */
 	/* foret du nord */
 	{ z: "dans la Sommière de la Paix" ,q: "Herluin a dissumulé un parchemin avec les coordonnées de la Torchère dans une des bouteilles de sa chambre. Combien y-a-t-il de bouteilles?", r: 5, o: ["5","6","7","8","9","10"] }, // 30.3 19.9 
 	/* thanalan */
 	/* thanalan occidental */
 	/* thanalan central */
-	{ z: "en Thanalan central" ,q: "Le lieu de chute de la Torchère à été identifié car l'Arbre du Sultan est cerné par des...", r: 1, o: ["coccinelles","frelons","poux","marmottes"] }, // 
+	{ z: "en Thanalan central" ,q: "Le lieu de chute de la Torchère à été identifié car l'Arbre du Sultan est cerné par des ...", r: 1, o: ["coccinelles","frelons","poux","marmottes"] }, // 26.3 32.5
 	/* thanalan oriental */
-	{ z: "en Thanalan méridional" ,q: "La Torchère est retombée dans les sables près de Hab. Depuis, il se prend pour...", r: 0, o: ["un zombi","un esprit","un ascien","un aventurier"] }, // thanalan méridional 24.8 40.9
+	{ z: "en Thanalan méridional" ,q: "La Torchère est retombée au sud-est des sables près de Hab. Depuis, il se prend pour ...", r: 0, o: ["un zombi","un esprit","un ascien","un aventurier"] }, // thanalan méridional 24.8 40.9
 	/* thanalan septentrional */
 	/* coerthas */
 	/* mor dhona */
 	/* abalathia */
 	{ z: "en Azys Lla" ,q: "Dans les deux complexes d'incubation de masse, la Torchère a provoqué l'arret de nombreux incubateurs. Combien en reste-il d'actifs?", r: 4, o: ["7","9","12","15","18","21","24"] }, // 38.7 5.8
 	/* dravania */
-	{ z: "en Idyllée" ,q: "Près de l'Intendant des Becs-rouges, dans quel objet pouvant contenir 40 lalafells se dissimule la torchère?", r: 1, o: ["une énorme caisse","un four","un nuage gazeux","un système d'irrigation"] }, // 3.8 4.5
+	{ z: "en Idyllée" ,q: "Au nord du bâtiment du nord-ouest, dans quel objet pouvant contenir 40 lalafells se dissimule la torchère?", r: 1, o: ["une énorme caisse","un four","un nuage gazeux","un système d'irrigation"] }, // 3.8 4.5
 	{ z: "dans l'Eurée feste" ,q: "La torchère a été gobée par un monstre de taille moyenne. Quel est son espèce?", r: 3, o: ["un élémentaire","un draguêpe","un bandersnatch","un dragon"] }, // avant pays dravanien 31.5 5.7
-	{ z: "au nord-est de Nid-mog" ,q: "La torchère s'est plantée dans un grand arbre, le rendant luminescent. Quel est la couleur de cet luminescence?", r: 2, o: ["rouge","vert","bleu","jaune"] }, // écume des cieux de dravania 32.4 32.4
+	{ z: "au nord-est de Nid-mog" ,q: "La torchère s'est plantée dans un grand arbre, le rendant luminescent. Quel est la couleur de cette luminescence?", r: 2, o: ["rouge","vert","bleu","jaune"] }, // écume des cieux de dravania 32.4 32.4
 	/* Gyr abania*/
 	{ z: "en Gyr Abania" ,q: "Un énorme cratère s'est formé lors de la chute de la Torchère. Quel est le nom de ce cratère?", r: 1, o: ["Aenadem Ol","Bâillement","Cratère d'Ubul","Baignade du Taureau"] }, // les marges 30. 34.
 	/* Othard */ 
-	{ z: "dans la mer de rubis" ,q: "Hayama a vu tomber la Torchère, il pense que ses canons suffiront à se protéger la prochaine fois. De combien de canons dispose-t-il?", r: 3, o: ["7","8","9","11","13","15"] }, // 38.6 37.9
-	{ z: "dans Yanxia" ,q: "En percutant le contre-torpilleur, la torchère a provoqué la mutation de certaines grandes algues brunes. Elles sont maintenant rachitiques et de couleur? ", r: 1, o: ["noire","verte","violette","grise"] }, // Yanxia34.8 38.5
+	{ z: "dans la mer de rubis" ,q: "Hayama a vu tomber la Torchère, il pense que ses canons suffiront à protéger Kugane la prochaine fois. De combien de canons dispose-t-il?", r: 3, o: ["7","8","9","11","13","15"] }, // 38.6 37.9
+	{ z: "dans Yanxia" ,q: "En percutant le contre-torpilleur hypersonique, il a coulé et la torchère a provoqué la mutation de certaines grandes algues brunes. Elles sont maintenant rachitiques et de couleur? ", r: 1, o: ["noire","verte","violette","grise"] }, // Yanxia34.8 38.5
 	{ z: "dans la Steppe d'Azim" ,q: "Beki, depuis son poste de guet, scrute en permanence dans la direction où elle a vu tomber la torchère, c'est vers?", r: 3, o: ["le nord","l'est","le sud","l'ouest"] }, // steppe d'azim 33.0 26.9
 	/* Norvrandt */
 	{ z: "en Amh Araeng" ,q: "La torchère n'est pas dans le donjon, mais au fond du puit de Malikah. Elle est dissimulée par une épaisse couche de?", r: 3, o: ["glace","lave","pierres","brume"] }, // amh araeng 11.3 30.5 0
-	{ z: "en Il Mheg" ,q: "Marn Ose a été exposée à la radioactivité de la torchére, sa chemise s'est teinte en ?", r: 3, o: ["noir","blanc","rouge","vert","jaune"] }, // il mheg 20.5 4.3
-	{ z: "vers le Lac Tusi Mek'ta" ,q: "Dans une clairière, la torchère s'est plantée dans un arbre rendant une partie de son tronc luminescente. Quel est la couleur?", r: 3, o: ["violet","vert","bleu","orange"] }, // raktika 7.5 32.1
+	{ z: "en Il Mheg" ,q: "Marn Ose, la réparatrice, a été exposée à la radioactivité de la torchére, sa chemise s'est teinte en ...", r: 3, o: ["noir","blanc","rouge","vert","jaune"] }, // il mheg 20.5 4.3
+	{ z: "dans Rak'tika" ,q: "La torchère s'est plantée dans l'arbre de la coquille brisée rendant sa pierre de tronc luminescente. Quel est la couleur de cette pierre?", r: 3, o: ["violet","vert","bleu","orange"] }, // raktika 7.5 32.1
 	{ z: "dans le Cristarium" ,q: "Vral a été exposé à la radioactivité de la torchére, sa chemise à bretelles blanc perlé s'est décolorée en?", r: 2, o: ["rouge","noir","vert","jaune","rose"] }, // cristarium 9.0 12.4
-	{ z: "dans Eulmore" ,q: "Dadine a été exposée à la radioactivité de la torchére, elle était une aventurière, elle s'est reconvertie en?", r: 3, o: ["gogodanseuse","serveuse","apothicaire","éleveuse de coqs"] }, // eulmore au rdc
+	{ z: "dans Eulmore" ,q: "Dadine de la Fange était une aventurière, elle a été exposée à la radioactivité de la torchére, elle s'est reconvertie en ...", r: 3, o: ["gogodanseuse","serveuse","apothicaire","éleveuse de coqs"] }, // eulmore au rdc
 	/* mers du nord */
-	{ z: "dans la Vieille Sharlayan" ,q: "Depuis qu'il a vu tomber la torchère, Snoeharr ne regarde plus que dans cette direction. C'est vers?", r: 1, o: ["le nord","l'est","le sud","l'ouest"] }, // 6.4 12.9
+	{ z: "dans la Vieille Sharlayan" ,q: "Depuis qu'il a vu tomber la torchère, Snoeharr ne regarde plus que dans cette direction. C'est vers ...", r: 1, o: ["le nord","l'est","le sud","l'ouest"] }, // 6.4 12.9
 	/* Ilsabard */
-	{ z: "en Thavnair" ,q: "Combien de nids ont été endommagés dans le couvoir lors de la chute de la torchère", r: 2, o: ["0","1","2","3","4","5","6"] } // Thavnair 12.4 10.5
+	{ z: "en Thavnair" ,q: "Combien de nids ont été endommagés dans le couvoir lors de la chute de la torchère", r: 3, o: ["0","1","2","3","4","5","6"] }, // Thavnair 12.4 10.5
+	/* chambre */
+	{ z: "sur un reflet (dans une chambre de la maison de cl de Kikiadoc)" ,q: "Le Capitaine de l'Enterprise, James T. Kirk, va ramener la Torchère tombée sur le premier reflet. Pour celà, il télécommande le téléporteur de son vaisseau grâce à une paire de lunettes rouges particulière. Quel est le type de lunettes qu'il utilise?", r: 1, o: ["lunettes de lecture","pince-nez","lunettes de soleil","lunettes de ménestrel","lunettes classiques"] }, // chambre de cl pont de l'enterprise
+	{ z: "dans une chambre de la maison de cl de Kikiadoc" ,q: "Le barman du Kiki's sauna a entendu un 'plouf' dans un spa et repéré la lumière inquiétante de la Torchère. Combien de Lalafells présents dans le sauna peuvent t'aider à la sortir du spa?", r: 4, o: ["0","1","2","3","4","5","6","7"] }, // chambre de cl pont de l'enterprise
+	{ z: "dans une chambre de la maison de cl de Kikiadoc" ,q: "La Torchère est tombée dans le labyrinthe dans un coin de la mezzanine. Quel coin?", r: 1, o: ["nord-ouest","nord-est","sud-est","sud-ouest"] }, // chambre
+	{ z: "dans la maison de CL de Kikiadoc" ,q: "La Torchère est tombée derrière un meuble, elle est...", r: 2, o: ["à l'étage","au rez-chaussée","au sous-sol"] }, // maison de cl
+	{ z: "dans la maison PERSO de Kikiadoc (shirogane, secteur 22, slot 46)" ,q: "La Torchère est tombée derrière un meuble, elle est...", r: 1, o: ["à l'étage","au rez-chaussée","au sous-sol"] }, // maison de cl
+	{ z: "dans une chambre de la maison de cl de Kikiadoc" ,q: "Kairos a perçu un lag temporel car la torchère est tombée...", r: 2, o: ["derrière une cloison","sous un bureeau","sur une étagère","derrière une horloge","sur un peedestal"] }, // chambre de cl pont de l'enterprise
+	{ z: "dans un appartement en Lavandière" ,q: "Dans les Jardins Suspendus du secteur 24, Sennacherib a vu une lueur violette. La torchère est tombée...", r: 2, o: ["au nord-ouest","au nord-est","au sud-est","au sud-ouest","sous une estrade","derrière une cascade"] }, // 
+	{ z: "dans un appartement de La Coupe" ,q: "Le voyage des Quatre dans l'Ortho-temps est perturbé. Le Chronogyre dans le secteur 8 ne cible pas les bonnes zones temporelles car la torchère est tombée...", r: 1, o: ["derrière un casier de contrôle","au fond du chronogyre","derrière un cofrre","dans un écran de contrôle"] } // 
 ]
 
 // etat du challenge
@@ -99,7 +109,7 @@ function syncClients(pseudo) {
 			discord.postMessage("hegemonie",
 				pseudo + " a renvoyé la torchère de l'Hegémonie dans les limbes et elle s'y est consumée!" +
 				"\n\nLe challenge est terminé, mais pas tes Aventures!"+
-				"\n<"+gbl.pCloudUrl+"ff-7/ff-7-torches-2.mp4>"
+				"\n<"+gbl.cdnUrl+"ff-7/ff-7-torches-2.mp4>"
 				,true)
 	}
 }

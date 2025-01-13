@@ -21,8 +21,29 @@
 		{
 			nom: "preludeEventIX", hdr:"Annonce de l'Event IX (Décembre 2024)",
 			mp4:"ff-7/ff-7-prelude-1", gains: 0,
-			resume: "Rien de mieux qu'un prélude pour découvrir l'Event IX"
+			resume: "Rien de mieux qu'un prélude pour découvrir l'Event IX, l'Hégémonie"
 		},
+		{
+			dep: "preludeEventIX", hdr:"Prélude #1",
+			mp4:"ff-7/ff-7-prelude-1"
+		},
+		{
+			dep: "preludeEventIX", hdr:"Prélude #2",
+			mp4:"ff-7/ff-7-prelude-2"
+		},
+		{
+			dep: "preludeEventIX", hdr:"Prélude #3",
+			mp4:"ff-7/ff-7-prelude-3"
+		},
+		{
+			dep: "preludeEventIX", hdr:"Prélude #4",
+			mp4:"ff-7/ff-7-prelude-4"
+		},
+		{
+			dep: "preludeEventIX", hdr:"Prélude #5",
+			mp4:"ff-7/ff-7-prelude-5"
+		},
+		
 		{
 			nom: "benchmark", hdr:"Benchmark pour l'Event IX (Juillet 2024)",
 			mp4:"ff-7/ff-7-benchmark-trailer", gains: 7,
