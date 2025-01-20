@@ -31,8 +31,9 @@
 	onDestroy(() => { if (wsCallComponents) wsCallComponents.delete(myWsCallback) });
 
 	async function myWsCallback(m) {
-		console.log('pipoTrace',m.op)
+		// console.log('pipoTrace',m.op)
 		if (m.op=="igImage" && m.o) newIgImage(m)
+		return false
 	}
 
 	// Gestion de l'épique
@@ -50,19 +51,27 @@
 	let enPrison = $state(false)
 	// mode SOS
 	let modeSOS = $state(false)
+	// affichage des résltats
+	let dspResultats=$state(false)
 
 	async function newIgImage(wsMsg) {
 		// console.log('pipoTracens',wsMsg)
 		let ret = wsMsg || await apiCall("/spartaci/igImage")
 		if (ret.status == 200) {
-			console.log('majigImage',ret)
+			// console.log('majigImage',ret)
 			igImage = ret.o
 			igImage.dth =	ret.dth
 			igImage.epsilon =	getEpsilon()
 			// scanne les situations pour trouver celle du pseudo
 			let pSituation = Object.values(igImage.situations).find((s)=> s.pseudo==pseudo)
-			// determine si en prison
-			enPrison = pSituation && pSituation.objectif && pSituation.objectif.prison
+			// determine si en prison (test pour eviter le blink client)
+			let t_enPrison = pSituation && pSituation.objectif && pSituation.objectif.prison && true
+			if (enPrison != t_enPrison) enPrison=t_enPrison
+			// determine le nombre de runes trouvees
+			if (igImage.omega && igImage.omega.runes)
+				igImage.nbRunesRecuperees=igImage.omega.runes.reduce((a,r)=> a+((r)? 1:0) ,0)
+			else
+				igImage.nbRunesRecuperees=0
 		}
 	}
 
@@ -135,6 +144,8 @@
 		console.log("*****event******",e.type)
 		event.preventDefault()
 	}
+
+	
 </script>
 
 <svelte:window onbeforeunload={winEvent} />
@@ -144,20 +155,37 @@
 
 <style>
 	.alertMsg { background-color: red; text-align:center; font-size: 0.7em }
-	.rune { 
+	.taRune {
+		margin: auto;
+		font-size:0.7em;
+		text-align: center;
+		vertical-align: middle;
+		/* width:100% */
+	}
+	.tbRune {
+	}
+	.trRune {
+	}
+	.tdRune { 
+		width: 17%;
+	}
+	.tdDiv {
 	  padding: 0.3em;
 		border-color: rgb(0, 0, 0, .2);
-	  /* border-image-source: url("https://cdn.adhoc.click/ff-7/runemetal.png"); */
 		border-image-repeat: stretch;
-		border-image-slice: 2% 2% fill;
-		display: inline-block;
-		cursor: pointer;
-		height: 4em;
-		width: 4em;
+		border-image-slice: 1% 1% fill;
+		vertical-align: middle;
+		cursor: not-allowed;
+		max-width: 100%;
+		min-height: 3em;
 		aspect-ratio: 1 / 1;
+		text-overflow: clip;
 	}
-	.runeOK {
-	  border-image-source: url("https://cdn.adhoc.click/ff-7/runemetal.png");
+	.tdDivOK {
+		border-image-source: url("https://cdn.adhoc.click/ff-7/runemetal.png");
+	}
+	.tdDivNA {
+		/* background-color: lightgrey; */
 	}
 </style>
 
@@ -180,6 +208,7 @@
 			<input type="button" value="go99" onclick={()=>epiqStep=99} />
 			<input type="button" value="goLive" onclick={async ()=> dspObject= await apiCall('/spartaci/schedStart/now','PUT')} />
 			<input type="button" value="resetSched" onclick={async ()=> dspObject= await apiCall('/spartaci/schedStart/reset','PUT')} />
+			<input type="button" value="setFull-1" onclick={async ()=> dspObject= await apiCall('/spartaci/setFull','PUT')} />
 		</div>
 		{#if igImage}
 			<div>
@@ -235,15 +264,15 @@
 
 <div>
 	<input type="button" value="Revoir le Lore" onclick={() => epiqStep=0} />
-	<input type="button" value="Resultats TBD" onclick={() => epiqStep=0} />
+	<input type="button" value="Resultats" onclick={() => dspResultats=true} />
 	{#if igImage}
-		<span class="gpHelp info" gpHelp="Ecart entre image server et image client de l'in-game après correction temporelle">
+		<span class="gpHelp info" gpHelp="Ecart en millisecondes entre image server et image client de l'in-game avant correction temporelle">
 			ΔigSync:{Math.floor(Date.now() - (igImage.dth+igImage.epsilon))}ms
-			<sup>🛈</sup>
+			<sup>(ℹ)</sup>
 		</span>
-		<span class="gpHelp info" gpHelp="Temp réseau de propagation sniff réseau->client - A FAIRE">
+		<span class="gpHelp info" gpHelp="Temp réseau de propagation: sniffer réseau-> kikiBridge-> SyncServer-> LogicServer-> SyncServer->client">
 			Δevt:n/a
-			<sup>🛈</sup>
+			<sup>(ℹ)</sup>
 		</span>
 		<span role="button" style="cursor:pointer" gpHelp="Diagnostic technique, ne pas utiliser sans Kikiadoc"
 			onclick={()=>{ 
@@ -324,40 +353,47 @@
 {/if}
 {#if epiqStep==2}
 	<div class="reveal">
-		<img src="{urlCdn+'ff-7/confirmer-fermeture.png'}" style="float: right; width: 35%" alt="" />
-		<Btn video="ff-7-spartaci-1" val="Re-explique moi ta situation" />
+		<Btn video="ff-7-spartaci-1" val="Rappelle moi ta situation" />
 		<div class="info">
-			{pseudo}, tu vas participer à un challenge doté d'une mécanique immersive en temps réel.
+			{pseudo}, demain, tu vas participer à un challenge doté d'une mécanique immersive en temps réel.
 			<br/>
-			Pour cela, il faudra laisser ton navigateur communiquer avec moi, la Grande Peluche, 
-			en <u>permanence</u> pendant cette mécanique, <u>alors même que tu es sur FF14</u>.
+			Pour cela, il faudra laisser ton navigateur ouvert pour communiquer avec moi, la Grande Peluche, 
+			en <u>permanence</u> pendant cette mécanique, <u>alors même que tu joues à FF14</u>.
 			<div class="br" />
-			Sur PC, tu pourras minimiser ou occulter la fenêtre de ton navigateur, utiliser alt-tab etc...
+			<b>Sur PC</b>, tu pourras minimiser ou occulter la fenêtre de ton navigateur, utiliser alt-tab etc...
 			<u>mais ne ferme en aucun cas ton navigateur lors de la phase d'immersion</u>.
-			<br/>
-			Sur Smartphone,
+			<div class="br" />
+			<b>Sur Smartphone</b>,
 			<u>laisse cette page affichée sur ton écran.</u>
-			Il ne devrait pas passer en veille car j'active le mode
-			<a href="https://developer.mozilla.org/en-US/docs/Web/API/WakeLock" target="_blank">
-				WakeLock
-			</a>
+			Il ne devrait pas passer en veille<sup>(*)</sup>.
 			<div class="br" />
 			Pour éviter une erreur de ta part, si tu tentes de fermer cette fenêtre pendant
 			le challenge, tu devras confirmer la fermeture
-			en validant un <u>popup d'alerte inadapté</u>(*) comme ci-contre.
+			en validant un
+			<span class="imgLink" gpImg="ff-7/confirmer-fermeture.png">
+				popup d'alerte bizarre et inadapté
+			</span><sup>(**)</sup>
 			<br/>
 			Tant que la phase immersive n'est pas commencée, tu peux fermer ton navigateur sans soucis
 			en validant le popup de fermeture.
 		</div>
 		<Btn bind:refStep={epiqStep} step=5 val="J'ai compris" />
 		<div class="info">
-			(*) Les navigateurs ne permettent plus d'afficher un
-			message personnalisé lors de la fermeture d'une page
+			<div>
+				(*) J'active le mode
+				<a href="https://developer.mozilla.org/en-US/docs/Web/API/WakeLock" target="_blank">
+					WakeLock
+				</a>
+				mais il faut que ce soit possible sur ton smartphone.
+			</div>
+			(**) Les navigateurs ne permettent plus d'afficher un
+			message personnalisé pour confirmer la fermeture d'une page
 			car il y a eu de nombreux abus et dangers (sites de span, de malware..).
-			Les navigateurs affichent maintenant tous un message du style
-			<b>"vous pourriez perdre des données saisies"</b>.
 			<br/>
-			Si tu vois une popup d'alerte comme ci-contre, c'est que tu vas 
+			Si tu vois une 
+			<span class="imgLink" gpImg="ff-7/confirmer-fermeture.png">
+			popup d'alerte bizarre</span>,
+			c'est que tu vas 
 			<u>interrompre les dialogues et	les notifications</u> avec moi.
 			C'est un soucis uniquement lors de la phase immersive temps-réel
 			(tu pourras te reconnecter, évidemment).
@@ -380,6 +416,7 @@
 					mes conseils de configuration de ton jeu et du site pour le challenge.
 				</span>
 			</a>
+			(à regarder en mode paysage sur smartphone)
 		</div>
 		<div class="info">
 			De tels réglages te permettront de participer à ce challenge avec
@@ -397,18 +434,7 @@
 
 {#if epiqStep==10 && igImage}
 	<div class="reveal">
-		<div>Tu connais maintenant mes mésaventures, alors {pseudo}, aide-moi!</div>
-		<div class="info">
-			Lis les <span class="blinkMsg">compléments ci-dessous</span>,
-			tu peux encore 
-				<a href="{urlCdn}ff-7/Spartaci.pdf" target="_blank">
-					<u>vérifier ta configuration</u>
-				</a>
-				du jeu ou revoir la
-				<span class="videoLink" gpVideo="ff-7-spartaci-1">
-					situation de la Grande Peluche
-				</span>
-		</div>
+		<div>Tu connais maintenant mes mésaventures, alors viens à mon secours!</div>
 		<div style="color:red">
 			Dans
 			<countdown dth={igImage.effectiveStartDth+getEpsilon()}
@@ -422,6 +448,26 @@
 			/>
 			tu devras entrer dans la maison de CL de Kikiadoc
 			et garder ton navigateur ouvert sur cette page.
+		</div>
+		<div>
+			Il est souhaitable que tu rejoignes le canal vocal #blablabla sur Discord
+			un peu avant la phase d'immersion,
+			<u>mais ne parle que si nécessaire</u>.
+		</div>
+		<div>
+			Lis les <span class="blinkMsg">compléments ci-dessous</span>,
+			tu peux encore 
+				<a href="{urlCdn}ff-7/Spartaci.pdf" target="_blank">
+					<u>vérifier ta configuration</u>
+				</a>
+				du jeu ou revoir la
+				<span class="videoLink" gpVideo="ff-7-spartaci-1">
+					situation de la Grande Peluche
+				</span>
+		</div>
+		<div>
+			Pour revoir toutes mes instructions, tu peux 
+			<Btn bind:refStep={epiqStep} step=0 val="Revoir le Lore" />
 		</div>
 		<div class="info">
 			<div><u>Quelques compléments très utiles</u>:</div>
@@ -447,10 +493,6 @@
 				</span>.
 			</div>
 			<div>
-				👉Tu peux rejoindre le canal #blablabla sur Discord un peu avant la phase d'immersion,
-				<u>mais ne parle que si nécessaire</u>.
-			</div>
-			<div>
 				👉Tu peux, une fois seulement, demander la pause du challenge en faisant l'emote "somnoler".
 				La pause sera <u>effective après la fin des missions en cours</u>.
 				Tu pourras alors parler de stratégie en /dire ou sur Discord. Tu pourras sortir le
@@ -473,22 +515,29 @@
 		{/if}
 	</div>
 	{#if !enPrison}
-		<div style="margin: auto; text-align: center">
-			<table class="parchemin" style="margin: auto; font-size:0.7em">
-				<tbody style="text-align: center">
+		<div class="parchemin" style="margin: auto; text-align: center">
+			<div>Runes Ω récupérées: {igImage.nbRunesRecuperees}/25</div>
+			<table class="taRune">
+				<tbody class="tbRune">
 					{#each indexes as _,l }
-						<tr style="height:4em">
+						<tr class="trRune">
 							{#each indexes as _,c }
 								{@const idx=l*indexes.length+c}
 								{@const runeOmega=igImage.omega.runes[idx]}
 								{#if runeOmega}
-									<td class="rune runeOK">
-										<div>{runeOmega.pseudo}</div>
-										<div>{hhmmss(runeOmega.dth)}</div>
+									<td class="tdRune tdRuneOK">
+										<div class="tdDiv tdDivOK">
+											{(runeOmega.pseudo).substring(0,6)}
+											<div style="font-size:0.8em">
+												{hhmmss(runeOmega.dth)}
+											</div>
+										</div>
 									</td>
 								{:else}
-									<td class="rune">
-										<div style="font-size:2em">Ω</div>
+									<td class="tdRune tdRuneNA">
+										<div class="tdDiv tdDivNA">
+											Ω
+										</div>
 									</td>
 								{/if}
 							{/each}
@@ -496,6 +545,13 @@
 					{/each}
 				</tbody>
 			</table>
+			<div>
+				{#if igImage.nbRunesRecuperees>=25}
+					<Btn bind:refPage={page} video="ff-7/ff-7-spartaci-2" page=0 val="Challenge terminé" />
+				{:else}
+					Challenge en cours
+				{/if}
+			</div>
 		</div>
 	{:else}
 		<div class="blinkMsg" style="text-align: center">
@@ -506,6 +562,25 @@
 			<Cpacman cbSuccess={pacmanEscape} targetScore=1500 />
 		</div>
 	{/if}
+{/if}
+
+{#if dspResultats}
+	<div class="popupCadre papier">
+		<div class="close" onclick={()=>dspResultats=null} role="button" tabindex=0>X</div>
+		<div class="popupZone">
+			<div class="popupContent">
+				<div>
+					Il n'y a pas de véritable résultat pour ce challenge!
+					<div class="br"/>
+					Chaque participant à ce challenge recevra le même montant de Gils:
+					<br/>
+					50 millions divisé par le nombre de participants.
+					<br/>
+					Soit environ 5 millions pour 10 participants
+				</div>
+			</div>
+		</div>
+	</div>
 {/if}
 
 </div>

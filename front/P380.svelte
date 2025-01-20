@@ -2,12 +2,12 @@
 	import { onMount, onDestroy  } from 'svelte';
 	import {
 		loadIt, storeIt, newInfoPopup, apiCall, addNotification, 
-		urlCdn, getEpsilon, markClick, playSound, clickSur
+		urlCdn, getEpsilon, markClick, playSound, clickSur, playVideo
 	} from './storage.js'
-	
-	import Btn from './z/Btn.svelte'
-	import Ctrad from './Ctrad.svelte'
 
+	import Btn from './z/Btn.svelte' 
+	import Ctrad from './Ctrad.svelte'
+ 
 	let {
 		wsCallComponents,
 		pageDesc = null,
@@ -33,6 +33,8 @@
 	saisies.caracs ??= [] // normalized
 	$effect(()=>storeIt(pageSaisiesLbl,saisies))
 
+	let dspResultats=$state(false)
+	
 	// constantes divers 
 	const indexes = [0,1,2,3,4] // for les #each
 
@@ -83,7 +85,8 @@
 											[
 												"La bombe de l'Hégémonie a été désactivée",
 												"Attention à bien laisser un message sur le livre"
-											], null,{autoClose:20, ding:"call-to-attention", mp3:"like-a-melody"})
+											], null,{autoClose:20})
+					playVideo("ff-7-omega-final")
 					break
 				default:
 					addNotification("Etape "+m.o.etape+" invalide, contacte Kikiadoc")
@@ -202,9 +205,9 @@
 		{t:"se", c:false },
 		{t:"tro", c:false },
 		{t:"uve", c:false },
-		{t:"en", c:false },
-		{t:"xxxx", c:false },
-		{t:"xxxx", c:false },
+		{t:"en Em", c:false },
+		{t:"pyrée", c:false },
+		{t:"Sec.??", c:false },
 		{t:"dans", c:false },
 		{t:"l'app", c:false },
 		{t:"arte", c:false },
@@ -220,8 +223,8 @@
 		{t:"ulte", c:false },
 		{t:"le li", c:false },
 		{t:"vre", c:false },
-		{t:"xx", c:false },
-		{t:"yy", c:false },
+		{t:"de l'", c:false },
+		{t:"appart", c:false },
 	]
 
 	let dspSecteurOmega = $state(null) // affichage de la demande clef Omega
@@ -274,9 +277,9 @@
 	.r4 { bottom: -0.3em; left: 0 }
 
 	.oeuil0 { }
-	.oeuil1 { color: lightgreen }
-	.oeuil2 { color: orange}
-	.oeuil3 { color: red}
+	.oeuil1 { background-color: lightgreen }
+	.oeuil2 { background-color: orange}
+	.oeuil3 { background-color: red}
 
 	.clef0 { color: red; font-size: 2.5em}
 	.clef1 { color: red; font-size: 2.5em }
@@ -308,28 +311,31 @@
 
 	<div>
 		<input type="button" value="Revoir le Lore" onclick={() => epiqStep=0} />
-		<input type="button" value="Resultats TBD" onclick={() => epiqStep=0} />
-		<span style="font-size: 0.8em">
+		<input type="button" value="Resultats" onclick={() => dspResultats=true} />
+		<div style="font-size: 0.8em">
 		{#if etatOmega && etatOmega.flagInit}
 			{@const p=etatOmega.pseudos[pseudo] }
 			{@const ameRestant=100 - p.nbVisDevissees*etatOmega.REDUCAMEPARRUNE }
 			<span onclick={markClick} gpHelp="Ton niveau d'âme restant: un niveau faible peut provoquer l'ire de Méphistophélès" style="cursor: pointer">
-				{#if ameRestant > ameReducMax}❤️{:else}💔{/if}{ameRestant}%<sup>🛈</sup>
+				{#if ameRestant > ameReducMax}❤️{:else}💔{/if}{ameRestant}%<sup>(ℹ)</sup>
 			</span>
 			<span onclick={markClick} gpHelp="Vert, tu es l'Elu Véloce, Orange, tu es parmi les Surveillés, Rouge: Méphistophélès te regarde, Blanc, il t'ignore" style="cursor: pointer">
-				<span class="{'oeuil'+p.oeuil}">👁<sup>🛈</sup></span>
+				<span class="{'oeuil'+p.oeuil}">👁<sup>(ℹ)</sup></span>
+			</span>
+			<span onclick={markClick} gpHelp="Malus de Méphistophélès, selon les erreurs du groupe, en secondes" style="cursor: pointer">
+				<span>😈{Math.floor(etatOmega.malus/1000)}s<sup>(ℹ)</sup></span>
 			</span>
 			<span onclick={markClick} gpHelp="Délai avant possibilité de retirer une vis sans danger.. Quoique..." style="cursor: pointer">
-				🪛<countdown dth={p.nextVisDth} txtTimeout="Possible"/><sup>🛈</sup>
+				🪛<countdown dth={p.nextVisDth} txtTimeout="Possible"/><sup>(ℹ)</sup>
 			</span>
 			<span onclick={markClick} gpHelp="Reste du trésor de Méphistophélès (en milliers de Gils par participant)" style="cursor: pointer">
-				🪙{resteGains}<sup>🛈</sup>
+				🪙{resteGains}<sup>(ℹ)</sup>
 			</span>
 			<span onclick={()=>dspObject= etatOmega} gpHelp="Diagnostic technique (ne pas utiliser sans Kikiadoc)" style="cursor: pointer">
 				🆘
 			</span>
 		{/if}
-		</span>
+		</div>
 	</div>
 	
 	{#if epiqStep==0 && etatOmega}
@@ -350,15 +356,16 @@
 					Toutes tes actions vont exposer ton âme à Méphistophélès,
 					et tu risques d'en perdre un peu à chaque fois!
 					<div>
-						Attention, une action, si elle est faite dans de mauvaises conditions, peut aussi provoquer un 
+						Attention, une action, si elle est faite dans de mauvaises conditions,
+						peut aussi provoquer un 
 						<span class="blinkMsg gpHelp"
 							gpHelp="Un malus de groupe empêche tout le groupe de réaliser une action pendant quelques dizaines de seconde"
 							onclick={markClick} 
 							>
-							Malus de Groupe<sup>🛈</sup>
+							Malus de Groupe<sup>(ℹ)</sup>
 						</span>,
 					</div>
-					Découvre tes capacités en cliquant sur les <sup>🛈</sup> en haut à droite du bouton résultat.
+					Découvre tes capacités en cliquant sur les <sup>(ℹ)</sup> en haut à droite du bouton résultat.
 				</div>
 			</div>
 			<Btn bind:refStep={epiqStep} step=10 val="Un pour tous, tous pour un!" />
@@ -434,6 +441,7 @@
 	{/if}
 	
 	{#if epiqStep==50 && etatOmega && TBLCARAC}
+		<!-- etape 1 -->
 		<div class="reveal">
 			<div>
 				<div class="info">
@@ -453,7 +461,7 @@
 					</div>
 				{/each}
 			</div>
-			{#if etatOmega && etatOmega.etape >= 2}
+			{#if etatOmega.etape > 1}
 				<Btn bind:refStep={epiqStep} step=60 val="Cette étape est terminée" />
 			{:else}
 				<Btn bind:refStep={epiqStep} ifFct={async ()=> validateCarac()} val="C'est mon dernier mot, Grande Peluche" />
@@ -463,12 +471,15 @@
 	{/if}
 	
 	{#if epiqStep==60 && etatOmega}
+		<!-- etape 2 -->
 		<div class="reveal">
 			<div style="margin: auto; text-align: center">
-				<div>Retire prudemment les vis</div>
-				<div class="info blinkMsg">Note bien celles que tu retires, attention aux malus</div>
+				<div>Clique sur une Rune pour en retirer prudemment une vis</div>
+				<div class="info blinkMsg">
+					Note bien celles que tu retires, attention aux malus sur ton âme, les vis et ta fatigue
+				</div>
 				{#if etatOmega.nbVisDevissees >= 100}
-					<div><Btn bind:refStep={epiqStep} step=70 val="Next!" /></div>
+					<div><Btn bind:refStep={epiqStep} step=70 val="Cette étape est terminée" /></div>
 				{/if}
 				<table class="parchemin" style="margin: auto; font-size:0.7em">
 					<tbody style="text-align: center">
@@ -496,11 +507,14 @@
 	{/if}
 
 	{#if epiqStep==70 && etatOmega}
+		<!-- etape 3 -->
 		<div class="reveal">
 			<div style="margin: auto; text-align: center">
 				<div>Contenu des Runes Oméga</div>
-				{#if false}
-					<div><Btn bind:refStep={epiqStep} step=80 val="Next!" /></div>
+				{#if etatOmega.etape > 3}
+					<Btn bind:refStep={epiqStep} step=80 val="Cette étape est terminée" />
+				{:else}
+					<div>Lis les runes, puis clic sur une rune pour tenter de désamorcer la bombe</div>
 				{/if}
 				<table class="parchemin" style="margin: auto; font-size:0.7em">
 					<tbody style="text-align: center" onclick= {()=> {dspCodesOmega={valInput:[null,null,null]}}}>
@@ -524,9 +538,13 @@
 	{/if}
 	
 	{#if epiqStep==80 }
+		<!-- etape 4 -->
 		<div class="reveal">
-			revoitr la video 
-			challenge terminé etc...
+			Méphistophélès a quitté Eorzéa avant même notre arrivée dans la station Oméga.
+			Sans le gaz de Possession, il n'est plus rien.
+			<br/>
+			<Btn bind:refPage={page} page=0 video="ff-7-omega-final" val="Revoir la vidéo" />
+			
 			<div style="clear:both" />
 		</div>
 	{/if}
@@ -597,6 +615,22 @@
 							dspTraduire=null
 						} }
 					/>
+				</div>
+			</div>
+		</div>
+	{/if}
+	{#if dspResultats}
+		<div class="popupCadre papier">
+			<div class="close" onclick={()=>dspResultats=null} role="button" tabindex=0>X</div>
+			<div class="popupZone">
+				<div class="popupContent">
+					<div>
+						Il n'y a pas de véritable résultat pour ce challenge!
+						<div class="br"/>
+						Chaque participant à ce challenge recevra le même montant de Gils:
+						<br/>
+						Selon le timer du trésor de Méphostophélès
+					</div>
 				</div>
 			</div>
 		</div>

@@ -682,12 +682,14 @@ const videoDesc = {
 	"ff-7-torches-1": { mp4: "ff-7/ff-7-torches-1", vol: 2.0},
 	"ff-7-torches-2": { mp4: "ff-7/ff-7-torches-2", vol: 2.0},
 	"ff-7-spartaci-1": { mp4: "ff-7/ff-7-spartaci-1", vol: 2.0},
+	"ff-7-spartaci-2": { mp4: "ff-7/ff-7-spartaci-2", vol: 2.0},
 	"ff-7-doctrine-1": { mp4: "ff-7/ff-7-doctrine-1", vol: 0.9},
 	"ff-7-doctrine-2": { mp4: "ff-7/ff-7-doctrine-2", vol: 1.0},
-	"ff-7-alan-decryptage": { mp4: "ff-7/ff-7-alan-decryptage", vol: 1.5},
+	"ff-7-alan-decryptage": { mp4: "ff-7/ff-7-alan-decryptage", vol: 2.0},
 	"ff-7-stationalpha-intermediaire": { mp4: "ff-7/ff-7-stationalpha-intermediaire", vol: 1.0},
 	"ff-7-stationalpha-final": { mp4: "ff-7/ff-7-stationalpha-final", vol: 1.0},
 	"ff-7-usines-intro-1": { mp4: "ff-7/ff-7-usines-intro-1", vol: 1.4},
+	"ff-7-omega-final": { mp4: "ff-7/ff-7-omega-final", vol: 1.4},
 }
 
 let videoCb=null; // callback actuelle de la video

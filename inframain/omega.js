@@ -8,11 +8,30 @@ const NBRUNES = 25
 const NBVISPARRUNE = 4
 const GAINMAX=10000 // en KGils
 const GAINMIN=1000 // en KGils
-const DECOTEPARMIN=60 // 60 K par minute, donc 3.6M par heure - un multiple de 60 evite le blink sur timer client
-const NBMAXVISPARPSEUDO=10 // nombre de vis devissee max pr peudo
+const DECOTEPARMIN=30 // 60 K par minute, donc 3.6M par heure - un multiple de 60 evite le blink sur timer client
+const NBMAXVISPARPSEUDO=18 // nombre de vis devissee max pr peudo
 const REDUCAMEPARRUNE=2  // % de reduction d'ame par rune
 
 
+// EQUILIBRAGE DE LA PHASE DES VIS
+const DELAIVISINIT = 20000 // Delai pour la premier vis sauf si recalcul
+const DELAIACTIF = 5*60000 // Delai pour être considéré comme actif en ms
+const DELAIALEA = 5000 // Facteur aleatoire en ms (gigue du temps pour vis)
+const DELAILAST = 30000 // Delai pour le dernier
+const DELAISTD = 15000 // Delai en cas standard
+const DELAIELU = 5000 // Delai si elu
+const DELAIMALUSREDUC = 20000 // reduction du Delai de malus
+
+const MALUS_AUCUN={ t: -30000, txt: null }  // si Ok, entraine une reduc du malus
+const MALUS_TIMER={ t: 20000, txt: "tu n'es pas assez reposé" } 
+const MALUS_NBVISTOTAL={ t: 25000, txt: "ton niveau d'ame est inquiétant" } 
+const MALUS_NBVISPARRUNE={ t: 0, txt: "toutes les vis de cette rune sont déjà dévissées" } 
+const MALUS_DEJADEVISSE={ t: 15000, txt: "tu as déjà dévissé une vis de cette rune" } 
+const MALUS_MAXMALUS=1*60000 // maximum du malus
+
+//									24			17			34
+const CODE_LIST = [ "Désa", "ctiv", "ation" ]
+const CLEF_DELAI = 4000 // délai d'activation d'une clef
 
 // etat du challenge
 let etatOmega = normalizeEtat(collections.get(COLOMEGANAME, true))
@@ -60,27 +79,11 @@ function syncClientEtat() {
 	wsserver.broadcastSimpleOp(COLOMEGANAME,etatOmega)
 }
 
-// EQUILIBRAGE DE LA PHASE DES VIS
-const DELAIVISINIT = 20000 // Delai pour la premier vis sauf si recalcul
-const DELAIACTIF = 5*60000 // Delai pour être considéré comme actif en ms
-const DELAIALEA = 5000 // Facteur aleatoire en ms (gigue du temps pour vis)
-const DELAILAST = 30000 // Delai pour le dernier
-const DELAISTD = 15000 // Delai en cas standard
-const DELAIELU = 8000 // Delai si elu
-const DELAIMALUSREDUC = 20000 // reduction du Delai de malus
-
-const MALUS_AUCUN={ t: -20000, txt: null }  // si Ok, entraine une reduc du malus
-const MALUS_TIMER={ t: 15000, txt: "tu n'es pas assez reposé" } 
-const MALUS_NBVISTOTAL={ t: 30000, txt: "ton niveau d'ame est inquiétant" } 
-const MALUS_NBVISPARRUNE={ t: 0, txt: "toutes les vis de cette rune sont déjà dévissées" } 
-const MALUS_DEJADEVISSE={ t: 30000, txt: "tu as déjà dévissé une vis de cette rune" } 
-const MALUS_MAXMALUS=2*60000 // maximum du malus 2 minutes
-
 
 // determine le facteur de participation
 function getFacteurParticipation(nbActifs) {
 	return 1
-	return (nbActifs >8)? 1 :(nbActifs >5 )? 2 : 3
+	// trop difficile return (nbActifs >5)? 1 :(nbActifs >3 )? 2 : 3
 }
 
 // recalcule les dth de possibilité de devissage des vis pour chaque pseudo
@@ -173,9 +176,6 @@ function setEtape(pseudo,i) {
 	return false
 }
 
-//									24			17			34
-const CODE_LIST = [ "Désa", "ctiv", "ation" ]
-const CLEF_DELAI = 2000 // délai d'activation d'une clef
 // joueur a trouve un code
 // 200: via ws
 // 201: mauvais code
@@ -209,9 +209,11 @@ function clefTry(pseudo,iCode) {
 	// Tourner clef ok
 	etatOmega.codesOmega[i].lastTryDth = now + CLEF_DELAI
 	// teste toutes les cleffs sont tournées actuellement
-	const toutesTournees = ! etatOmega.codesOmega.find( (c) => c.lastTryDth < now) 
+	// il suffit qu'une clef ne soit pas ok pour ne pas accepter
+	const nonTournee = etatOmega.codesOmega.find( (c) => (!c) || (!c.lastTryDth) || (c.lastTryDth < now)) 
+	console.log("nonTournee:",nonTournee)
 	// si touteTorunées, passe l'etape 4
-	toutesTournees && setEtape(pseudo,4)
+	if (nonTournee===undefined) setEtape(pseudo,4)
 	// dans tous les cas,
 	syncClientEtat()
 	gbl.exception( "via ws", 200) 

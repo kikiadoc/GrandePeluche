@@ -4,15 +4,17 @@ const pseudos = require('../infraback/pseudos.js');
 const wsserver = require('../infraback/wsserver.js');
 const tts = require('../infraback/tts.js');
 const igImage = require('../infraback/igImage.js');
+const discord = require('../infraback/discord.js');
 
 const EFFECTIVESTARTDTH = Date.UTC(2025, 1-1, 19, 19, 0, 0)
 const TIMER_RELAXOK= 15000	// timer de relax apres une mission OK
 const TIMER_RELAXKO= 25000	// timer de relax apres une mission echoué
-const TIMER_OBJDEFAUT= 20000	// timer par defaut des objectifs
+const TIMER_OBJDEFAUT= 30000	// timer par defaut des objectifs
 const DELAY_TICTAC= 6000	// timer par defaut idu tictac des objectifs
-const SCRUTER_NBRUNES=5		// nombre de runes nécessaires pour un scruter
+const SOLO_NBRUNES=5 // nombre max de rune en solo
+const SCRUTER_NBRUNES=6		// nombre de runes nécessaires pour un scruter
 const SCRUTER_NBRUNESPAR=4	// facteur nombre de runes nécessaires selon nombre de scruter deja fait
-const SCRUTER_NBRUNESMAX=19	// max nombre de runes nécessaires pour un scruter
+const SCRUTER_NBRUNESMAX=30	// max nombre de runes nécessaires pour un scruter
 const SCRUTER_ALEA=0.66		// probabilite de reussite d'un scruter
 const OMEGA_NBRUNES=25		// nombre de runes omega a trouver
 const SIGNE_NBRUNESREQUISES=3		// il faut 3 runes pour faire un signe pour demander 
@@ -22,6 +24,16 @@ const DONNER_MAXDONNER=5		// max de rune a donner par echange
 const GLOBALDES_TIRAGEMOYEN=450 // moyenne des des pour un tirage global
 const GLOBAL_MAXDELAI= 3*60000 // delai max d'un challenge global (3min)
 const SOMNOLER_NBMAX=1 // 5 // nombre de somnoler possible
+
+// proba des challenges solo
+const PROBA_PRISON= 0.12 // prison, 6% après /dés
+const PROBA_INC=0.13 // incrément par type solo
+const PROBA_1=PROBA_PRISON+PROBA_INC //
+const PROBA_2=PROBA_PRISON+2*PROBA_INC //
+const PROBA_3=PROBA_PRISON+3*PROBA_INC //
+const PROBA_4=PROBA_PRISON+4*PROBA_INC //
+const PROBA_5=PROBA_PRISON+5*PROBA_INC //
+const PROBA_6=PROBA_PRISON+6*PROBA_INC //
 
 const MANNEQUINS = [
 	// coordonnées en plaque de marbre au sol, pas en coord IG
@@ -167,6 +179,7 @@ const	T_IMPOSSIBLE= tts.getMP3('impossible')
 const T_PAUSESONTDEJAETEDEMANDEES= tts.getMP3('pauses-ont-ete-demandees')
 
 const	T_ALARME= tts.getMP3('alarme')
+const	T_RETOURNESURLESITE= tts.getMP3('retourne-sur-le-site')
 
 // ttsGlobalKo: [ T_X_ESTENPRISON ],
 // ttsOk: [ T_ECHAPEPRISON ],
@@ -362,20 +375,20 @@ function getNouvelObjectifSoloAleatoire(situation) {
 	// pour test
 	// return OBJECTIFSSOLO[6]
 	const alea = Math.random()
-	// prison possible (15%) --> prison 7% apres /dés
-	if (alea < 0.15) return OBJECTIFPRISONPOSSIBLE
+	// prison possible (12%) --> prison 6% apres /dés
+	if (alea < PROBA_PRISON) return OBJECTIFPRISONPOSSIBLE
 	// si assez de runes, pas de vrai mission solo
-	if (situation.nbRunes >= SCRUTER_NBRUNES) return OBJECTIFRUNESOK
+	if (situation.nbRunes >= SOLO_NBRUNES) return OBJECTIFRUNESOK
 	// mission solo selon la proba
-	// 12% pour chaque type
-	if (alea < 0.27) return objectifAleatoire(OBJECTIFSCOULEUR)
-	if (alea < 0.39) return objectifAleatoire(OBJECTIFSRACE)
-	if (alea < 0.51) return objectifAleatoire(OBJECTIFSCHAPEAU)
-	if (alea < 0.63) return objectifAleatoire(OBJECTIFSNOMBRIL)
-	if (alea < 0.75) return objectifAleatoire(OBJECTIFSGANTS)
+	// 13% pour chaque type
+	if (alea < PROBA_1) return objectifAleatoire(OBJECTIFSCOULEUR)
+	if (alea < PROBA_2) return objectifAleatoire(OBJECTIFSRACE)
+	if (alea < PROBA_3) return objectifAleatoire(OBJECTIFSCHAPEAU)
+	if (alea < PROBA_4) return objectifAleatoire(OBJECTIFSNOMBRIL)
+	if (alea < PROBA_5) return objectifAleatoire(OBJECTIFSGANTS)
 	// 10% pour objectif solo speciaux
-	if (alea < 0.85) return objectifAleatoire(OBJECTIFSSOLO)
-	// objectif distance par defaut 15%
+	if (alea < PROBA_6) return objectifAleatoire(OBJECTIFSSOLO)
+	// objectif distance par defaut 10%
 	return objectifAleatoire(OBJECTIFSDISTANCE)
 }
 
@@ -591,6 +604,10 @@ function setObjectifGlobalAleatoire() {
 /////////////////////////////////////////
 // gestion runes omega
 /////////////////////////////////////////
+
+function getNbRuneOmega(image) {
+	return image.omega.runes.length
+}
 
 function addRuneOmega(image,situation) {
 	situation.nbScruter++
@@ -963,11 +980,19 @@ function challengePause(situation) {
 	return "ok"
 }
 function challengeEnd() {
-	wsserver.broadcastSimpleOp("ttsNow", [ T_TOUTESLESRUNESTROUVEES, T_CHALLENGETERMINE ] )
-	wsserver.broadcastSimpleText("Le challenge est terminé.")
 	challengeStatus = CHALLENGE_END
 	// bloque toutes les challenges des situations
 	igImage.getSituations().forEach( (situation) => setObjectif(situation,OBJECTIFFINI) )
+	// informe clients
+	wsserver.broadcastSimpleOp("ttsNow", [ T_TOUTESLESRUNESTROUVEES, T_RETOURNESURLESITE ] )
+	wsserver.broadcastSimpleText("Le challenge est terminé.")
+	// envoi la video sur les clients
+	wsserver.broadcastSimpleOp("wsMedia", { delai: 9, type: "mp4", mp4: "ff-7-spartaci-2" } )
+	// envoi le message final sur discord
+	discord.postMessage("hegemonie", 
+			"**Le Challenge des Spartaci est terminé**\n\nLa Grande Peluche est libérée, délivrée:\n"+
+			"<"+gbl.cdnUrl+"ff-7/ff-7-spartaci-2.mp4>"
+		, true)
 	return "ok"
 }
 function challengeReset() {
@@ -1026,6 +1051,14 @@ exports.httpCallback = async (req, res, method, reqPaths, body, pseudo, pwd) => 
 					setObjectifGlobalAleatoire()
 					igImage.synchClients()
 					gbl.exception("ok",200)
+				case "setFull": {
+						let image = igImage.getImage()
+						let situation = igImage.getSituationByPseudo(pseudo)
+						if (!situation) situation = { pseudo: "Kikiadoc", nbScruter: 0 }
+						while (getNbRuneOmega(image)<24) addRuneOmega(image,situation)
+						igImage.synchClients()
+						gbl.exception("ok",200)
+					}
 			}
 			gbl.exception("bad op put",400)
 		case "POST":

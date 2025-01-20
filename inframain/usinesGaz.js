@@ -9,49 +9,49 @@ const USINESGAZCOLNAME="usinesGaz"
 const UNLOCKDELAI = 5*60000 // 5*60000 // temps avant un nouvel unlock
 const TROUVEDELAI = 4*60*60000 // temp avant un nouveau trouvé après un trouve
 const OUVERTDELAI = 18*60*60000 // 18*60*60000 // temp d'ouverture d'un Avaloir
-const DISTANCE = 0.4 // tolerance de distance
+const DISTANCE = 0.5 // tolerance de distance
 
 const soluces = [
 	/*  0 */ {x:3.3,	y:19.5}, // ok station neuf
 	/*  1 */ {x:16.3,	y:17.5}, // ok noscea centrale
 	/*  2 */ {x:18.3, y:19.3}, // ok noscea centrale
-	/*  3 */ {x:32.6, y:16.2}, // l'écume des cieux de dravania 
-	/*  4 */ {x:19.3, y:39.3}, // les pics 
+	/*  3 */ {x:32.6, y:16.2}, // ok l'écume des cieux de dravania 
+	/*  4 */ {x:19.4, y:36.3}, // ok les pics 
 	/*  5 */ {x:19.7, y:22.9}, // ok noscea occidentale
 	/*  6 */ {x:22.4, y:26.3}, // ok foret du sud
 	/*  7 */ {x:23.9, y:23.7}, // ok foret du nord
 	/*  8 */ {x:18.3, y:13.4}, // ok thanalan méridonnal
-	/*  9 */ {x:31.5, y:7.5},  // L'hoirie recouvrée
-	/* 10 */ {x:37.6, y:27.2}, // hautes terres du coerthas occidental
-	/* 11 */ {x:29.7, y:23.5}, // hautes terres du coerthas occidental
-	/* 12 */ {x:20.3, y:8.7},  // mor dhona
-	/* 13 */ {x:8.6,  y:17.3}, // l'écume des cieux d'abalathia
-	/* 14 */ {x:23.8, y:31.2}, // l'écume des cieux d'abalathia
-	/* 15 */ {x:5.1,  y:9.2},  // Azys Lla
-	/* 16 */ {x:13.4, y:9.6},  // Garlemald
-	/* 17 */ {x:35.0, y:7.3},	 // les lacs
-	/* 18 */ {x:29.5, y:30.6}, // Yak t'el
-	/* 19 */ {x:29.7, y:26.1}, // les marges
-	/* 20 */ {x:34.7, y:12.7}, // Avantpays dravanien
-	/* 21 */ {x:33.5, y:28.2}, // les steppes d'azim
-	/* 22 */ {x:12.2, y:25.0}, // foret de l'est
+	/*  9 */ {x:31.6, y:7.5},  // ok L'hoirie recouvrée
+	/* 10 */ {x:37.6, y:27.2}, // ok hautes terres du coerthas occidental
+	/* 11 */ {x:29.7, y:23.5}, // ok hautes terres du coerthas occidental TRES DIFFICILE (sous le pont)
+	/* 12 */ {x:19.3, y:9.4},  // ok mor dhona
+	/* 13 */ {x:8.6,  y:17.3}, // ok l'écume des cieux d'abalathia
+	/* 14 */ {x:23.8, y:31.2}, // ok l'écume des cieux d'abalathia
+	/* 15 */ {x:5.1,  y:9.2},  // ok Azys Lla
+	/* 16 */ {x:13.4, y:9.6},  // ok Garlemald
+	/* 17 */ {x:35.0, y:7.3},	 // ok les lacs
+	/* 18 */ {x:29.5, y:30.6}, // ok Yak t'el
+	/* 19 */ {x:29.7, y:26.1}, // ok les marges
+	/* 20 */ {x:34.7, y:12.7}, // ok Avant pays dravanien
+	/* 21 */ {x:33.5, y:28.2}, // ok les steppes d'azim
+	/* 22 */ {x:12.2, y:25.0}, // ok foret de l'est
 	/* 23 */ {x:18.8, y:35.2}, // ok basse-noscea
-	/* 24 */ {x:22.2, y:20.3}, // Thanalan central
-	/* 25 */ {x:11.8, y:31.6}, // les marges
-	/* 26 */ {x:27.0, y:37.6}, // Elpis
-	/* 27 */ {x:29.9, y:24.8}, // Thanalan occidental
-	/* 28 */ {x:20.0, y:26.2}, // l'écume des cieux de dravania
-	/* 29 */ {x:31.5, y:32.2}, // Urqopacha
-	/* 30 */ {x:10.1, y:35.9}, // arrière-pays dravanien
-	/* 31 */ {x:26.8, y:23.1}, // les lacs
-	/* 32 */ {x:24.6, y:36.4}, // La tempete
-	/* 33 */ {x:19.4, y:4.6},  // Il Mheg
+	/* 24 */ {x:21.5, y:20.3}, // ok Thanalan central
+	/* 25 */ {x:11.8, y:31.6}, // ok les marges
+	/* 26 */ {x:27.0, y:37.6}, // ok Elpis
+	/* 27 */ {x:29.9, y:24.8}, // ok Thanalan occidental
+	/* 28 */ {x:20.0, y:26.2}, // ok l'écume des cieux de dravania
+	/* 29 */ {x:31.5, y:32.2}, // ok Urqopacha
+	/* 30 */ {x: 9.6, y:32.8}, // ok arrière-pays dravanien
+	/* 31 */ {x:26.8, y:23.1}, // ok les lacs
+	/* 32 */ {x:24.6, y:36.4}, // ok La tempete
+	/* 33 */ {x:19.4, y:4.6},  // ok Il Mheg
 	/* 34 */ {x:32.1, y:28.0}, // ok noscea occidentale
-	/* 35 */ {x:17.9, y:36.4}, // Kholusia
-	/* 36 */ {x:6.5, y:9.5},   // mer de rubis
-	/* 37 */ {x:8.8, y:37.8},  // thavnair 
-	/* 38 */ {x:33.2, y:22.6}, // arrière-pays dravanien
-	/* 39 */ {x:19.8, y:21.3} // les pics
+	/* 35 */ {x:17.9, y:36.4}, // ok Kholusia
+	/* 36 */ {x:6.5, y:9.5},   // ok mer de rubis
+	/* 37 */ {x:8.9, y:38.0},  // ok thavnair
+	/* 38 */ {x:33.2, y:22.6}, // ok arrière-pays dravanien
+	/* 39 */ {x:19.8, y:21.3}	 // ok les pics
 ]
 
 let etat = normalize(collections.get(USINESGAZCOLNAME,true))
@@ -64,6 +64,7 @@ function normalize(etat) {
 	etat.UNLOCKDELAI = UNLOCKDELAI
 	etat.TROUVEDELAI = TROUVEDELAI
 	etat.OUVERTDELAI = OUVERTDELAI // delai d'ouverture apres le unlockDth
+	etat.DISTANCE = DISTANCE // tolerance de distance
 	return etat
 }
 

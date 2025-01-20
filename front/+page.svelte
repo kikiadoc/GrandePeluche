@@ -171,7 +171,7 @@
 		},
 		{n: 370, texte: "Les Spartaci", music: "medium",
 		 start: geUtcMsFrom(2025, 1, 18, 19, 0, 0),
-		 end: geUtcMsFrom(2025, 1, 19, 22, 0, 0),
+		 end: geUtcMsFrom(2025, 1, 20, 0, 0, 0),
 		 effectiveStart: geUtcMsFrom(2025, 1, 19, 19, 0, 0),
 		 viewAfter: true,
 		 component: P370
@@ -275,11 +275,12 @@
 			case "notif": chatNotif(m);	done=true; break;
 			case "tts": tts(m);	done=true; break // TTS a mettre en file
 			case "ttsNow": tts(m,true);	done=true; break; // TTS a faire immediatement
+			case "wsMedia": wsMedia(m);	done=true; break; // Ordre multimedia depuis le ws
 			case "admGotoPage": admGotoPage(m);	done=true; break; // admin switch page
 		};
 		// appel des composants enregistrés si besoin
 		if (!done) wsCallComponents.forEach( (cb) => { if ( cb(m) ) done=true; });
-		if (done==false) console.log("WS op non géré: ", m);
+		if (!done) console.log("WS op non géré: ", m);
 	}
 
 	// force la page d'un user
@@ -287,6 +288,19 @@
 		if (wsm.o.pseudo != pseudo) return newInfoPopup("admGotoPage bad pseudo")
 		dspObject = wsm
 		page = wsm.o.page		
+	}
+
+	// ordre de jouer un truc multimedia
+	function wsMedia(wsm) {
+		switch(wsm.o.type) {
+			case 'mp4': {
+				if (wsm.o.delai) 
+					setTimeout(playVideo,1000*wsm.o.delai,wsm.o.mp4 )
+				else
+					playVideo(wsm.o.mp4)
+			}
+			default: console.log ("bad wsMedia:",wsm)
+		}
 	}
 	
 	let etatTTS = $state({ dth:0, files: [] })
@@ -977,6 +991,7 @@
 						</a>
 					</div>
 					<hr />
+					<!-- BUGGE
 					<div>
 						Utilise l'option suivante si des vidéos, des images ou des musiques
 						ne semblent pas se télécharger normalement
@@ -988,6 +1003,7 @@
 						</a>
 					</div>
 					<hr />
+					-->
 					<div>N'utilise l'option suivante qu'en cas de soucis et après avoir contacté Kikiadoc sur discord</div>
 					<div>
 						👉 <span style="cursor: pointer; color: red" onclick={clearStorage} role="button" tabindex=0>

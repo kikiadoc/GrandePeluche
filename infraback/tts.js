@@ -170,6 +170,7 @@ mp3s.byTexte.set('a-trouve-une-rune-omega',{file: "a-trouve-une-rune-omega.mp3",
 
 mp3s.byTexte.set('impossible',{file: "impossible.mp3", statique: true})
 mp3s.byTexte.set('pauses-ont-ete-demandees',{file: "pauses-ont-ete-demandees.mp3", statique: true})
+mp3s.byTexte.set('retourne-sur-le-site',{file: "retourne-sur-le-site.mp3", statique: true})
 
 mp3s.byTexte.set('alarme',{file: "alarme.mp3", statique: true, flash: true})
 

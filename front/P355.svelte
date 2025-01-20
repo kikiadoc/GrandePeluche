@@ -139,17 +139,23 @@
 {#if epiqStep==0}
 	<div class="reveal">
 		<img class="parchemin" src={urlImg+"ff-7/peinture.png"} style="width:30%; float:right" alt="" />
+		La Torchère de l'Hégémonie n'est plus qu'un souvenir.
+		Encore bravo!
+		<div class="br"></div>
 		Souviens-toi {pseudo},
 		<br/>
-		OSS117 a envoyé la torchère dans les Limbes et détruit le site qui la fabriquait.
+		il y a quelques jours, OSS117 a, la première, envoyé la Torchère dans les Limbes.
+		<br/>
+		Elle a réussi à s'enfuir après avoir fait exploser le site de production de Station Neuf.
 		<div class="br"></div>
-		Elle m'a envoyé de nombreux débris de l'explosion.
+		De retour de mission, elle m'a confié de nombreux débris de l'explosion.
 		Six d'entre-eux ont attiré mon attention car ils indiquent des lieux d'Eorzéa:
 		Ils cachent peut-être un message des Nouveaux Anciens.
 		<div class="br"></div>
-		Je les ai exposés sous la forme des 6 tableaux que tu peux voir dans la Crypte des Valeureux, au sous-sol de la maison de CL de Kikiadoc.
+		Je les ai exposés sous la forme de 6 tableaux que tu peux voir dans la Crypte des Valeureux, au sous-sol de la maison de CL de Kikiadoc.
 		Sauras-tu m'aider en identifiant les lieux associés?
 		<br/>
+		<Btn msg="Pff, je t'ai déjà dit de lire le Lore ATTENTIVEMENT" val="C'est ou?" />
 		<Btn bind:refStep={epiqStep} step=10 val="J'en suis sûr" />
 		<div style="clear:both" />
 	</div>
@@ -173,7 +179,7 @@
 		<Btn bind:refStep={epiqStep} step=15 val="J'ai identifié les lieux" ifFct={()=>isTableauxValid()}
 			koMsg="Tu n'as pas correctement identifié les tableaux"
 			/>
-		<div class="info">Les tableaux 1,2,3 sont au nord du sous-sol, les 4,5,6 sont au sud.</div>
+		<div class="info">Les tableaux 1,2,3 sont au nord, les 4,5,6 au sud.</div>
 		<div class="info">Chacune des 6 possibilités est à associer à un tableau.</div>
 		<div style="clear:both" class="br"></div>
 	</div>
@@ -197,6 +203,7 @@
 		<div class="br"></div>
 		Peux-tu t'y rendre?
 		<br/>
+		<Btn msg="Pff, je t'ai déjà dit de lire le Lore attentivement" val="C'est ou?" />
 		<Btn bind:refStep={epiqStep} step=17 val="Tout de suite!" />
 		<div style="clear:both" class="br"></div>
 	</div>
@@ -240,7 +247,7 @@
 		{#each peluches as _,i}
 			<div>
 				{i+1}: 
-				<input type="texte" placeholder="nombre" size=4 bind:value={saisies.nombres[i]} />
+				<input type="number" placeholder="nombre" min=1 max=99 bind:value={saisies.nombres[i]} />
 				<input type="button" value="➤" onclick={()=>traduire(i)} />
 				{saisies.traductions[i] || ""}
 			</div>
@@ -248,7 +255,7 @@
 		<div>Quand tu as fini, clique ci-dessous</div>
 		<Btn bind:refStep={epiqStep} step=30 val="J'ai tout traduit" ifFct={()=>isTraductionsFaites()}
 			msg="En cas d'erreur, tu peux cliquer sur revoir le lore et modifier tes informations"
-			koMsg="Tu n'as pas traduits les 6 nombres" koDing='prout-long'
+			koMsg="Tu n'as pas traduits les 6 nombres, LIS LE LORE BORDEL" koDing='prout-long'
 			/>
 		<div style="clear:both" class="br"></div>
 	</div>
@@ -264,12 +271,14 @@
 		{/each}
 		<div class="br"></div>
 		Vas-y et indique-moi comment ce lieu est nommé par les Nouveaux Anciens.
-		<div class="info">(c'est indiqué sur le livre de correspondance par un nombre Ancien)</div>
+		<div class="info">(c'est indiqué sur le livre de correspondance par un nombre Ancien qu'il faut traduire)</div>
 		<input type="number" placeholder="nombre" min=0 max=99 bind:value={saisies.nombres[6]} />
 		<input type="button" value="➤" onclick={()=>traduire(6)} />
 		{saisies.traductions[6] || "??"}
 		<br/>
-		<Btn bind:refStep={epiqStep} step=40 val="C'est ça" ifFct={()=>saisies.traductions[6]=="La Source"}
+		<Btn bind:refStep={epiqStep} step=0 val="Je ne trouve pas"
+			msg="Relis le lore, vérifie toutes les infos que tu as indiquées et modifie-les si tu t'es trompé" />
+		<Btn bind:refStep={epiqStep} step=40 val="J'ai trouvé" ifFct={()=>saisies.traductions[6]=="La Source"}
 			koMsg="Impossible de faire réagir le Grimoire des Savoirs avec ce nom" koDing="prout-long" />
 		<div style="clear:both" class="br"></div>
 	</div>

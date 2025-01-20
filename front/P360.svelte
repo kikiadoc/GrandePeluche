@@ -99,7 +99,7 @@
 		let nbTrouve = 0 // nombre de trouves
 		let trouveMax = 0 // calcul le dth de dernier trouve du pseudo
 		let unlockMax = 0 // calcul le dth de dernier unlock du pseudo
-		let unlockNb = 0 // calcul le nb d'unlock actuel du pseudo
+		let nbUnlock = 0 // calcul le nb d'unlock actuel du pseudo
 		let now=Date.now()-getEpsilon() // raccord sur l'horloge serveur
 		for (let c=0;c<4;c++)
 			for (let l=0;l<10;l++) {
@@ -109,7 +109,7 @@
 				if (lieu.isSurv) nbSurv++
 				// calcul unlockDth et nbUnlock du joueur
 				if (lieu.unlockPseudo==pseudo) {
-					unlockNb ++
+					nbUnlock ++
 					if (lieu.unlockDth > unlockMax)
 						unlockMax=lieu.unlockDth
 				}
@@ -118,12 +118,13 @@
 					trouveMax=lieu.trouveDth
 				if (lieu.status=="trouve") nbTrouve++
 			}
-		etat.unlockMax = Math.max(unlockMax+(etat.UNLOCKDELAI*unlockNb),dthLastFail+rate.fail) // dth de prochaine unlock possible
+		etat.unlockMax = Math.max(unlockMax+etat.UNLOCKDELAI*((nbUnlock>2)? nbUnlock: 1),dthLastFail+rate.fail) // dth de prochaine unlock possible
 		etat.canUnlock = now>etat.unlockMax // indique si l'option de unlock est ok ou si il faut attendre
 		etat.trouveMax = trouveMax+etat.TROUVEDELAI // dth de prochaine découverte possible
 		etat.canTrouve = now>etat.trouveMax // indique si l'option de découverte est ok ou si il faut attendre
 		etat.nbSurv = nbSurv // nombre de lieux surveillés
 		etat.nbTrouve = nbTrouve
+		etat.nbUnlock = nbUnlock
 		etat.termine = nbTrouve==40
 		etat.proba = Math.floor(rate.proba*(40-nbSurv)/40)
 		// calcul classe d'affichage
@@ -273,11 +274,11 @@
 			}
 			if (lieu && lieu.trouvePseudo) {
 				tRes[lieu.trouvePseudo]??= {pseudo:lieu.trouvePseudo, nbUnlock:0, nbTrouve:0 }
-				tRes[lieu.unlockPseudo].nbTrouve++
+				tRes[lieu.trouvePseudo].nbTrouve++
 				totalTrouve++
 			}
 		})
-		dspResultats = {totalUnlock: totalUnlock, totalTrouve: totalTrouve, pseudos: Object.values(tRes) }
+		return {totalUnlock: totalUnlock, totalTrouve: totalTrouve, pseudos: Object.values(tRes) }
 	}
 </script>
 <style>
@@ -289,11 +290,11 @@
 	.selDown { background-color: green; cursor:pointer}
 	.selDown::before { content: "✅"}
 	.unselDown { background-color: red; cursor:pointer}
-	.unselDown::before { content: "⬇️"}
+	.unselDown::before { content: "⬇️"; background-color: green}
 	.selRight { background-color: green; cursor:pointer}
 	.selRight::after { content: "✅"}
 	.unselRight { background-color: red; cursor:pointer}
-	.unselRight::after { content: "➡️"}
+	.unselRight::after { content: "➡️"; background-color: green}
 	.nosel { background-color: red; cursor:wait}
 	.nosel::before { content: "⏳"}
 </style>
@@ -318,7 +319,8 @@
 {#if etat && rate}
 	<div>
 	  <input type="button" onclick={()=> epiqStep=0} value="Revoir le lore" />
-	  <input type="button" onclick={()=> dspResultat=calcResultat()} value="Resultats" />
+	  <input type="button" onclick={()=> dspResultats=calcResultat()} value="Resultats" />
+		<br/>
 		<span style="font-size:0.7em" role="button" tabindex=0 onclick={markClick}
 			class="gpHelp" gphelp="Delai à respecter avant de pouvoir perturber le Réparateur de la Station Alpha afin d'inspecter un avaloir à gaz">
 			⏳<countdown dth={etat.unlockMax}/><sup>(ℹ)</sup>
@@ -329,40 +331,80 @@
 		</span>
 		<span style="font-size:0.7em" role="button" tabindex=0 onclick={markClick}
 			class="gpHelp" gphelp="Rapidité du réparateur de la station Alpha: {rate.lbl}">
-			<input type="range" min=0 max={caractRate.length-1} bind:value={saisies.configRate} style="width: 3em; height:0.4em" />
+			<input type="range" min=0 max={caractRate.length-1} bind:value={saisies.configRate} style="width: 7em; height:0.4em" />
 			<sup>(ℹ)</sup>
 		</span>
+		<span role="button" style="cursor:pointer" tabindex=0
+			gpHelp="Diagnostic technique, ne pas utiliser sans Kikiadoc"
+			onclick={()=> dspObject = { rate: rate, etat: etat } } >
+			🆘
+		</span>
+
 	</div>
 {/if}
-{#if epiqStep==0}
+{#if epiqStep==0 && etat}
 	<div class="reveal">
 		<img class="parchemin" src="{urlCdn}ff-7/lasource-infos.png" alt="" style="width:20%; float: right"/>
+		<div class="blinkMsg info">Lis ATTENTIVEMENT le lore, tu as le temps</div>
+		<div class="br"></div>
 		{pseudo}, il faut détruire la Station Alpha sinon Eorzéa est perdu.
 		<div class="br"></div>
-		Au fond de la station Alpha se trouve le Générateur de Gaz, il ne faut pas s'en approcher!
-		<br/>
-		Près de l'entrée se trouve le Réparateur-Alpha et au centre de la station
-		les 40 Avaloirs situés aux 4 coins de chacune des 10 cartes.
+		Au fond de la station Alpha se trouve le Générateur de Gaz de Possession,
+		il ne faut pas s'en approcher!
+		<div class="br"></div>
+		Près de l'entrée se trouve le Réparateur-Alpha en charge de l'entretien
+		des 40 Avaloirs situés sur les cartes au centre.
 		<div class="br"></div>
 		Chaque Avaloir va bientôt diffuser du Gaz de Possession vers un lieu d'Eorzéa.
+		Il faut donc détruire les Avaloirs avant celà.
 		<div class="br"></div>
-		En distrayant le Réparateur, tu peux augmenter ton facteur de chance.
-		Quand ta chance est suffisante, tu peux tenter de voir un lieu et
-		boucher temporairement l'Avaloir associé.
-		<div class="br"></div>
-		Quand le lieu associé à un Avaloir est rendu visible, <u>même par un autre Aventurier</u>,
-		tu peux le voir, t'y rendre et m'indiquer les coordonnées de ce lieu.
+		<Btn bind:refStep={epiqStep} step=5 val="As-tu un plan?" />
+		<div style="clear:both"></div>
+	</div>
+{/if}
+	
+{#if epiqStep==5 && etat}
+	<div class="reveal">
+		<img class="parchemin" src="{urlCdn}ff-7/lasource-infos.png" alt="" style="width:20%; float: right"/>
+		Oui {pseudo}. Voici mon plan pour chacun des Avaloirs:
 		<br/>
-		Je bloquerai alors l'extrémité de l'Avaloir dans Eorzéa et il sera définitivement détruit.
+		1- Perturber le réparateur pour qu'il
+		<span class="gpHelp" onclick={markClick}
+			gpHelp="C'est une phase de rapidité solo augmentant la chance de succès de l'étape 2">
+			néglige de surveiller les Avaloirs<sup>(ℹ)</sup>.
+		</span>
+		<br/>
+		2- Sélectionner un
+		<span class="gpHelp" onclick={markClick}
+			gpHelp="Il faut cliquer sur un avaloir quand la distraction est suffisante">
+			Avaloir non surveillé et l'obturer<sup>(ℹ)</sup>
+		</span>
+		tout en regardant où il débouche en Eorzéa.
+		<br/>
+		3- Se rendre à son extrémité en Eorzéa et m'indiquer les
+		<span class="gpHelp" onclick={markClick}
+			gpHelp="Tu as une tolérance de {etat.DISTANCE} dans les coordonnées, voir en bas de page.">
+			coordonnées du lieu<sup>(ℹ)</sup>.
+		</span>
+		<br/>
+		4- Je bloquerai alors l'extrémité de l'Avaloir dans Eorzéa et il sera définitivement détruit.
 		<div class="br"></div>
 		<div>
 			J'y reviendrai en détail mais tu peux déjà
 			<span class="videoLink" gpVideo="ff-7-usines-intro-1">voir la démo</span>
 		</div>
+		<div class="br"></div>
 		<Btn bind:refStep={epiqStep} step=10 val="Et on fait ca tous ensemble?" />
+		<div class="info">
+			(ℹ) Tu as une tolérance de {etat.DISTANCE} dans les coordonnées.
+			Ainsi si le Nouvel Ancien est en X:10 et Y:20, 
+			les X sont valides entre {10-etat.DISTANCE} et {10+etat.DISTANCE},
+			les Y sont valides entre {20-etat.DISTANCE} et {20+etat.DISTANCE}.
+		</div>
 		<div style="clear:both"></div>
 	</div>
 {/if}
+	
 {#if epiqStep==10}
 	<div class="reveal">
 		<img class="parchemin" src="{urlCdn}ff-7/lasource-infos.png" alt="" style="width:20%; float: right"/>
@@ -370,22 +412,17 @@
 		<div class="br" />
 		C'est pourquoi j'ai sollicité tous les Aventuriers.
 		<div class="br"></div>
-		Tu l'as compris, il y a deux phases pour bloquer définitivement un avaloir mais
-		tous les aventuriers peuvent faire un peu tout en même temps sur différents avaloirs!
+		Tu l'as compris, il y a deux "phases" pour bloquer définitivement un avaloir mais
+		<u>tous les aventuriers peuvent faire un peu tout en même temps sur différents avaloirs!</u>
 		<div class="br" />
 		<div>
 			Mais tout d'abord, 
 			<span class="imgLink" gpImg="ff-7/lasource-matrice.png">examine la matrice des Avaloirs</span>
 		</div>
-		<div>
-			Tu peux aussi
-			<span class="videoLink" gpVideo="ff-7-usines-intro-1">revoir la démo</span>
-		</div>
-		<Btn bind:refStep={epiqStep} step=20 val="Il y a deux phases?" />
-		<div class="br"></div>
 		<div class="info">
 		Ca a l'air compliqué, mais tu verras que ce n'est pas le cas quand tu te lanceras dans l'Aventure!
 		</div>
+		<Btn bind:refStep={epiqStep} step=20 val="Il y a deux phases?" />
 		<div style="clear:both"></div>
 	</div>
 {/if}
@@ -397,13 +434,17 @@
 			Phase d'obturation d'un Avaloir dans la Station Alpha
 		</div>
 		<div class="br"></div>
-		Pour identifier l'extrémité d'un Avaloir tout en le bouchant, il faut d'abord distraire le Réparateur:
+			Pour boucher un Avaloir et de permettre d'en identifier son extrémité,
+			il faut d'abord distraire le Réparateur:
 		<div>
-			C'est une phase de rapidité solo, répétable toutes les {etat && etat.UNLOCKDELAI/60000}
-			minutes avec un 
-			<span class="gpHelp" onclick={markClick} gpHelp="Chaque avaloir que tu as bouché ajoute 5 minutes">
-				petit malus<sup>(ℹ)</sup>
+			C'est une phase de rapidité solo, 
+			<span class="gpHelp" onclick={markClick} 
+				gpHelp="Même si tu ne peux pas encore idenfier une extémité, tu peux continuer à boucher des Avaloirs:
+								Si l'extrémité d'un Avaloir que tu as bouché est découverte par un autre,
+								tu augmenteras tes gains.">
+				répétable<sup>(ℹ)</sup>
 			</span>
+			toutes les {etat && etat.UNLOCKDELAI/60000}	minutes
 			et quasi immédiatement en cas de défaillance.
 		</div>
 		Lorsque cette phase est possible, des flèches ⬇️ et ➡️ sont affichées autour de la
@@ -411,13 +452,17 @@
 		<div>
 			En cliquant sur ces flèches, tu va perturber le Réparateur,
 			et dès que ta probabilité d'identification est 
-			<span class="gpHelp" onclick={markClick} gpHelp="Ton niveau de chance est capé selon la vélocité du Réparateur-Alpha">
+			<span class="gpHelp" onclick={markClick}
+				gpHelp="Ton niveau de chance est capé selon la vélocité du Réparateur-Alpha.
+								Plus tu cliques sur les flèches plus ta chance augmente,
+								mais le réparateur la fait aussi se réduire.">
 				suffisante<sup>(ℹ)</sup>,
 			</span>
 		tu peux cliquer sur la case d'un Avaloir.
 		</div>
 		<div>
-			Si tu as de la chance, tu pourras visualiser le lieu d'Eorzéa à l'extrémité de cet Avaloir et
+			Avec suffisamment de chance,
+			tu visualiseras le lieu d'Eorzéa à l'extrémité de cet Avaloir et
 			boucheras temporairement cet Avaloir dans la station Alpha.
 		</div>
 		<div>
@@ -433,7 +478,7 @@
 	<div class="reveal">
 		<img class="parchemin" src="{urlCdn}ff-7/lasource-infos.png" alt="" style="width:20%; float: right"/>
 		La deuxième phase, c'est quand un Avaloir est bouché dans la station Alpha:
-		tu peux en découvrir l'extrémité.
+		tu peux en découvrir l'extrémité, peu importe qui l'a bouché.
 		<div style="font-weight: bold; text-decoration: underline">
 			Phase d'identification d'une extrémité d'un Avaloir:
 		</div>
@@ -447,15 +492,18 @@
 		Mais tu peux continuer à boucher des avaloirs,
 		car même si tu ne peux pas identifier une extrémite,
 		tu aideras les autres Aventuriers et si un autre Aventutier identifie l'extrémité
-		d'un Avaloir que tu as bouché,
-		tu récupèreras une partie des gains.
+		d'un Avaloir que tu as bouché, tes gains augmenteront.
+		<div>
+			Tu peux 
+			<span class="videoLink" gpVideo="ff-7-usines-intro-1">revoir la démo</span>
+		</div>
 		<div class="br"></div>
 		<Btn bind:refStep={epiqStep} step=20 val="Redis moi la phase une" />
 		<Btn bind:refStep={epiqStep} step=40 val="J'ai tout compris" />
 		<div style="clear:both"></div>
 	</div>
 {/if}
-{#if epiqStep==40}
+{#if epiqStep==40 && etat}
 	{@const isPC = isEquipementPC()}
 	<div class="reveal">
 		<img class="parchemin" src="{urlCdn}ff-7/lasource-infos.png" alt="" style="width:20%; float: right"/>
@@ -479,7 +527,20 @@
 		<div class="info">Chance maximale={rate.proba}%</div>
 		<div class="info">Tick du réparateur={rate.tick*0.5}s</div>
 		<div class="info">Repos si vu par le réparateur={rate.fail/1000}s</div>
-		<Btn bind:refStep={epiqStep} step=99 val="GO GO GO!" />
+		<div class="br"></div>
+		J'ai l'habitude qu'un Aventurier ne lise pas attentivement le Lore, et c'est TRES mal...
+		<br/>
+		Et toi? As-tu bien lu le lore? Répond à cette petite question:
+		Quel est la tolérance quand tu m'indiques des coordonnées en Eorzéa?
+		<br/>
+		<Btn bind:refStep={epiqStep} step=0 msg="Relis le lore" val={etat.DISTANCE-0.5} />
+		<Btn bind:refStep={epiqStep} step=0 msg="Relis le lore" val={etat.DISTANCE-0.4} />
+		<Btn bind:refStep={epiqStep} step=0 msg="Relis le lore" val={etat.DISTANCE-0.3} />
+		<Btn bind:refStep={epiqStep} step=0 msg="Relis le lore" val={etat.DISTANCE-0.2} />
+		<Btn bind:refStep={epiqStep} step=0 msg="Relis le lore" val={etat.DISTANCE-0.1} />
+		<Btn bind:refStep={epiqStep} step=99 msg="A toi de jouer!" val={etat.DISTANCE} />
+		<Btn bind:refStep={epiqStep} step=0 msg="Relis le lore" val={etat.DISTANCE+0.1} />
+		<Btn bind:refStep={epiqStep} step=0 msg="Relis le lore" val={etat.DISTANCE+0.2} />
 		<div style="clear:both"></div>
 	</div>
 {/if}
@@ -633,7 +694,7 @@
 								<td>{p.pseudo}</td>
 								<td>{p.nbUnlock}</td>
 								<td>{p.nbTrouve}</td>
-								<td>{Math.floor(100*(p.nbUnlock+4*p.nbTrouve)/200)}%</td>
+								<td>{Math.floor(100*(p.nbUnlock+5*p.nbTrouve)/240)}%</td>
 							</tr>
 						{/each}
 					</tbody>
