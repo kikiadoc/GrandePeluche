@@ -27,6 +27,7 @@
 	import P360 from './P360.svelte'
 	import P370 from './P370.svelte'
 	import P380 from './P380.svelte'
+	import P390 from './P390.svelte'
 
 	let version=null;  // SERA MODIFIE LORS DU COMMIT EN STAGING OU PROD ne pas changer
 
@@ -186,7 +187,7 @@
 		 start: geUtcMsFrom(2025, 1, 21, 19, 0, 0),
 		 end: geUtcMsFrom(2025, 1, 23, 19, 0, 0),
 		 viewAfter: true,
-		 // component: pacman
+		 component: P390
 		}
 	]);
 
