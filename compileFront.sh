@@ -40,7 +40,7 @@ cd /home/ec2-user/dev/front
 
 echo "================================="
 echo "Verifier:"
-echo "Version npm 16"
+echo "Version npm"
 echo "source dans src/$subdir"
 echo "target web dans $dir"
 echo "apiPourCommit version: $urlApi"
