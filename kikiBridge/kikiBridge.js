@@ -300,8 +300,10 @@ function parse00() {
 
 	const chan = items[2].slice(-2) // seul le dernier octet semble être le channel
 	const mots = items[4].split(' ')
-	if (chan=="0A" || chan == "0B" || chan == "1E") {
-		// dire
+	// /dire /hurler /crier
+	// if (chan=="0A" || chan == "0B" || chan == "1E") {
+	if (chan == "1E") {
+		// /crier --> dire sur serveur
 		return toServer( getEltByLine(mots), { type: "dire", mot: mots[0] } )
 	}
 	if (chan == "1D") {
