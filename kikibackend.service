@@ -1,0 +1,17 @@
+[Unit]
+Description={kikibackend}
+
+[Service]
+Type=simple
+User=ec2-user
+WorkingDirectory=/home/ec2-user/prod/inframain
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+ExecStart=/home/ec2-user/.nvm/versions/node/v20.18.0/bin/node --expose-gc server.js PROD
+Environment="HTTPPORT=7070"
+Environment="WSPORT=7071"
+
+
+[Install]
+WantedBy=multi-user.target

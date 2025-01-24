@@ -1,0 +1,15 @@
+[Unit]
+Description={kikichecksec}
+
+[Service]
+Type=simple
+User=ec2-user
+Group=ec2-user
+WorkingDirectory=/home/ec2-user/checksec
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+ExecStart=/home/ec2-user/.nvm/versions/node/v20.18.0/bin/node server.js CHECKSEC
+
+[Install]
+WantedBy=multi-user.target
