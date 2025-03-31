@@ -710,6 +710,7 @@ export function visibilityChange() {
 // Gestion du serviceWorke
 /////////////////////////////////////////////////////////////////////
 let swcReady = null
+let swcCtx = { id:0, queue:[]}
 // Activation Reception des messages depuis le service worker
 export function swcSetup() {
 	console.log("serviceWorker in navigator",("serviceWorker" in navigator))
@@ -763,28 +764,28 @@ async function swcSend(o,timeout) {
 	swc.postMessage({id: swcCtx.id, o: o})
 	return p
 }
-// retourne la liste des éléments non résolus
-// pas de return direct pour evioter les références aux premies
-function swcGetWaitingIds() {
-	let waiting = []
-	swcCtx.queue.forEach( (e) => waiting.push({ id: e.id, o: e.o}))
-	return { msg:"idReq en attente de synchro:", waiting: waiting }
-}
 /////////////////////////////////////////////////////////////////////
 // Gestion du meta-cache
 /////////////////////////////////////////////////////////////////////
 export async function metaCacheTest() {
-	dspObject = await swcSend({op:"metaCacheTest"},10000) || "Metacache non disponible ou Timeout"
+	displayObject(await swcSend({op:"metaCacheTest"},10000) || "Metacache non disponible ou Timeout")
 	console.log("metaCacheTest End")
 }
 export async function metaCacheList() {
-	dspObject = await swcSend({op:"metaCacheList"},10000) || "Timeout MetaCacheList"
+	displayObject(await swcSend({op:"metaCacheList"},10000) || "Timeout MetaCacheList")
 	console.log("metaCacheList End")
 }
 export async function metaCacheClear() {
 	if (!confirm('Effacer le cache de MétaCache?')) return
-	dspObject =  await swcSend({op:"metaCacheClear"},10000) || "Timeout MetaCacheClear"
+	displayObject(await swcSend({op:"metaCacheClear"},10000) || "Timeout MetaCacheClear")
 	console.log("metaCacheClear End")
+}
+// retourne la liste des éléments non résolus
+// pas de return direct pour evioter les références aux premies
+export function swcGetWaitingIds() {
+	let waiting = []
+	swcCtx.queue.forEach( (e) => waiting.push({ id: e.id, o: e.o}))
+	return { msg:"idReq en attente de synchro:", waiting: waiting }
 }
 
 /////////////////////////////////////////////////////////////////////

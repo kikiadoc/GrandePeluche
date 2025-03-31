@@ -221,7 +221,7 @@
 			resume: "Les Aventuriers de Brocéliande ont dissipé les nombreux maléfices en résolvant des énigmes, \
 							puis ils ont établi un itinéraire permettant de partir de la Grande Bibliothèque du Bois Bandé \
 							et rejoindre le chateau de Camelot. Le Grand Grimoire de la Magie a alors été découvert",
-			img: "https://filedn.eu/lxYwBeV7fws8lvi48b3a3TH/Minijeu-Broceliande.png"
+			img: "https://cdn.adhoc.click/Minijeu-Broceliande.png"
 		},
 		{
 			nom: "transition", hdr:"La transition Magique (septembre 2023)",
@@ -255,7 +255,7 @@
 		{
 			nom: "godot", hdr:"En attendant Godot (juin 2023)",
 			mp4: "godot", gains: 10, 
-			img: "https://filedn.eu/lxYwBeV7fws8lvi48b3a3TH/Minijeu-Godot.png",
+			img: "https://cdn.adhoc.click/Minijeu-Godot.png",
 			resume: "Les félicités insulaires de FF14 sont des endroits paradisiaques.<br/> \
 				Tels que dans la pièce <b>En Attendant Godot de Samuel Beckett</b>, les arbres de mon île semblent \
 				changer au fil du temps. J'ai proposé aux Aventuriers d'identifier ces changements. \

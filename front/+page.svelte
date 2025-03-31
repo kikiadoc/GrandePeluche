@@ -16,7 +16,7 @@
 		hhmmss, hhmmssms, geUtcMsFrom, mmssms,
 		orientationChange, visibilityChange, startBlinkGlobal, markClick, firstClick,
 		playMusic, playDing, playVideo, closeVideo, audioInit, audioSetup, wsMedia,
-		securitypolicyviolation
+		securitypolicyviolation, metaCacheList, metaCacheClear, swcGetWaitingIds
 	} from "./common.js";
 	
 	import { G, unPatchConsole } from "./privacy.js"
@@ -44,7 +44,7 @@
 		window.screen?.orientation?.addEventListener("change", orientationChange);
 		visibilityChange()
 		startCountDown()
-		swcSetup() // init le dialogue avec le service worker controller
+		GBLSTATE.swcReady = swcSetup() // init le dialogue avec le service worker controller
 		console.log('** Mount Done **')
 	});
 	onDestroy(() => {

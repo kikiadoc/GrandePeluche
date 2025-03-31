@@ -68,9 +68,6 @@
 	// afficahge des popups standards
 	let dspResultats=$state(false) 	// affichage des résltats
 
-	////////////////////////////////////////////////
-	// A modifier dans un vrai composant 
-	////////////////////////////////////////////////
 	// appelé apres mount du component
 	async function init() {
 		let ret = await apiCall("/shared/metropolis")
@@ -98,9 +95,6 @@
 		}
 	}
 
-	////////////////////////////////////////////////
-	// Spécifique au composant
-	////////////////////////////////////////////////
 	import { markClick, addNotification, urlImg, apiCall } from './storage.js'
 	import Btn from './z/Btn.svelte'
 	import Cradio from './Cradio.svelte'
@@ -153,11 +147,6 @@
 			if (runesMalefiques[i].valeur==TBLINDICES[i].r) nbOk++
 		return nbOk
 	}
-	// function block {}
-	////////////////////////////////////////////////
-	// FIN DU A supprimer dans un vrai composant
-	////////////////////////////////////////////////
-	
 
 </script>
 <style>
@@ -209,10 +198,6 @@
 			</div>
 		</div>
 	{/if}
-	<!-- Partie a supprimer -->
-	<!-- Partie a supprimer -->
-	<!-- Partie a supprimer -->
-	<!-- Partie a supprimer -->
 
 	{#if epiqStep==0}
 		<div class="reveal" use:scrollPageToTop>
@@ -817,9 +802,5 @@
 		</div>
 	{/if}
 	
-	<!-- Fin Partie a supprimer -->
-	<!-- Fin Partie a supprimer -->
-	<!-- Fin Partie a supprimer -->
-	<!-- Fin Partie a supprimer -->
 </div>
 <!-- P400.svelte -->

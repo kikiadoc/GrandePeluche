@@ -1,6 +1,6 @@
 <script>
 	import { onMount, onDestroy } from 'svelte'
-	import { apiCall, parseJJMMHHMM, jjmmhhmmss, newInfoPopup, sortCmp,
+	import { apiCall, parseJJMMHHMM, jjmmhhmmss, sortCmp,
 					 storeIt, removeIt, displayObject } from "./common.js"
 
 	let { wsCallComponents } = $props();
@@ -210,4 +210,6 @@
 	</div>
 {/if}
 <!-- Padmin.svelte -->
+
+
 
