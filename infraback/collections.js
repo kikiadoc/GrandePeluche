@@ -146,11 +146,22 @@ exports.loadSimpleObject = (name) => {
 		return jsonObj;
 	}
 	catch(e) {
+		if (e.errno==-2) 
+			console.error("Object initialisé a default, file not found",e.path);
+		else
+			console.error(e);
+	}
+	return { name: name }
+}
+exports.deleteSimpleObject = (name) => {
+	try {
+		fs.unlinkSync(gbl.staticFsPath+name+".object");
+	}
+	catch(e) {
 		console.log(e);
 	}
 	return { name: name }
 }
-
 exports.saveSimpleObject = (name,obj) => {
 	try {
 		if (obj.name != name) throw new Error("object "+name+" malformé, reinit");
@@ -159,7 +170,10 @@ exports.saveSimpleObject = (name,obj) => {
 		return jsonStr;
 	}
 	catch(e) {
-		console.log(e);
+		if (e.errno==-2) 
+			console.error("Object supprime, mais file not found",e.path);
+		else
+			console.log(e);
 	}
 	return { name: name }
 }

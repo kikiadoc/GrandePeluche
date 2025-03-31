@@ -6,12 +6,12 @@ const collections = require('../infraback/collections.js');
 const httpserver = require('../infraback/httpserver.js');
 const wsserver = require('../infraback/wsserver.js');
 const hautsFaits = require('../infraback/hautsFaits.js');
-const jetons = require('../infraback/jetons.js');
 const discord = require('../infraback/discord.js');
 const adminTest = require('../infraback/adminTest.js');
 const lodestone = require('../infraback/lodestone.js');
-const voirVideos = require('../infraback/voirVideos.js');
 const tts = require('../infraback/tts.js');
+const chat = require('../infraback/chat.js');
+const metrologie = require('../inframain/metrologie.js');
 const clientConfig = require('../inframain/clientConfig.js');
 const innommable = require('../inframain/innommable.js');
 const torches = require('../inframain/torches.js');
@@ -22,6 +22,9 @@ const uploadFile = require('../inframain/uploadFile.js');
 const usinesGaz = require('../inframain/usinesGaz.js');
 const spartaci = require('../inframain/spartaci.js');
 const omega = require('../inframain/omega.js');
+const metropolis = require('../inframain/metropolis.js');
+const rubans = require('../inframain/rubans.js');
+const shared = require('../inframain/shared.js');
 // inutile const votation = require('../infraback/votation.js');
 // inutile const webAuth = require('../infraback/webAuth.js');
 
@@ -30,16 +33,20 @@ async function httpCallback(req, res, method, reqPaths, body, pseudo, pwd) {
 		case "pseudos": await pseudos.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
 		case "collections": collections.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
 		case "lodestone": await lodestone.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
-		case "jetons": jetons.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
 		case "hautsFaits": hautsFaits.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
-		case "voirVideos": voirVideos.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
 		case "discord": await discord.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
 		case "adminTest": await adminTest.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
 		case "innommable": innommable.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
-		case "clientConfig": clientConfig.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
+		case "clientConfig": await clientConfig.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
 		case "uploadFile": await uploadFile.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
 		case "tts": await tts.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
+		case "chat": await chat.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
+		case "metrologie": await metrologie.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
+		case "rubans": await rubans.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
+		case "shared": await shared.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
 		// eleents liés aux activités présentes
+		case "metropolis": await metropolis.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
+		// eleents liés aux activités anciennes
 		case "torches": torches.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
 		case "asciens": asciens.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
 		case "pnjs": await pnjs.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
@@ -50,8 +57,16 @@ async function httpCallback(req, res, method, reqPaths, body, pseudo, pwd) {
 	}
 	gbl.exception( { m: method, rp: reqPaths, body: body, pseudo: pseudo, pwd: pwd  } ,404);
 }
-function wsCallback(jsonMessage) {
-	gbl.exception("Wscallback Bad opcode",400);
+function wsCallback(pseudo,m) {
+	switch (m.op) {
+		case "metro.sync":
+			metropolis.syncPseudo(pseudo,m)
+			return
+		case "metro.emote":
+			metropolis.emote(pseudo,m)
+			return
+	}
+	gbl.exception("ERREUR FATALE: Bad ws op",400);
 };
 
 
@@ -109,4 +124,3 @@ console.log("WSPORT=",WSPORT)
 discord.start(null)
 wsserver.start(wsCallback, WSPORT)
 httpserver.start(httpCallback, HTTPPORT)
-

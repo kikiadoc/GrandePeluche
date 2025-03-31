@@ -25,16 +25,6 @@ const discordTrailer =	"\n\nSigné: *Hildiscord, assistant Discord de la Grande 
 
 
 // Channels disponibles pour les posts de la grande peluche (pour sécurité)
-/* OBSOLETE
-const postChannels = {
-	annonces: 			"1151925290570874951",	// Kiki's event, canal public annonces
-	avant2024: 			"1182706199414710272",	// Kiki'event PROD (l'avant 2024)
-	jungleBoogie: 	"1189564888570396702",  // Kiki'event PROD jungleBoogie
-	deepAI: 				"1194723860990398496",	// channel de deepai
-	uchronie: 			"1208202103219036160",	// channel de notif de l'event
-	innommable: 		"1241849680598401075"		// channel de l'innommable
-}
-*/
 
 // Selon le mode PROD ou STAGIN/DEV
 const prod={
@@ -49,6 +39,7 @@ const prod={
 	deepAiChanId: '1194723860990398496', // channel de deepai
 	hegemonieChanId: '1279762365075951646', // channel de l'hegemonie de prod
 	hegemonieRoleId: '1279762907701186624', // roleId de l'hegemonie de prod
+	metropolisChanId: '1347534666453745725', // channel de métropolis de prod
 }
 const staging={
 	testChanId:	"1039491017017143356",	// KIKITEST
@@ -62,6 +53,7 @@ const staging={
 	deepAiChanId: '1195463916776591370', // channel de deepai
 	hegemonieChanId: '1279764642234761258', // channel de l'hegemonie de test
 	hegemonieRoleId: '1279764689936449620', // roleId de l'hegemonie de test
+	metropolisChanId: '1347535273281458216', // channel de métropolis de test
 }
 
 // contexte d'execution selon dev/prod

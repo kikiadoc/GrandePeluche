@@ -3,7 +3,7 @@ exports.staticFsPath="../inframain/datastore/";
 exports.grimoireFsPath="/var/www/static/grimoire/";
 exports.grimoireUrlPath= "https://ff14.adhoc.click/grimoire/"
 exports.pCloudUrl= "https://filedn.eu/lxYwBeV7fws8lvi48b3a3TH/"
-exports.cdnUrl= "https://cdn.adhoc.click/"
+exports.cdnUrl= "https://cdn.adhoc.click/V10/"
 exports.vaultPath="/home/ec2-user/.vault.donotdelete";
 exports.ipAdmin="91.164.33.248" // adrese PC perso Kikiadoc
 
@@ -17,6 +17,7 @@ exports.lowerFirstLetter = str => { return str.charAt(0).toLowerCase() + str.sli
 exports.alphanum2placer = str => { return str.replace(/[a-z0-9]/g,"﹇") } ;
 exports.stripBlank = str => { return str.replace(/[ \:\.\,]/g,"") };
 exports.isPseudoValid = (str) => { return /^['\-A-Za-z0-9]+$/g.test(str); }
+exports.isDataNameValid = (str) => /^[\.A-Za-z0-9]+$/g.test(str) // DataName est une chaine alphanum avec des points
 
 const flagProd = __filename.indexOf('/prod/') > 0
 exports.isProd = () => {

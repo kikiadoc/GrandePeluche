@@ -18,9 +18,6 @@ exports.forceClientVersion = () => {
 	return v;
 }
 
-// message constant de pong avec la vesion client requise
-
-
 function targetClient(pseudo,o) {
 	let jsonMsg = JSON.stringify(o);
 	console.log("targetClient:" ,pseudo, o.op);
@@ -38,6 +35,7 @@ function broadcastClient(o) {
 		ws.send(jsonMsg);
 	});
 	const now = performance.now()
+	// Annulation des mesures pour performances tr de metropolis
 	console.log("broadcastClient(op,nbCli,jsonLength,jsonMs,totalMs):" , o.op, clients.size, jsonMsg.length, mid-start, now-start)
 }
 
@@ -127,6 +125,18 @@ exports.targetSimpleOp= (pseudo,op,o) => {
 	targetClient( pseudo, { op: op , o: o, status:200, dth: Date.now() } );
 }
 
+// execution d'une video v apres un delai en seconde d par les connectes
+exports.broadcastVideo = (v,d) => {
+	exports.broadcastSimpleOp('wsMedia',{ type:'mp4', mp4:v, delai:d })
+}
+
+exports.getMetadata = (pseudo) => {
+	let ret=null
+  clients.forEach((meta,ws) => {
+		if (meta.pseudo==pseudo) ret=meta
+	})
+	return ret
+}
 
 exports.start = (wsCallback, port) => {
   const wss = new WebSocket.Server({ port: port });
@@ -153,7 +163,7 @@ exports.start = (wsCallback, port) => {
 				let jMsg = JSON.parse(p);
 				let start = performance.now()
 				switch (jMsg.op) {
-					case "ig":
+					case "ig": // image ingame depuis le kikibidge
 						if (metadata.ip != gbl.ipAdmin) gbl.exception("not bot",400)
 						await igImage.jsonEvent(jMsg)
 						break;
@@ -188,9 +198,9 @@ exports.start = (wsCallback, port) => {
 						broadcastPseudoList();
 						break;
 					default:
-						wsCallback(jMsg);
+						wsCallback(metadata.pseudo,jMsg);
 				}
-				console.log("WSmessage:",metadata.pseudo,p,performance.now()-start);
+				console.log("WSmessage:",metadata.pseudo,jMsg.op,performance.now()-start);
 			}
 			catch(ev) {
 				console.log("WS INBOUND msg:", m.toString(), "exception:" , ev);
