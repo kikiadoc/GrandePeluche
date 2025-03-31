@@ -2,9 +2,17 @@
 	import { onMount, onDestroy  } from 'svelte'
 	import { urlCdn, loadIt, storeIt, scrollPageToTop, getTypeEquipement,
 					 audioPause, audioResume, playVideo,
-					 setHautFait, getHautFait, jjmmhhmmss } from './storage.js'
+					 setHautFait, getHautFait, jjmmhhmmss,
+					 markClick, addNotification, urlImg, apiCall,
+					 metaCacheTest
+				 } from './common.js'
+	import { GBLCONST } from "./ground.svelte.js"
+
 	import { G }  from './privacy.js'
 	import Ruban from './Ruban.svelte'
+	import Btn from './Btn.svelte'
+	import Radio from './Radio.svelte'
+	import Cengine3D from './Cengine3D.svelte'
 
 	const TBLNBBTNCHRONO= [{val:4,lbl:"4"},{val:6,lbl:"6"},{val:8,lbl:"8"},{val:10,lbl:"10"}]
 	const TBLOPTIONSINDICES= [
@@ -35,7 +43,6 @@
 
 	
 	let {
-		GBLCTX,
 		wsCallComponents,
 		pageDesc = null,
 		pseudo,
@@ -94,11 +101,6 @@
 			case 95: playVideo("ff-10/ff-10-metro-trailer"); setHautFait("metropolisMaitre",3); break
 		}
 	}
-
-	import { markClick, addNotification, urlImg, apiCall } from './storage.js'
-	import Btn from './z/Btn.svelte'
-	import Cradio from './Cradio.svelte'
-	import Cengine3D from './Cengine3D.svelte'
 
 	let rubanTermine=$state(false)
 	let accesPupitre = $state(false)
@@ -303,7 +305,7 @@
 	{/if}
 	
 	{#if epiqStep==10}
-		{@const genreLbl = GBLCTX.TBL_GENRES.find((e)=> e.val==pseudoGenre).lbl}
+		{@const genreLbl = GBLCONST.GENRES.find((e)=> e.val==pseudoGenre).lbl}
 		<div class="reveal" use:scrollPageToTop>
 			<img class="parchemin" src={urlImg+"gamemaster.jpg"} style="width:20%; float:right" alt="" />
 			<div>Tu es toujours aussi inpatient{G(pseudoGenre,"","e")}, {pseudo}...</div>
@@ -459,7 +461,7 @@
 			<img class="parchemin" src={urlImg+"ff-10/metropolis.jpg"} style="width:30%; float:right" alt="" />
 			<div>
 				Tu peux vérifier:
-				<input type="button" value="Etat de Metacache" onclick={GBLCTX.metaCacheTest} />
+				<input type="button" value="Etat de Metacache" onclick={metaCacheTest} />
 			</div>
 			<div class="br" />
 			<div>
@@ -607,7 +609,7 @@
 			<div>
 				Vas-y et indiques moi le nombre de runes de coordonnées qui se trouvent sur le Premier Anneau.
 			</div>
-			<Cradio nom="btnChronogyre"	bind:value={saisies.btnChronogyre} options={TBLNBBTNCHRONO} />
+			<Radio nom="btnChronogyre"	bind:value={saisies.btnChronogyre} options={TBLNBBTNCHRONO} />
 			<Btn bind:refStep={epiqStep} ifFct={()=>saisies.btnChronogyre==8} step=60
 				hautFait="metropolisPadawan" val="➤"
 				koMsg="Ce n'est pas ca"/>
@@ -739,7 +741,7 @@
 	{/if}
 	{#if epiqStep==80}
 		<div class="reveal" use:scrollPageToTop>
-			<Cengine3D GBLCTX={GBLCTX} wsCallComponents={wsCallComponents}
+			<Cengine3D wsCallComponents={wsCallComponents}
 				pseudo={pseudo} pseudoGenre={pseudoGenre} pseudoList={pseudoList} resetStep=75
 				bind:epiqStep={epiqStep} bind:dspObject={dspObject} />
 			<div style="clear:both" class="br"></div>
@@ -773,7 +775,7 @@
 						<span style="cursor:pointer" class={(lock)?"":"blinkFlag"} gpHelp={"Méphistophéles à dissimulé une rune "+TBLINDICES[i].txt} onclick={markClick}>
 							{i+1}😈
 						</span>
-						<Cradio nom={"btnFinal"+i}
+						<Radio nom={"btnFinal"+i}
 							bind:value={rune.valeur}
 							lock={lock}
 							cb={(cIdx)=>proposeRuneMalefique(i,cIdx)}

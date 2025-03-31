@@ -1,6 +1,6 @@
 <script>
 	import { onMount, onDestroy  } from 'svelte'
-	import { apiCall, getEpsilon, urlImg, markClick, addNotification } from './storage.js'
+	import { apiCall, getEpsilon, urlImg, markClick, addNotification } from './common.js'
 	import { G }  from './privacy.js'
 	
 	let {

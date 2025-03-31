@@ -997,6 +997,43 @@ export function wsMedia(o) {
 	}
 }
 /////////////////////////////////////////////////////////////////////
+// TTS
+/////////////////////////////////////////////////////////////////////
+let etatTTS = { dth:0, files: [] }
+export function tts(m,force) {
+	console.log("tts:",m)
+	if (force) etatTTS.files = []
+	etatTTS.dth=Date.now()
+	if (Array.isArray(m.o))
+		m.o.forEach((e)=>etatTTS.files.push(e))
+	else
+		etatTTS.files.push(m.o)
+	tryTTS(force)
+}
+export function tryTTS(force) {
+	try {
+		let elt = document.getElementById('tts')
+		let now = Date.now()
+		// attend si pas force, playing et que playing depuis moins de 15 seconde
+		if (!force && elt.gpPlaying && (elt.gpPlaying+15000>now)) return console.log("TTS playing") // attente erreur ou end
+		elt.gpPlaying=0
+		let next = etatTTS.files.shift()
+		if (!next) { console.log("TTS: no file in queue"); return }
+		elt.gpPlaying=now
+		elt.gpRef=next.file
+		if (next.statique)
+			elt.src = urlCdn+"ff-tts-static/"+next.file
+		else
+			elt.src = "https://ff14.adhoc.click/grimoire/"+next.file
+		if (next.flash) startBlinkGlobal()
+		elt.play()
+	}
+	catch(e) {
+		console.error('try tts',e)
+	}
+}
+
+/////////////////////////////////////////////////////////////////////
 // Gestion du CSP
 /////////////////////////////////////////////////////////////////////
 export function securitypolicyviolation(e) {

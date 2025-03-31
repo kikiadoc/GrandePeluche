@@ -1,7 +1,7 @@
 <script>
 	import { onMount, onDestroy  } from 'svelte';
 	import { loadIt, storeIt, scrollPageToTop, displayInfo,
-					 markClick, playMusic,
+					 markClick, playMusic, tts
 				 } from './common.js'
 	import { G }  from './privacy.js'
 	import { GBLCONST,GBLSTATE }  from './ground.svelte.js'
@@ -275,6 +275,10 @@
 				A titre d'exemple, "tu es heureu..." se décline, à cet instant, selon ton genre en
 				"tu es heureu{G(pseudoGenre,"x","se")}".
 			</div>
+			<div onclick={markClick} gpHelp="N'oublie pas, tu peux modifier ton genre à tout moment. Pour celà clique sur ton pseudo en haut à droite de ton écran et modifie-le. Tu en verras les effets immédiats sur la page affichée">
+				<Btn val="Je veux changer mon genre" />
+				<Btn bind:refStep={epiqStep} step=5 val="Pour mon genre, {genreLbl}, c'est OK" />
+			</div>
 			<div class="info">
 				Pour éviter de passer sous les fourches caudines de la
 				<a href="https://www.cnil.fr/fr" target="_blank">CNIL</a>
@@ -294,10 +298,6 @@
 			<div class="info">
 				Cette fonctionnalité semble simple, mais est en réalité très complexe pour couvrir tous les cas.
 				Tu dois la considérer comme expérimentale.
-			</div>
-			<div onclick={markClick} gpHelp="N'oublie pas, tu peux modifier ton genre à tout moment. Pour celà clique sur ton pseudo en haut à droite de ton écran et modifie-le. Tu en verras les effets immédiats sur la page affichée">
-				<Btn val="Je veux changer mon genre" />
-				<Btn bind:refStep={epiqStep} step=5 val="Pour mon genre, {genreLbl}, c'est OK" />
 			</div>
 			<div style="clear:both" class="br"></div>
 		</div>
@@ -365,7 +365,7 @@
 				</div>
 				<div class="br"></div>
 			{/if}
-			<div style="font-size:0.7em">
+			<div class="info">
 				(*) Lors de l'affichage de vidéos, tu gardes la possibilité de te positionner, de faire pause,
 				ou d'en modifier le volume. Toutefois, ces modifications ne s'appliquent qu'à la vidéo en cours.
 			</div>
@@ -378,16 +378,19 @@
 		<div class="reveal" use:scrollPageToTop>
 			<img class="parchemin" src={urlCdn+"audio.jpg"} style="width:20%; float:right" alt="" />
 			Je vais aussi utiliser ma Voix pour te commander.
-			Vérifie le niveau sonore de la Synthèse Vocale:
 			<div>
-				Tu dois entendre distinctement la Voix même avec l'ambiance sonore active.
+				Tu dois entendre distinctement ma Voix même avec l'ambiance sonore active.
+				<input type="button" value="Je veux tester ta voix"
+					onclick={(e)=>{tts({o:{statique:true, file:"mavoix.mp3"}});addNotification("Test TTS en cours...","green",3) }} />
 			</div>
 			<div class="blinkMsg">
-				Clique sur ton pseudo en haut à droite de ton écran et
-				clique sur le bouton de test vocal.
+				Pour régler le volume de ma voix,
+				clique sur ton pseudo en haut à droite de ton écran..
 			</div>
-			<Btn bind:refStep={epiqStep} step=20 val="J'ai un soucis"
-				msg="Contacte Kikiadoc sur Discord, Il t'aidera a compléter tes reglages en paramétrant aussi le mixer de ton appareil"	/>
+			<Btn val="Je n'entend pas bien ta voix"
+				msg="Monte le volume de ma voix à 100% et baisse celui de l'ambiance sonore."	/>
+			<Btn val="J'ai un soucis"
+				msg="Si même avec un volume à 100%, tu n'entends pas ma voix, contacte Kikiadoc sur Discord, Il t'aidera a compléter tes reglages en paramétrant aussi le mixer de ton appareil"	/>
 			<Btn bind:refStep={epiqStep} step=20 val="J'entend parfaitement ta Voix" />
 			<div style="clear:both" class="br"></div>
 		</div>
@@ -483,31 +486,36 @@
 	{#if epiqStep==35}
 		<div class="reveal" use:scrollPageToTop>
 			<img class="parchemin" src={urlCdn+"ff-7/checksec.png"} style="width:30%; float:right" alt="" />
-			SyncServer, LogicServer, Hildiscord, AudioBlaster...
-			<div class="br"></div>
 			Je tiens aussi à te présenter CheckSec, mon Tank Gardien. 
-			Il nous protège des incessantes agressions liées à la cybersécurité.
-			J'espère que tu n'attireras jamais son regard. Quand il enrage, il est pire que l'œuil de Sauron.
+			Il est en charge de notre cybersécurité.
 			<div class="br"></div>
-			Si le site ne répond pas alors que d'autres sites
-			répondent correctement, c'est probablement que tu as attiré sur toi l'œuil de CheckSec
-			et qu'il t'a bloqu{G(pseudoGenre,"é","ée")}.
+			Si tu provoques l'œuil de CheckSec, il n'a qu'une réponse:
+			Il te bannit dès que ton comportement n'est pas prévu.
 			<div class="br"></div>
-			Si tel est le cas, c'est probablement parce que:
+			<u>Si tu as prévu de partager ta connexion Internet avec plus d'un autre joueur</u>,
+			contacte Kikiadoc immédiatement Kikiadoc pour qu'il modifie les seuils de sécurité.
 			<br/>
-			➤ Ton IP est "proche" d'une IP malveillante
-			(fréquent en utilisant un VPN douteux)
+			Si lors d'un mini jeu ou d'un événement, le site ne répond pas, c'est probablement parce que:
 			<br/>
 			➤ Tu n'as pas respecté la navigation prévue sur le site
 			(possible avec un VPN moisi, un antivirus moisi ou si tu n'utilises pas uniquement l'URL d'accès au site)
-			<div class="br"></div>
-			CheckSec vérifie aussi en temps réel le nombre de connexions actives vers le site.
-			<u>Si vous êtes plusieurs à partager ta connexion Internet</u>,
-			indique le à Kikiadoc.
-			Normalement à 2, ca doit passer, mais à 3 ça bloque et
-			tu risques le bannissement automatique.
 			<br/>
+			➤ Ton IP est "proche" d'une IP malveillante
+			(fréquent en utilisant un VPN)
+			<div class="br"></div>
 			<Btn bind:refStep={epiqStep} step=36 val="J'ai compris" />
+			<div class="info">
+				CheckSec vérifie en temps réel le nombre de connexions actives vers le site.
+				<u>Si vous êtes plusieurs à partager ta connexion Internet</u>,
+				indique le à Kikiadoc.
+				Normalement à 2, ca doit passer, mais à 3 ça bloque et
+				tu risques le bannissement automatique.
+			</div>
+			<div class="info">
+				CheckSec vérifie aussi en temps réel toutes les URL entrantes
+				et leurs sémantiques selon ton contexte.
+				<u>Ne pas respecter la sémantique prévue entraine un bannissement instantanné</u>.
+			</div>
 			<div style="clear:both" class="br"></div>
 		</div>
 	{/if}

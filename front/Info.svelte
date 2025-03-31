@@ -47,11 +47,11 @@
 					{#if template}{@render template(l)}{:else}<div>{l}</div>{/if}
 				{:else if l.cb}
 					<div role="button" style="cursor:pointer" onclick={(e)=>l.cb(l,i,e)}>
-						{#if template}👉{@render template(l)}{:else}{l.txt}{/if}
+						{#if template}👉{@render template(l)}{:else}👉{l.txt}{/if}
 					</div>
 				{:else}
 					<div>
-						{#if template}👉{@render template(l)}{:else}{l.txt}{/if}
+						{#if template}{@render template(l)}{:else}{l.txt}{/if}
 					</div>
 				{/if}
 			{/each}

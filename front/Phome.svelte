@@ -52,7 +52,7 @@
 				{@const isAvantFin = Date.now() < p.end }
 				{@const cls =
 					(p.always)? { c:"green",a:true } :
-					(!p.start)? { c:"red", t: "Masqué par une brume éthérée", h:["Aucune date n'est connue","profite de la musique d'ambiance"] } :
+					(!p.start)? { c:"red", t: "Masqué par une brume éthérée", h:["Aucune date n'est connue,","Profite de la musique d'ambiance"] } :
 					(p.beta && isAvantDebut)? { c:"green", dt:p.start, t: "Début ", a:true, h:["Accès en avant première","tout n'est pas finalisé mais tes gains en avant-première sont garantis"] } :
 					(isBcpDebut)? { c:"orange", dt: p.start, cd:p.start-DELAI, t:"Début ", h:["Ce challenge n'est pas encore commencé"] } :
 					(isAvantDebut)? { c:"orange", cd:p.start, t:"Début dans ", h:["Ce challenge commencera bientôt"] } :

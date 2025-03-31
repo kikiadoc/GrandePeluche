@@ -1,16 +1,14 @@
-<svelte:options runes />
 <script>
 	import { onMount, onDestroy  } from 'svelte';
-	import { urlCdn, addNotification, infoPopup, ssms, markClick } from "./storage.js"
-	import { loadIt, storeIt, apiCall, wsSend, isEquipementPC,
-					 jjmmhhmmss, countDownTo, playVideo, playDing } from "./storage.js"
+	import { urlCdn, addNotification, displayInfo, ssms, markClick,
+					 loadIt, storeIt, apiCall, wsSend, isEquipementPC,
+					 jjmmhhmmss, countDownTo, playVideo, playDing } from "./common.js"
 
-	import Cinfo from './Cinfo.svelte'
+	import Info from './Info.svelte'
 
 	// function stopBlock {} // 
 
 	let {
-		GBLCTX,
 		wsCallComponents,
 		pseudo,
 		pseudoGenre,
@@ -115,9 +113,9 @@
 				// reception d'un emote metropolis
 				switch (m.emote) {
 					case 'coucou':
-						if (m.orgPseudo==pseudo) dspMessage = {title:"harmonique",body: "Tu as fait coucou à "+m.dstPseudo, ding:"ding-ding"}
+						if (m.orgPseudo==pseudo) dspMessage = {title:"harmonique",body:["Tu as fait coucou à "+m.dstPseudo], ding:"ding-ding"}
 						else
-						if (m.dstPseudo==pseudo) dspMessage = {title:"harmonique",body: m.orgPseudo+" te fait coucou", ding:"ding-ding"}
+						if (m.dstPseudo==pseudo) dspMessage = {title:"harmonique",body:[m.orgPseudo+" te fait coucou"], ding:"ding-ding"}
 						else
 							addNotification(m.orgPseudo+" fait coucou à "+m.dstPseudo)
 				}
@@ -450,7 +448,7 @@
 					if (debugEngine) scenePerf?.render()
 				}
 				catch(e) {
-					infoPopup({titre: "Erreur fatale dans RenderLoop", body: ["Erreur FATALE","Clique sur le bouton 'J'ai un soucis' pour report à Kikiadoc","Cause:",e.toString()], back: "rouge", ding:"explosion"})
+					displayInfo({titre: "Erreur fatale dans RenderLoop", body: ["Erreur FATALE","Clique sur le bouton 'J'ai un soucis' pour report à Kikiadoc","Cause:",e.toString()], back: "rouge", ding:"explosion"})
 					throw e
 				}
 			};
@@ -791,11 +789,10 @@
 			let m = {
 				titre: 'Harmonique:',
 				body: [desc.lbl+":",desc.clg.t],
-				trailer: 'tu peux fermer ce popup et recliquer plus tard',
-				cbActions: []
+				trailer: 'tu peux fermer ce popup et recliquer plus tard'
 			}
 			// ajoute les options du challenge
-			desc.clg.o.forEach( (txt, idx) => m.cbActions.push( { txt: txt, cb: ()=>harmoTry(harmoTask.i,idx) } ) )
+			desc.clg.o.forEach( (txt, idx) => m.body.push( { txt: txt, cb: ()=>harmoTry(harmoTask.i,idx) } ) )
 			dspHarmo = m
 		}
 		// clic sur un perso 
@@ -804,8 +801,12 @@
 				harmoClick()
 			}
 			else {
-				dspMessage={titre:"Harmonique", body:"En Eorzéa je pense que c'est "+m.metadata.p,
-										cbActions: [ {txt:"Faire Coucou", cb:()=>{wsSend({op:'metro.emote',emote:'coucou',orgPseudo:pseudo,dstPseudo:m.metadata.p});dspMessage=null} } ] }
+				dspMessage={titre:"Harmonique", body:[
+					"En Eorzéa je pense que c'est "+m.metadata.p,
+					{txt:"Faire Coucou",
+					 cb:()=>{wsSend({op:'metro.emote',emote:'coucou',orgPseudo:pseudo,dstPseudo:m.metadata.p});
+									 dspMessage=null} }
+				] }
 			}
 		}
 		function tableauClick(i,desc,status,todo) {
@@ -855,8 +856,11 @@
 															] }
 			else	
 					dspMessage = { titre:'Anneaux de retour',
-												 body: ["Tu as effectué toutes tes tâches dans l'Ortho-Temps","Vérifie que c'est aussi le cas de tes amis"],
-												 cbActions: [{txt:"Retour en Eorzéa",cb: ()=>{epiqStep=90}}]
+												 body: [
+													 "Tu as effectué toutes tes tâches dans l'Ortho-Temps",
+													 "Vérifie que c'est aussi le cas de tes amis",
+													 {txt:"Retour en Eorzéa",cb: ()=>{epiqStep=90}}
+												 ]
 											 }
 			// activation de l'animation du ring
 		}
@@ -900,7 +904,6 @@
 					dspObject = desc
 					throw new Error("Erreur sur type d'objet dans objetGetRefContainer")
 			}
-			
 		}
 		function objetSetMesh(i) {
 			// supprime le mesh actuel si existe
@@ -1459,7 +1462,7 @@
 			sceneLoad.gpMainLoaded()
 		}
 		catch(e) {
-			infoPopup({titre: "Erreur fatale", body: ["Erreur FATALE","Cause:",e.toString()], back: "rouge", ding:"explosion"})
+			displayInfo({titre: "Erreur fatale", body: ["Erreur FATALE","Cause:",e.toString()], back: "rouge", ding:"explosion"})
 			throw e
 		}
 	}
@@ -1533,10 +1536,10 @@
 		</div>
 	{/if}
 	{#if dspMessage}
-		<Cinfo bind:dspInfo={dspMessage} />
+		<Info bind:dspInfo={dspMessage} />
 	{/if}
 	{#if dspHarmo}
-		<Cinfo bind:dspInfo={dspHarmo} />
+		<Info bind:dspInfo={dspHarmo} />
 	{/if}
 	
 	<div>

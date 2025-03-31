@@ -16,6 +16,7 @@
 		hhmmss, hhmmssms, geUtcMsFrom, mmssms,
 		orientationChange, visibilityChange, startBlinkGlobal, markClick, firstClick,
 		playMusic, playDing, playVideo, closeVideo, audioInit, audioSetup, wsMedia,
+		tts, tryTTS,
 		securitypolicyviolation, metaCacheList, metaCacheClear, swcGetWaitingIds
 	} from "./common.js";
 	
@@ -28,7 +29,7 @@
 	import Padmin from './Padmin.svelte'
 	import Pipa from './Pipa.svelte'
 	
-	// import P400 from './P400.svelte' // metropolis
+	import P400 from './P400.svelte' // metropolis
 	import P405 from './P405.svelte' // Kiki's Event X - initiatique
 
 	//////////////////////////////////////////
@@ -117,10 +118,21 @@
 		 always: true,
 		 component: Pipa
 		},
+		{n: 400, texte: "Métropolis", music: "le-jeu",
+		 start: geUtcMsFrom(2025,3,21,19,0,0),
+		 end: geUtcMsFrom(2025,3,25,8,0,0),
+		 after: true,
+		 component: P400
+		},
 		{n: 405, texte: "Kiki's Event X, initiatique", music: "dolmen",
 		 start: 0,
 		 end: 0,
 		 component: P405
+		},
+		{n: 999, texte: "Kiki's Event X, Epilogue", music: "dolmen",
+		 start: 0,
+		 end: 0,
+		 component: null
 		},
 		/*
 		{n: 400, texte: "Métropolis", music: "le-jeu",
@@ -177,43 +189,6 @@
 		if (wsm.o.pseudo != pseudo) return displayInfo({body: "admGotoPage bad pseudo, contacte Kikiadoc"})
 		dspObject = wsm
 		page = wsm.o.page		
-	}
-
-	/////////////////////////////////////////////////////////////////////
-	// TTS
-	/////////////////////////////////////////////////////////////////////
-	let etatTTS = { dth:0, files: [] }
-	function tts(m,force) {
-		console.log("tts:",m)
-		if (force) etatTTS.files = []
-		etatTTS.dth=Date.now()
-		if (Array.isArray(m.o))
-			m.o.forEach((e)=>etatTTS.files.push(e))
-		else
-			etatTTS.files.push(m.o)
-		tryTTS(force)
-	}
-	function tryTTS(force) {
-		try {
-			let elt = document.getElementById('tts')
-			let now = Date.now()
-			// attend si pas force, playing et que playing depuis moins de 15 seconde
-			if (!force && elt.gpPlaying && (elt.gpPlaying+15000>now)) return console.log("TTS playing") // attente erreur ou end
-			elt.gpPlaying=0
-			let next = etatTTS.files.shift()
-			if (!next) { console.log("TTS: no file in queue"); return }
-			elt.gpPlaying=now
-			elt.gpRef=next.file
-			if (next.statique)
-				elt.src = urlCdn+"ff-tts-static/"+next.file
-			else
-				elt.src = "https://ff14.adhoc.click/grimoire/"+next.file
-			if (next.flash) startBlinkGlobal()
-			elt.play()
-		}
-		catch(e) {
-			console.error('try tts',e)
-		}
 	}
 
 	/////////////////////////////////////////////////////////////////////
@@ -419,7 +394,7 @@
 		border: 0.1em solid white; padding: 0.2em; margin-top: 0.5em; color: white;
 		background-position: center; background-repeat: no-repeat; 
 		background-size: cover; background-color: black;
-		background-image: url('https://cdn.adhoc.click/texture-papier-noir.jpg');
+		background-image: url('https://cdn.adhoc.click/V10/texture-papier-noir.jpg');
 		animation-duration: 10s; animation-name: revealFrames; animation-iteration-count: 1;
 	}
 	@keyframes revealFrames {
