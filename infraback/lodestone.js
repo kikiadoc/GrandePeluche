@@ -44,7 +44,7 @@ async function getFF14Id(prenom,nom,monde) {
 // lodestone check: 200 { ff41Id: } si ok, 202 si introuvable
 async function httpCallback(req, res, method, reqPaths, body, pseudo, pwd) {
 	// pas de verif complete, l'acces doit être fait avec un user="" (dummy)
-	if (pseudo!="nondefini") gbl.exception("bad user need dummy",400);
+	if (pseudo!="nondefini") gbl.exception("bad user need nondefini dans la requete",400);
 	switch (method) {
 		case "GET":
 			switch(reqPaths[2]) {

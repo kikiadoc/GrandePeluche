@@ -697,12 +697,12 @@ async function requestWakeLock() {
 	}
 	catch (err) {	console.log("Erreur WakeLock", err) }
 }
-export function visibilityChange() {
+export function visibilityChange(gState) {
 	// console.log('visibilityChange', document.visibilityState);
 	// changement de visibility
 	switch(document.visibilityState) {
 		case "visible": audioResume(); requestWakeLock(); break;
-		case "hidden": audioPause(); break;
+		case "hidden": if (!document.getElementById("musique")?.gpBack) audioPause(); break;
 	}
 }
 
@@ -836,7 +836,7 @@ export function audioSetup(vol,back,ambiance,tts) {
 	const domVideo = document.getElementById("video");
 	if (!domMusique || !domDing || !domTTS || !domVideo)
 		return console.error("setupAudio, dom not ready")
-	// sauvegarde le contexte
+	// sauvegarde le contexte dans le DOM
 	storeIt('audioVolume', vol)
 	storeIt('audioTTS', tts)
 	storeIt('audioBack', back)

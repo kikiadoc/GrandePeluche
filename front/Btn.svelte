@@ -33,7 +33,7 @@
 			if (page!==null) refPage=page
 		}
 		else {
-			if (koMsg) displayInfo({titre:titre, body:koMsg, trailer:trailer, ding: 'prout-long', back:'papier'})
+			if (koMsg) displayInfo({titre:titre, body:[koMsg], trailer:trailer, ding: 'prout-long', back:'papier'})
 			if (koVideo) playVideo(koVideo)
 		}
 	}

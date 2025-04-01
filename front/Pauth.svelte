@@ -1,19 +1,21 @@
 <script>
 	import { onMount, onDestroy  } from 'svelte';
-	import { scrollPageToTop, capitalizeFirstLetter, isPseudoValid, crypoCreateKeyPair 
+	import { scrollPageToTop, capitalizeFirstLetter, isPseudoValid, crypoCreateKeyPair,
+					 addNotification, apiCall, storeIt, displayInfo
 				 } from './common.js'
 	import { G }  from './privacy.js'
-	
+	import { GBLCONST, GBLSTATE } from "./ground.svelte.js"
+
 	import Credits from './Credits.svelte'
 	
-	let {	pseudo } = $props()
+	let {	pseudo=$bindable() } = $props()
 
 	/////////////////////////////////////////////////////////////////////
-	// Gestion du pseudo et creation compte
+	// Gestion du pseudo et creation compte 
 	/////////////////////////////////////////////////////////////////////
 	async function registerPseudo()	{
 		let enregistrer = document.getElementById("enregistrerPseudo");
-		if (enregistrer.style.color=="red")	return infoPopup({titre:"Patience...",body: "Les vérifications sont en cours",trailer:"Patience"})
+		if (enregistrer.style.color=="red")	return displayInfo({titre:"Patience...",body:["Les vérifications sont en cours"],trailer:"Patience"})
 		enregistrer.style.color="red";
 		try {	await registerPseudoTech();	} catch(e) {console.log(e)} ;
 		enregistrer.style.color="black";
@@ -24,14 +26,14 @@
 		let nomIG = capitalizeFirstLetter(document.getElementById("nomRequest").value.replaceAll(' ','').toLowerCase())
 		let monde = capitalizeFirstLetter(document.getElementById("mondeRequest").value.replaceAll(' ','').toLowerCase())
 		if (!isPseudoValid(newPseudo) || !isPseudoValid(nomIG))
-			return infoPopup({titre:"Invalide!",body:"Ton prénom et nom doivent respecter les règles de nommage de FF14"});
+			return displayInfo({titre:"Invalide!",body:["Ton prénom et nom doivent respecter les règles de nommage de FF14"]});
 
 		let ret = null; // resulta de requete
 		addNotification("Vérif / lodestone","green",3)
 		// acces lodestone via proxy sur adhoc.click (pour eviter les reponses opaques,sans atttente WS)
 		ret = await apiCall("/lodestone/check/"+newPseudo+"/"+nomIG+"/"+monde,"GET",null,true)
 		if (ret.status==202)
-			return infoPopup({
+			return displayInfo({
 				titre:"Tu es inconnu du lodestone",
 				body: [
 					"Je n'ai pas trouvé "+newPseudo+" "+nomIG+"@"+monde+" sur le Lodestone de FF14",
@@ -41,7 +43,7 @@
 				trailer: "si cette erreur persiste, contacte Kikiadoc sur discord"
 			})
 		if (ret.status!=200)
-			return infoPopup({
+			return displayInfo({
 				titre:"Erreur d'accès sur le lodestone",
 				body: [
 					"Je ne peux pas vérifier ton existance sur le lodestone de FF14",
@@ -59,14 +61,14 @@
 		addNotification("Création de ta clé de crypto elliptique...","green",3)
 		let jwkPublicKey = await crypoCreateKeyPair()
 		if (! jwkPublicKey )
-			return infoPopup({
+			return displayInfo({
 				titre: "ATTENTION erreur GRAVE",
 				back:"rouge",
-				body: "Génération de la clé de crypto elliptique impossible",
+				body:["Génération de la clé de crypto elliptique impossible"],
 				trailer:"Contacte Kikiadoc"
 			})
 		addNotification("Enregistrement de ton perso sur le server...","green",3)
-		// propositon du pseudo au serveur sans attendre le WS
+		// propositon du pseudo au serveur sans attendre le WS car disable actuellement
 		ret = await apiCall("/pseudos","PUT",
 			{pseudo: newPseudo, nom: nomIG, monde: monde, ff14Id: ff14Id, jwkPublicKey: jwkPublicKey},
 			true
@@ -74,23 +76,23 @@
 		if (ret.status==200) {
 			addNotification(ret.o.pseudo+" enregistré");
  			storeIt("pseudo",ret.o.pseudo)
-			pseudo=ret.o.pseudo;
 			if (newPseudo!=ret.o.pseudo)
-				infoPopup({
+				displayInfo({
 					titre: "Note bien ton pseudo "+ret.o.pseudo,
-					body: "Le pseudo "+newPseudo+" est déjà attribué, je t'ai donc assigné le pseudo "+ret.o.pseudo
+					body:["Le pseudo "+newPseudo+" est déjà attribué, je t'ai donc assigné le pseudo "+ret.o.pseudo]
 				})
+			pseudo=ret.o.pseudo
 		}
 		else if (ret.status==403) {
-			infoPopup({
+			displayInfo({
 				titre: "Contacte Kikiadoc sur Discord",
-				body: "Un joueur identique existe déjà dans mon Grimoire de Sécurité, tu as peut-être effacé les données de ton appareil ou changé d'appareil",
+				body: ["Un joueur identique existe déjà dans mon Grimoire de Sécurité, tu as peut-être effacé les données de ton appareil ou changé d'appareil"],
 				trailer: "Impossible d'enregistrer ton pseudo"
 			})
 		}
 		else {
 			addNotification(ret.erreur+"("+ret.status+")","red",60 );
-			infoPopup({
+			displayInfo({
 				titre:"ATTENTION",
 				body: [
 				 "il y a eu un soucis lors de l'enregistrement de ton Pseudo",
@@ -110,10 +112,10 @@
 	<p>Je suis la Grande Peluche Oracle Des Savoirs du Bois Bandé.</p>
 	<div>Pour participer, tu dois m'indiquer EXACTEMENT ton prénom, nom et monde InGame:</div>
 	<div>
-		<label><input type="text" placeholder="prénomIG" id="pseudoRequest" maxlength=15></label>
-		<label><input type="text" placeholder="nomIG" id="nomRequest" maxlength=15></label>
+		<input type="text" placeholder="prénomIG" id="pseudoRequest" maxlength=15>
+		<input type="text" placeholder="nomIG" id="nomRequest" maxlength=15>
 		<select id="mondeRequest">{#each GBLCONST.MONDES as m}<option>{m}</option>{/each}</select>
-		<label><input type="button" value="Valider ►" id="enregistrerPseudo" onclick={registerPseudo}></label>
+		<input type="button" value="Valider ►" id="enregistrerPseudo" onclick={registerPseudo}>
 	</div>
 	<Credits />
 </div>

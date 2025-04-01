@@ -233,19 +233,13 @@
 			Comme lors du précédent événement, 
 			Kikiadoc m'a confié la lourde mission d'être ton Game Master Numérique.
 			<div class="br"></div>
-			<u>Alors, lit attentivement mes instructions</u>
-			<br/>
-			Même si tu as déjà participé à de précédents événements, il y a toujours
-			quelques nouveautés dans l'initiatique afin de découvrir de nouvelles fonctions
+			Même si tu as déjà participé à de précédents événements,
+			<u>lit attentivement mes instructions</u>:
+			Il y a toujours quelques nouveautés dans l'initiatique
+			afin de découvrir de nouvelles fonctions
 			du site, même si, en apparence, rien n'a changé.
 			<div class="br"></div>
 			Tu découvriras aussi le début de la trame épique de l'événement.
-			<div class="br"></div>
-			Lorsque, comme maintenant, je t'indique des éléménts du Lore,
-			tu auras souvent des boutons à la fin de mes explications.
-			Il te faudra choisir l'une des options proposées.
-			<br/>
-			Ici, il n'y en a qu'une: J'ai compris. Clique dessus!
 			<br/>
 			<Btn bind:refStep={epiqStep} step=2 val="J'ai compris" />
 			<div style="clear:both" class="br"></div>
@@ -361,7 +355,7 @@
 					<input type="button" onclick={audioFaible} value="Le son est trop faible" />
 					<input type="button" onclick={audioFort} value="Le son est trop fort" />
 					<Btn bind:refStep={epiqStep} step=15 val="C'est parfait" 
-							msg="N'oublie pas que tu peux toujours activer/désactiver l'ambiance sonore avec les boutons 🔊 ou 🔇, alors ne mute pas le site pour toujours recevoir les éléments sonores importants"	/>
+							msg="Tu peux toujours activer/désactiver l'ambiance sonore avec les boutons 🔊 ou 🔇, alors ne mute pas le site par d'autres moyens afin de toujours recevoir les éléments sonores importants"	/>
 				</div>
 				<div class="br"></div>
 			{/if}
@@ -489,13 +483,13 @@
 			Je tiens aussi à te présenter CheckSec, mon Tank Gardien. 
 			Il est en charge de notre cybersécurité.
 			<div class="br"></div>
-			Si tu provoques l'œuil de CheckSec, il n'a qu'une réponse:
-			Il te bannit dès que ton comportement n'est pas prévu.
+			Si tu attires l'œuil de CheckSec, il te bannit instantanement.
 			<div class="br"></div>
-			<u>Si tu as prévu de partager ta connexion Internet avec plus d'un autre joueur</u>,
-			contacte Kikiadoc immédiatement Kikiadoc pour qu'il modifie les seuils de sécurité.
-			<br/>
-			Si lors d'un mini jeu ou d'un événement, le site ne répond pas, c'est probablement parce que:
+			<u>Si tu as prévu de partager ta connexion Internet avec d'autres joueurs</u>,
+			indiques-le à Kikiadoc.
+			<div class="br"></div>
+			Si le site ne répond pas (voir le bas de l'image d'illustration),
+			c'est probablement parce que:
 			<br/>
 			➤ Tu n'as pas respecté la navigation prévue sur le site
 			(possible avec un VPN moisi, un antivirus moisi ou si tu n'utilises pas uniquement l'URL d'accès au site)
@@ -543,7 +537,16 @@
 				Elle n'est, hélas, utilisée que par moins de 3% des sites majeurs du web
 				(et encore moins pour l'ensemble du web)
 				car cette technique, éprouvée, est incompatible avec les sites qui utilisent
-				des liens publicitaires incontrôlables et sources d'innombrables malwares.
+				des liens publicitaires incontrôlables (entre autres), sources d'innombrables malwares.
+				<br/>
+				La technique de cache utilisée par MétaCache 
+				est un standard du Web depuis plusieurs années.
+				C'est le 
+				<a href="https://developer.mozilla.org/en-US/docs/Web/API/Cache" target="_blank">
+					Cache API
+				</a>.
+				Métacache ne s'active que pour certains gros fichiers, en particulier
+				les modèles 3D.
 			</div>
 			<div style="clear:both" class="br"></div>
 		</div>
@@ -634,7 +637,8 @@
 	{#if epiqStep==72}
 		<div class="reveal" use:scrollPageToTop>
 			<img class="parchemin" src={urlCdn+"multijoueurs.jpg"} style="width:30%; float:right" alt="" />
-			Faire une page pour communaute ou linkshell intermondes --  A ETUDIER
+			Faire une page pour communaute ou linkshell intermondes ou améliorer le chat du site
+			--  A ETUDIER
 			<br/>
 			<Btn bind:refStep={epiqStep} step=78 val="next" />
 			<div style="clear:both" class="br"></div>

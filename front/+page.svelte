@@ -26,6 +26,7 @@
 	import Info from './Info.svelte'
 	import Radio from './Radio.svelte'
 	import Phome from './Phome.svelte'
+	import Pauth from './Pauth.svelte'
 	import Padmin from './Padmin.svelte'
 	import Pipa from './Pipa.svelte'
 	
@@ -43,7 +44,7 @@
 		$effect(() => audioSetup(GBLSTATE.audioVolume,GBLSTATE.audioBack,GBLSTATE.audioAmbiance,GBLSTATE.audioTTS) )
 		// gestion smartphone		
 		window.screen?.orientation?.addEventListener("change", orientationChange);
-		visibilityChange()
+		visibilityChange(GBLSTATE)
 		startCountDown()
 		GBLSTATE.swcReady = swcSetup() // init le dialogue avec le service worker controller
 		console.log('** Mount Done **')
@@ -349,7 +350,9 @@
 	.video { border: 0.2em solid white; height: 100%; max-height: 100%; width: 100%; max-width: 100%;  }
 
 
+	/* Styles partagé */
 	:global(input) {	font-family: "Times New Roman";	font-size: 0.8em; cursor: pointer	}
+	:global(select) {	font-family: "Times New Roman";	font-size: 0.8em; cursor: pointer	}
 	:global(.blinkFlag) {
 		color: white; outline: 2px solid white; border-radius: 25%; cursor: pointer;
 		animation-duration: 2s;
@@ -358,7 +361,6 @@
 	}
 	@keyframes blinkFlagFrames { from { outline-color: black; }	to { outline-color: white; }	}
 
-	/* Elt partagé */
 	div :global(.adminCadre) { border: 2px solid red; background-color: black; margin: 2px }
 	div :global(.papier) {
 		background-color: grey; background-position: center;
@@ -615,12 +617,14 @@
 						</label>
 						{#if !GBLSTATE.audioBack}
 							<div class="info">
-								Par défaut, AudioBlaster coupe le son si la fenêtre de ton navigateur est masquée.
+								AudioBlaster coupe le son si la fenêtre de ton navigateur est masquée.
 								Cela ne fonctionne pas automatiquement si tu utilises le site sur smartphone
-								ou avec plusieurs écrans sur PC.
-								Dans ce cas, sur windows, minimise la fenêtre de ton navigateur, 
-								sur smartphone, repasse sur l'écran d'accueil.
+								ou avec plusieurs écrans.
+								Pour couper l'ambiance, sur windows, minimise la fenêtre de ton navigateur, 
+								et sur smartphone, repasse sur l'écran d'accueil.
 							</div>
+						{:else}	
+							<div class="info">L'ambance sonore continuera même si ta fenêtre de navigateur est masquée</div>
 						{/if}
 					</div>
 					<hr />
