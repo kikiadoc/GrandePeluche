@@ -1,6 +1,6 @@
 
 // Filtrage d'accès vers Cloudfront https://cdn.adhoc.click
-// pour éviter les scans russes, chinois et turques depuis des ips non authorisées
+// suite aux scans russes, chinois et turques depuis des ips non authorisées
 
 function handler(event) {
 	var referer = event?.request?.headers?.referer?.value
