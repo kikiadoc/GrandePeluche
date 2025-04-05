@@ -203,7 +203,7 @@ async function discordPostMessagePrive(usrPrmId,chanPrmId,texte) {
 		const postBody = { recipient_id: usrId }
 		let ret = await gbl.apiCall(discordUrl,'POST',postBody,discordHeaders);
 		console.log("Creation DM avec usrId:",usrId," ret=", ret.id)
-		if (ret.status != 200) console.log("discordPostMessagePrive, get DM chann ERROR ret=:",ret);
+		if (ret.status != 200) return console.log("discordPostMessagePrive, get DM chann ERROR ret=:",ret), null
 		chanId = ret.id;
 	}
 	//
@@ -218,6 +218,14 @@ async function discordPostMessagePrive(usrPrmId,chanPrmId,texte) {
 // Post un message prive direct Kikiadoc
 async function discordMpKiki(texte) {
 	return await discordPostMessagePrive(idKikiadoc,null,texte);
+}
+// Post un message prive vers un pseudo
+async function discordMpPseudo(pseudo,texte) {
+	const pseudoDesc = pseudos.get(pseudo)
+	if ( ! pseudoDesc?.ff14Id) return console.warn("discordMpPseudo bad pseudo ou ff14Id:",pseudo), null
+	const discordDesc = getDiscordByFf14Id(pseudoDesc.ff14Id)
+	if (!discordDesc) return console.warn("discordMpPseudo bad discordDesc pour pseudo:",pseudo), null
+	return await discordPostMessagePrive(discordDesc.usrId,null,texte)
 }
 // update un message de la GP existant
 async function discordUpdateMessage(chanId,msgId,texte, components, noSignature) {
@@ -1069,6 +1077,7 @@ exports.httpCallback = async (req, res, method, reqPaths, body, pseudo, pwd) => 
 
 
 exports.mpKiki = discordMpKiki
+exports.mpPseudo = discordMpPseudo
 exports.postMessage = discordPostMessage;
 exports.getDiscordByFf14Id = getDiscordByFf14Id
 

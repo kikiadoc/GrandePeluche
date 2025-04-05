@@ -1,23 +1,27 @@
 <script>
 	const SVELTEVERSION=null // SERA MODIFIE LORS DU COMMIT EN STAGING OU PROD ne pas changer
 	const CLIENTVERSION=null  // SERA MODIFIE LORS DU COMMIT EN STAGING OU PROD ne pas changer
+	const GLOBALSTARTDTH=Date.now() // dth de démarrage des traitements
+	console.log('CLIENT START id=',GLOBALSTARTDTH, "***********************************************************************")
 
 	// divers caractères pour copier/coller : ➤▲⏸◀▶▼⏬🔎📽❓✅🆘⚠️⬇️✅➥📷εΔ⛭👉😈ⓘ(ℹ)🛈႞⒤⇛⏳
-	// ne fonctionne pas sur android 🛈 utiliser (ℹ) 
+	// ne fonctionne pas sur android 🛈 utiliser (ℹ)
 
 	//////////////////////////////////////////
 	// Imports
 	//////////////////////////////////////////
 	import { onMount, onDestroy } from 'svelte'
 	import {
-		loadIt, storeIt, isProd, swcSetup, urlCdn,
-		addNotification, displayInfo, startCountDown, stopCountDown, scrollNodeToBottom, 
+		loadIt, storeIt, isProd, swcSetup, urlCdn, urlRaw,
+		addNotification, displayInfo, displayError,
+		startCountDown, stopCountDown, scrollNodeToBottom, 
 		connectToServer, disconnectFromServer, apiCall,	getDynMetro, getEpsilon,
 		hhmmss, hhmmssms, geUtcMsFrom, mmssms,
 		orientationChange, visibilityChange, startBlinkGlobal, markClick, firstClick,
 		playMusic, playDing, playVideo, closeVideo, audioInit, audioSetup, wsMedia,
 		tts, tryTTS,
-		securitypolicyviolation, metaCacheList, metaCacheClear, swcGetWaitingIds
+		securitypolicyviolation, generateSecurityAlert,
+		metaCacheList, metaCacheClear, swcGetWaitingIds
 	} from "./common.js";
 	
 	import { G, unPatchConsole } from "./privacy.js"
@@ -34,29 +38,33 @@
 	import P405 from './P405.svelte' // Kiki's Event X - initiatique
 
 	//////////////////////////////////////////
-	// Gestion des reload, refresh etc..
+	// Gestion du cycle de vie
 	//////////////////////////////////////////
 	onMount(() => {
-		console.log('** Mount **')
-		// play audio sur first click
+		console.log('** Mount ** id=',GLOBALSTARTDTH)
+		// unlock play media sur first click
 		document.addEventListener("click", firstClick, { once: true })
 		audioInit(GBLSTATE)
+		// audiosetup par call et ensuite via un effect, ca fait redondant, mais nop, possible
+		// d'avoir un start média apres le mount et avant l'effect
+		// audioresume, playVideo gere les appels doublons
+		audioSetup(GBLSTATE.audioVolume,GBLSTATE.audioBack,GBLSTATE.audioAmbiance,GBLSTATE.audioTTS)
 		$effect(() => audioSetup(GBLSTATE.audioVolume,GBLSTATE.audioBack,GBLSTATE.audioAmbiance,GBLSTATE.audioTTS) )
 		// gestion smartphone		
 		window.screen?.orientation?.addEventListener("change", orientationChange);
-		visibilityChange(GBLSTATE)
+		visibilityChange()
 		startCountDown()
 		GBLSTATE.swcReady = swcSetup() // init le dialogue avec le service worker controller
-		console.log('** Mount Done **')
+		console.log('** Mount Ok ** id=',GLOBALSTARTDTH)
 	});
 	onDestroy(() => {
-		console.log('** UnMount **')
+		console.log('** UnMount ** id=',GLOBALSTARTDTH)
 		disconnectFromServer()
 		stopCountDown()
 		document.removeEventListener("click", firstClick, { once: true })
 		window.screen?.orientation?.removeEventListener("change", orientationChange)
 		unPatchConsole()
-		console.log('** UnMount Done **')
+		console.log('** UnMount Ok ** id=',GLOBALSTARTDTH)
 	});
 
 	// peut être appelé après l'identification (effect) ou si dejà identifié (loadit)
@@ -68,12 +76,11 @@
 			page = 0; // force login car !pseudo
 	}
 	function initAfterKeyValidation() {
-		if (!GBLSTATE.audioAmbiance) addNotification("Musique d'ambiance désactivée, clic sur 🔇 en haut à droite pour la réactiver","orange",5)
 		// si la page n'est pas dans la desription, reset la page a 0
 		if (page!=0 && !pageList.find( (e) => { return (e.n == page) } ) ) page=0
 	}
 
-	//
+	/////////////////////////////////////////////////////////////////////
 	// Configuration générale
 	//
 	let page = $state(loadIt('page',0))
@@ -89,10 +96,11 @@
 	let pseudoGenre = $state(loadIt('pseudoGenre',null))
 	$effect(() => storeIt('pseudoGenre',pseudoGenre))
 	// affichage popup	
-	let dspPseudo=$state(false) // affichage Popup pseudo
-	let dspMultiPopup=$state(false)
+	let dspPseudo=$state(null) // affichage Popup pseudo
+	let dspMultiPopup=$state(null)
 	let dspInfo = $state(null)
 	let dspObject = $state(null)
+	let dspError = $state(null)
 	let dspAdminMsg = $state(null)
 
 	/////////////////////////////////////////////////////////////////////
@@ -193,7 +201,7 @@
 	}
 
 	/////////////////////////////////////////////////////////////////////
-	// Popup mutijoueurs et gestion du chat
+	// Popup mutijoueurs et gestion du chat 
 	/////////////////////////////////////////////////////////////////////
 	let chatMsgList=$state([]) // liste des messages recus
 	let chatFlag=$state(false) // indique le blink du flag de chat
@@ -253,15 +261,68 @@
 			addNotification(e.gpNotif,e.gpColor,e.gpTimeout,e.gpDing)	
 		}
 	}
-	
+	function addStackTrace(body,eltWithStack) {
+		if (eltWithStack?.stack) 
+			body.push("StackTrace:", ... eltWithStack.stack?.split('\n'))
+		else
+			body.push("Pas de stackTrace")
+	}
+	function globalHdlError(e) {
+		console.log(">>>>>>>> Erreur DEB e:", e)
+		let bld = {
+			titre:"FAIT UN SCREEN + MP KIKIADOC", trailer:"Fait un screen et contacte Kikiadoc",
+			back:"rouge",
+			body: ["Type: onerror","Message: "+e.message]
+		}
+		bld.body.push("Erreur:"+e.toString())
+		// Ajoute la reason 
+		if (e.reason) {
+			bld.body.push("Raison.msg: "+e.reason.message)
+			bld.body.push("Raison.name: "+e.reason.name)
+			bld.body.push("Raison.code: "+e.reason.code)
+		}
+		// Ajoute le staktrace
+		addStackTrace(bld.body,e.error)
+		displayError(bld)
+		console.log(">>>>>>>> Erreur FIN e:", e)
+	}
+	function globalHdlRejection(e) {
+		console.log(">>>>>>>> Rejection DEB e:",e,e?.reason)
+		let bld = {
+			titre:"FAIT UN SCREEN + MP KIKIADOC", trailer:"Fait un screen et contacte Kikiadoc",
+			back:"rouge",
+			body: ["Type: onunhandledrejection", "Raw: "+e?.reason, "Message: "+e?.reason.message]
+		}
+		addStackTrace(bld.body,e.error)
+		displayError(bld)
+		console.log(">>>>>>>> Rejection FIN e:",e,e?.reason)
+	}
+
+	/* debug
+	function testError() {
+		console.log('>> testError')
+		playVideo("pipo")
+		let e= new Error('pipo')
+		e.name="kikiTest"
+		// throw e
+	}
+	setTimeout(()=>{
+		testError()
+	},5000)
+	*/
 </script>
 
 <svelte:document 
 	onvisibilitychange={visibilityChange}
 	ondspObject={(e) => dspObject=e.detail}
 	ondspInfo={(e) => dspInfo=e.detail}
+	ondspError={(e) => dspError=e.detail}
 	onclick={(e)=>bubbleClick(e)}
 	onsecuritypolicyviolation={(e)=>securitypolicyviolation(e)}
+/>
+<svelte:window
+	onerror={globalHdlError}
+	onunhandledrejection={globalHdlRejection}
 />
 
 <style>
@@ -683,7 +744,7 @@
 								{#await performance.measureUserAgentSpecificMemory()}
 									<div>Analyse en cours...</div>
 								{:then e}
-									<div role="button" onclick={dspObject=e} style="cursor: pointer">
+									<div role="button" onclick={()=>dspObject=e} style="cursor: pointer">
 										Usage:
 										{(e.bytes/(1024*1024)).toFixed(2)}Mo
 										<sup>(i)</sup>
@@ -723,6 +784,25 @@
 								DeepCheckSec n'est pas active, contacte Kikiadoc
 							</div>
 						{/if}
+						<div style="font-size: 0.8em; color:red">
+							<div class="infoLink" role="button" onclick={markClick}
+								gpHelp="En cliquant sur 'Provoquer...',
+												je vais provoquer de vraies tentatives de hack du site.
+												Cela doit déclencher DeepCheckSec.
+												Si il fonctionne correctement, tu verras un message d'alerte.
+												Evidemment, cette attaque est réelle, mais sans risque.">
+								Tester le fonctionnement de DeepCheckSec
+							</div>
+							<input type="button" value="Provoquer script extern"
+								onclick={(e)=>confirm("Je vais faire provoquer un test de cyber-sécurité du site en conditions réelles mais sans risque, tu dois entendre une alerte stridente de 20 secondes, et tu devras peut-être recharger le site par F5. OK ?")
+												 && generateSecurityAlert(1)} />
+							<input type="button" value="Provoquer script inline"
+								onclick={(e)=>confirm("Je vais faire provoquer un test de cyber-sécurité du site en conditions réelles mais sans risque, tu dois entendre une alerte stridente de 20 secondes, et tu devras peut-être recharger le site par F5. OK ?")
+												 && generateSecurityAlert(2)} />
+							<input type="button" value="Provoquer media"
+								onclick={(e)=>confirm("Je vais faire provoquer un test de cyber-sécurité du site en conditions réelles mais sans risque, tu dois entendre une alerte stridente de 20 secondes, et tu devras peut-être recharger le site par F5. OK ?")
+												 && generateSecurityAlert(3)} />
+						</div>
 						<hr />
 						<div style="font-size: 0.8em">
 							{#if GBLSTATE.swcReady}
@@ -801,6 +881,10 @@
 				</div>
 			</div>
 		</div>
+	{/if}
+	
+	{#if dspError}
+		<Info bind:dspInfo={dspError}/>
 	{/if}
 	
 	{#if dspAdminMsg}

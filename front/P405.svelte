@@ -240,6 +240,21 @@
 			du site, même si, en apparence, rien n'a changé.
 			<div class="br"></div>
 			Tu découvriras aussi le début de la trame épique de l'événement.
+			<div class="br"></div>
+			N'hésite pas à cliquer sur les liens marqués d'une
+			<a href="https://fr.wikipedia.org/wiki/Hyperlien" target="_blank">loupe</a>
+			d'un <span class="imgLink" gpImg="ff-7/kiki-1.png" gpImgClass="img100">appareil photo</span>
+			d'un <span class="videoLink" gpVideo={VIDEO_PIPO}>projecteur vidéo</span>,
+			ou d'un <span class="infoLink" gpHelp="Exemple de message d'information">signe d'information</span>,
+			ça peut être une surprise ou une explication importante! 
+			<div class="br"></div>
+			Prends le temps de lire le texte du Lore, regarder les vidéos en intégralité,
+			et même les vidéos qui peuvent poper au milieu d'un challenge, 
+			<u>celà n'impacte jamais tes résultats</u>, au contraire, 
+			c'est parfois une source d'info pour aller plus vite!
+			<div class="br"></div>
+			A tout moment, tu peux cliquer sur "Revoir le lore" en haut de page,
+			tu ne perdras aucune donnée saisie ou Haut Fait réalisé.
 			<br/>
 			<Btn bind:refStep={epiqStep} step=2 val="J'ai compris" />
 			<div style="clear:both" class="br"></div>
@@ -251,7 +266,7 @@
 		<div class="reveal" use:scrollPageToTop>
 			<img class="parchemin" src={urlCdn+"gamemaster.jpg"} style="width:20%; float:right" alt="" />
 			<div>
-				Je vais adapter nos intéractions en fonction de ton genre:
+				J'adapte nos intéractions en fonction de ton genre:
 			</div>
 			<div class="infoLink" gpHelp="Ton genre est important, mais est une information sensible. Cette information reste uniquement sur ton appareil. Tu peux la modifier en cliquant sur ton pseudo en haut à droite du site. Je l'utilise pour adapter nos intéractions en post-traitement sur ton équipement. Ni Kikiadoc, ni moi en avons connaissance. Elle n'est jamais stockée par le server">
 				Ton genre actuel est {genreLbl}
@@ -331,19 +346,17 @@
 				<span style="cursor: pointer" onclick={markClick} gpHelp="Regarde en bas de la page">
 					les vidéos<sup>(i)</sup>.
 				</span>
+				Je vais t'aider à bien le paramétrer.
 			</div>
-			<div class="br"></div>
-			Je vais t'aider à bien le paramétrer.
 			<div class="br"></div>
 			A tout moment, en <u>cliquant sur 🔊 ou 🔇, en haut à droite de ton écran</u>,
 			tu peux activer ou désactiver l'ambiance sonore
 			tout en laissant les autres flux actifs
-			car ils peuvent être sources d'informations importantes.
-			<div class="br"></div>
+			car ils sont sources d'informations importantes.
 			<div class="br"></div>
 			{#if GBLSTATE.audioAmbiance}
-				Pour modifier les paramètres d'AudioBlaster, <span class="blinkMsg">clique sur ton pseudo en haut à droite de ton écran</span>.
-				Des conseils pour règler les paramètres te seront prodigués.
+				A tout moment, tu peux aussi modifier les réglages d'AudioBlaster
+				<u>en cliquant sur ton pseudo en haut à droite de ton écran</u>.
 			{:else}
 				<span style="color:red" class="blinkMsg">Active l'ambiance sonore en cliquant sur 🔇 afin de parametrer AudioBlaster</span>.
 			{/if}
@@ -360,7 +373,7 @@
 				<div class="br"></div>
 			{/if}
 			<div class="info">
-				(*) Lors de l'affichage de vidéos, tu gardes la possibilité de te positionner, de faire pause,
+				<sup>(i)</sup>Lors de l'affichage de vidéos, tu gardes la possibilité de te positionner, de faire pause,
 				ou d'en modifier le volume. Toutefois, ces modifications ne s'appliquent qu'à la vidéo en cours.
 			</div>
 			<div style="clear:both" class="br"></div>
@@ -377,9 +390,11 @@
 				<input type="button" value="Je veux tester ta voix"
 					onclick={(e)=>{tts({o:{statique:true, file:"mavoix.mp3"}});addNotification("Test TTS en cours...","green",3) }} />
 			</div>
-			<div class="blinkMsg">
-				Pour régler le volume de ma voix,
-				clique sur ton pseudo en haut à droite de ton écran..
+			<div>
+				<u>
+					Pour régler le volume de ma voix,
+					clique sur ton pseudo en haut à droite de ton écran..
+				</u>
 			</div>
 			<Btn val="Je n'entend pas bien ta voix"
 				msg="Monte le volume de ma voix à 100% et baisse celui de l'ambiance sonore."	/>
@@ -394,32 +409,140 @@
 		{@const epsilon=Math.abs(getEpsilon())}
 		<div class="reveal" use:scrollPageToTop>
 			<img class="parchemin" src={urlCdn+"lore.jpg"} style="width:20%; float:right" alt="" />
-			N'hésite pas à cliquer sur les liens marqués d'une
-			<a href="https://fr.wikipedia.org/wiki/Hyperlien" target="_blank">loupe</a>
-			d'un <span class="imgLink" gpImg="ff-7/kiki-1.png" gpImgClass="img100">appareil photo</span>
-			d'un <span class="videoLink" gpVideo={VIDEO_PIPO}>projecteur vidéo</span>,
-			ou d'un <span class="infoLink" gpHelp="Exemple de message d'information">signe d'information</span>,
-			ça peut être une surprise ou une explication importante! 
-			<div class="br"></div>
-			Prendre le temps de lire le texte du Lore, regarder les vidéos en intégralité,
-			et même les vidéos qui peuvent poper au milieu d'un challenge, 
-			<u>celà n'impacte jamais tes résultats</u>, et est parfois une source d'info pour aller plus vite!
-			<div class="br"></div>
-			A tout moment, tu peux cliquer sur "Revoir le lore" en haut de page,
-			tu ne perdras aucune donnée saisie ou Haut Fait réalisé.
+			La charge de Game Master Numérique ne peut se maîtriser seule:
+			Je m'appuie sur une équipe de Peluches émérites:
+			<br/>
+			➥ AudioBlaster, LogicServer, SyncServer, Métacache, CheckSec, DeepCheckSec
+			<br/>
+			et deux "moteurs" réputés:
+			<br/>
+			➥ Svelte et Babylon
+			<br/>
+			<u>En cas de soucis, recharge la page
+			(F5 su PC, touch top & swipe down sur smartphone)</u>
+			tu ne perdras pas ton avancement dans les challenges et
+			retrouvera ta situation.
 			<div class="br"></div>
 			<Btn bind:refStep={epiqStep} step=25 val="J'ai compris"
 				msg="Lire attentivement les popups est TRES IMPORTANT. Note bien cette valeur, tu en auras besoin plus tard: {saisies.aleaReq}"
 				/>
+			<div class="info">
+				➥AudioBlaster gère les médias (mixage son, vidéos, synthèse vocale...)
+				<br/>
+				➥LogicServer gère la logique des challenges.
+				<br/>
+				➥SyncServer s'assure de la synchronisation en temps-réel de l'ensemble des participants.
+				<br/>
+				➥Métacache optimise ta bande passante, en particuler lors des scènes en 3D.
+				<br/>
+				➥CheckSec est en charge de la cybersécurité du server.
+				<br/>
+				➥DeepCheckSec est en charge de la cybersécurité de ton navigateur.
+				<br/>
+				➥<a href="https://fr.wikipedia.org/wiki/Svelte" target="_blank">Svelte</a>
+				assure le rendu et la réactivité des pages web
+				<br/>
+				➥<a href="https://fr.wikipedia.org/wiki/Babylon.js" target="_blank">Babylon</a>
+				assure le rendu des scènes en 3D.
+			</div>
 			<div style="clear:both" class="br"></div>
 		</div>
 	{/if}
 	
-	{#if epiqStep==25 && novices}
+	{#if epiqStep==25}
+		<div class="reveal" use:scrollPageToTop>
+			<img class="parchemin" src={urlCdn+"ff-7/checksec.png"} style="width:30%; float:right" alt="" />
+			Un  
+			<a href="https://fr.wikipedia.org/wiki/Responsable_de_la_s%C3%A9curit%C3%A9_des_syst%C3%A8mes_d%27information" target="_blank">
+				RSSI
+			</a>, collègue de Kikiadoc, a dit un jour:
+			<i>En cybersécurité, il faut faire au mieux et s'attendre au pire</i>.
+			<div class="br"></div>
+			C'est pourquoi je veux te présenter plus en détail 
+			CheckSec et DeepCheckSec.
+			<div class="br"></div>
+			CheckSec, mon Tank Gardien, est en charge de la cybersécurité du server.
+			Il manie le Marteau du Bannissement et l'utilise plusieurs fois par jour contre
+			des sites malveillants.
+			<br/>
+			➥Il surveille en temps réel les connexions vers le serveur.
+			<br/>
+			⚠️Si vous êtes plusieurs à partager ta connexion Internet, indique le à Kikiadoc.
+			Normalement à 2, ca doit passer, mais à 3 ça bloque.
+			<br/>
+			➥Il vérifie la sémantique de toutes les requêtes vers le serveur.
+			Une seule requête invalide entraine le bannissement immédiat.
+			<br/>
+			⚠️Accède au site selon l'URL d'accès <u>uniquement</u>: {document.location}
+			<br/>
+			➥Son marteau est de grande taille, il bannit par bloc de 64 adresses IP au minimum.
+			<br/>
+			⚠️Si tu utilises un VPN moisi, ou ton IP est proche d'un site malveillant,
+			tu risques d'être un dommage colatéral.
+			<div class="br"></div>
+			<Btn bind:refStep={epiqStep} step=30 val="Je ferai attention" />
+			<div style="clear:both" class="br"></div>
+		</div>
+	{/if}
+	
+	{#if epiqStep==30}
+		<div class="reveal" use:scrollPageToTop>
+			<img class="parchemin" src={urlCdn+"ff-7/checksec.png"} style="width:30%; float:right" alt="" />
+			DeepCheckSec est mon Erudit furtif.
+			<br/>
+			Il applique ma
+			<a href="https://developer.mozilla.org/fr/docs/Web/HTTP/Guides/CSP" target="_blank">
+				stratégie de sécurité du contenu
+			</a>
+			directement dans ton navigateur. Il peut ainsi détecter un comportement déviant.
+			<br/>
+			Dans ce cas, l'accès à la ressource inappropriée est bloqué,
+			il t'alerte par un message dans ton navigateur et sur Discord.
+			<br/>
+			➥Un antivirus moisi, un VPN moisi peuvent provoquer un alerte de DeepCheckSec
+			s'ils bidouillent ta navigation.
+			<br/>
+			⚠️Utilise un antivirus (même gratuit) fiable et bien conçu.
+			Tu peux éventuellement utiliser un VPN <u>payant</u>.
+			<div class="br"/>
+			Tu peux examiner l'état de mes assistants en cliquant sur ton pseudo
+			en haut à droite de ton écran.
+			<br/>
+			Tu peux aussi consulter ma
+			<a href="https://filedn.eu/lxYwBeV7fws8lvi48b3a3TH/securite/index.html" target="_blank">
+				page d'assistance
+			</a>.
+			Elle te permet de vérifier si CheckSec t'a bloqué
+			et comment faire si tu changes ton pseudo sur FF14
+			ou si tu changes d'équipement pour accéder au site.
+			<div class="br"></div>
+			<Btn bind:refStep={epiqStep} step=35 val="J'ai regardé la page d'assistance" />
+			<div class="info">
+				AUCUN antivirus ou VPN ne garantit réellement la non collecte de données personnelles,
+				quoiqu'ils en disent.
+				Les VPNs gratuit ne vivent que pour et par ça.
+				<u>Il ne faut JAMAIS utiliser un VPN gratuit</u>.
+				<br/>
+				Kikiadoc utilise AVAST comme antivirus et aucun VPN sur 
+				ses équipements personnels (PC fixe, portable, tablettes et smartphones).
+				Il considère, depuis plus de 20 ans, que Kaspersky est une mauvaise solution,
+				et que Norton est une usine à gaz s'inscrutant telle une horde de morpions.
+				<br/>
+				Il utilise de préférence Firefox sinon Chrome. 
+				Ublock Origin sur Firefox est activé par défaut.
+				Par éthique, les pubs sont activées sur les
+				sites ayant une vraie valeur et dont les pubs ne sont pas envahissantes.
+				Les sites putapubs ou putaclics sont bloqués. 
+			</div>
+			<div style="clear:both" class="br"></div>
+		</div>
+	{/if}
+
+	{#if epiqStep==35 && novices}
 		{@const epsilon=Math.abs(getEpsilon())}
 		<div class="reveal" use:scrollPageToTop>
 			<img class="parchemin" src={urlCdn+"lore.jpg"} style="width:20%; float:right" alt="" />
-			Tu vas participer à des challenges où le timing est important aussi
+			Tu vas participer à des challenges où le timing est important:
 			j'applique une "correction temporelle" pour rendre équitable
 			les challenges entre tout le monde.
 			<br/>
@@ -437,7 +560,7 @@
 			Si tu fais cela, tu perdras ta clé privée(***), tes données saisies et tu ne pourras pas te reconnecter.
 			Il faudra alors contacter Kikiadoc sur Discord.
 			<div class="br"></div>
-			<Btn bind:refStep={epiqStep} step=30 val="J'ai compris" />
+			<Btn bind:refStep={epiqStep} step=40 val="J'ai compris" />
 			<div style="font-size:0.8em">
 				(*) la correction temporelle est l'écart entre l'horloge du serveur et celle de ton équipement.
 				Cet écart est compensé par les algorithmes utilisés dans la limite du raisonnable,
@@ -458,116 +581,7 @@
 		</div>
 	{/if}
 		
-	{#if epiqStep==30}
-		<div class="reveal" use:scrollPageToTop>
-			<img class="parchemin" src={urlCdn+"multijoueurs.jpg"} style="width:30%; float:right" alt="" />
-			Dans le bandeau supérieur, <u>ton pseudo et l'indicateur "multijoueurs"
-			doivent toujours être verts</u>.
-			Cela indique que tu es bien connect{G(pseudoGenre,"é","ée")}
-			à mes assistants LogicServer et SyncServer.
-			Tu peux alors participer aux challenges, qu'ils soient en solo,
-			en compétition ou en coopération temps réel.
-			<div class="br"></div>
-			Si pour une quelconque raison, ils deviennent rouge, recharge la page.
-			<br/>
-			Si cela ne suffit pas, contacte immédiatement Kikiadoc sur Discord.
-			<br/>
-			<Btn bind:refStep={epiqStep} step=35 val="J'ai compris" />
-			<div style="clear:both" class="br"></div>
-		</div>
-	{/if}
-	
-	{#if epiqStep==35}
-		<div class="reveal" use:scrollPageToTop>
-			<img class="parchemin" src={urlCdn+"ff-7/checksec.png"} style="width:30%; float:right" alt="" />
-			Je tiens aussi à te présenter CheckSec, mon Tank Gardien. 
-			Il est en charge de notre cybersécurité.
-			<div class="br"></div>
-			Si tu attires l'œuil de CheckSec, il te bannit instantanement.
-			<div class="br"></div>
-			<u>Si tu as prévu de partager ta connexion Internet avec d'autres joueurs</u>,
-			indiques-le à Kikiadoc.
-			<div class="br"></div>
-			Si le site ne répond pas (voir le bas de l'image d'illustration),
-			c'est probablement parce que:
-			<br/>
-			➤ Tu n'as pas respecté la navigation prévue sur le site
-			(possible avec un VPN moisi, un antivirus moisi ou si tu n'utilises pas uniquement l'URL d'accès au site)
-			<br/>
-			➤ Ton IP est "proche" d'une IP malveillante
-			(fréquent en utilisant un VPN)
-			<div class="br"></div>
-			<Btn bind:refStep={epiqStep} step=36 val="J'ai compris" />
-			<div class="info">
-				CheckSec vérifie en temps réel le nombre de connexions actives vers le site.
-				<u>Si vous êtes plusieurs à partager ta connexion Internet</u>,
-				indique le à Kikiadoc.
-				Normalement à 2, ca doit passer, mais à 3 ça bloque et
-				tu risques le bannissement automatique.
-			</div>
-			<div class="info">
-				CheckSec vérifie aussi en temps réel toutes les URL entrantes
-				et leurs sémantiques selon ton contexte.
-				<u>Ne pas respecter la sémantique prévue entraine un bannissement instantanné</u>.
-			</div>
-			<div style="clear:both" class="br"></div>
-		</div>
-	{/if}
-	{#if epiqStep==36}
-		<div class="reveal" use:scrollPageToTop>
-			<img class="parchemin" src={urlCdn+"ff-7/checksec.png"} style="width:30%; float:right" alt="" />
-			Si Checksec assure la sécurité coté serveur,
-			je télécharge aussi deux Peluches dans ton navigateur
-			pour assurer ta sécurité (DeepCheckSec) et l'optimisation de ta bande passante (MétaCache).
-			DeepCheckSec va vérifier en temps réel que
-			tous les accès Internet réalisés par ton navigateur sont bien prévalidés par Kikiadoc.
-			La seconde est MétaCache qui va optimiser tes téléchargements.
-			<br/>
-			Tu peux vérifier leur état en cliquant sur ton pseudo en haut à droite de ton écran
-			et en scrollant dans la popup.
-			<br/>
-			<Btn bind:refStep={epiqStep} step=38 val="J'ai compris" />
-			<div class="info">
-				La technique de sécurisation utilisée par DeepCheckSec 
-				est un standard du Web depuis plusieurs années.
-				C'est le 
-				<a href="https://developer.mozilla.org/fr/docs/Web/HTTP/Guides/CSP" target="_blank">
-					CSP, la stratégie de sécurité du contenu
-				</a>.
-				Elle n'est, hélas, utilisée que par moins de 3% des sites majeurs du web
-				(et encore moins pour l'ensemble du web)
-				car cette technique, éprouvée, est incompatible avec les sites qui utilisent
-				des liens publicitaires incontrôlables (entre autres), sources d'innombrables malwares.
-				<br/>
-				La technique de cache utilisée par MétaCache 
-				est un standard du Web depuis plusieurs années.
-				C'est le 
-				<a href="https://developer.mozilla.org/en-US/docs/Web/API/Cache" target="_blank">
-					Cache API
-				</a>.
-				Métacache ne s'active que pour certains gros fichiers, en particulier
-				les modèles 3D.
-			</div>
-			<div style="clear:both" class="br"></div>
-		</div>
-	{/if}
-	
-	{#if epiqStep==38}
-		<div class="reveal" use:scrollPageToTop>
-			<img class="parchemin" src={urlCdn+"ff-7/checksec.png"} style="width:30%; float:right" alt="" />
-			En cas de soucis technique, Kikiadoc te demandera de consulter la
-			<a href={urlRaw+'securite/index.html'} target="_blank">
-				page d'assistance
-			</a>
-			Jettes-y un coup d'œuil tout de suite, cela t'évitera le mode panique en cas de soucis:
-			Blocage par CheckSec, changement de nom IG, changement d'équipement etc...
-			<div class="br" />
-			<Btn bind:refStep={epiqStep} step=39 val="J'ai regardé la page" />
-			<div style="clear:both" class="br"></div>
-		</div>
-	{/if}
-	
-	{#if epiqStep==39}
+	{#if epiqStep==40}
 		<div class="reveal" use:scrollPageToTop>
 			<img class="parchemin" src={urlCdn+"lore.jpg"} style="width:30%; float:right" alt="" />
 			Lors des précédents événements, certains challenges en coopération temps réel ont été
@@ -580,7 +594,7 @@
 			je t'ai demandé de mémoriser lors d'un popup précédent de ce challenge initiatique.
 			<div class="br"/>
 			<input type="number" placeholder="nn" min=0 max=100 bind:value={saisies.alea} />
-			<Btn bind:refStep={epiqStep} step=40 ifFct={()=>saisies.alea==saisies.aleaReq} val="➤"
+			<Btn bind:refStep={epiqStep} step=50 ifFct={()=>saisies.alea==saisies.aleaReq} val="➤"
 				koMsg="Ce n'est pas la bonne valeur. Lire les popups est toujours important."/>
 			<br />
 			<Btn bind:refStep={epiqStep} step=0 val="Revoir le Lore en faisant attention aux popups"
@@ -589,23 +603,23 @@
 		</div>
 	{/if}
 	
-	{#if epiqStep==40}
+	{#if epiqStep==50}
 		<div class="reveal" use:scrollPageToTop>
 			<img class="parchemin" src={urlCdn+"hof-lalalex.png"} style="width:30%; float:right" alt="" />
-			Maintenant, blablabla aux choses sérieuses!
+			Maintenant, passons aux choses sérieuses!
 			<div class="br" />
 			Te souviens-tu de tout celà?
 			<div class="br"></div>
 			<Btn val="Non, je n'y ai pas participé"
 				msg="Alors clique sur les liens videos de cette page pour voir ce que tu as manqué" />
-			<Btn bind:refStep={epiqStep} step=50 val="Oui. J'y étais"
+			<Btn bind:refStep={epiqStep} step=55 val="Oui. J'y étais"
 				msg="Si tu souhaites revoir les vidéos de ces aventures plus tard, tu pourras te rendre à l'IPA, l'Institut Peluchique de l'Audiovisuel (dans la liste de tes Possibles)"/>
-			<Btn bind:refStep={epiqStep} step=50 val="Je viens de regarder les vidéos"
+			<Btn bind:refStep={epiqStep} step=55 val="Je viens de regarder les vidéos"
 				msg="Si tu souhaites revoir les vidéos de ces aventures plus tard, tu pourras te rendre à l'IPA, l'Institut Peluchique de l'Audiovisuel (dans la liste de tes Possibles)"/>
 			<div style="clear:both" class="br"></div>
 		</div>
 	{/if}
-	{#if epiqStep==50}
+	{#if epiqStep==55}
 		<div class="reveal" use:scrollPageToTop>
 			<img class="parchemin" src={urlCdn+"hof-lalalex.png"} style="width:30%; float:right" alt="" />
 			<div>
@@ -678,6 +692,14 @@
 			Entraine-toi à te positionner juste à coté d'un pnj (ici Kikiadoc Lebogosse),
 			à m'indiquer ses coordonnées (ici X:8.6 Y:11.7)
 			et faire un screen où les noms des servants ou pnjs sont lisibles.
+			<div class="info">
+				Lors de cet entrainement, ton screen ne sera pas réellement stocké sur le serveur,
+				mais son format, sa taille et ses métadonnées seront vérifiées.
+				N'en profite pas pour mettre une
+				<span class="videoLink" gpVideo="ff-7/photocopie-fesses">
+					photocopie de tes fesses!
+				</span>
+			</div>
 			<table width="95%"><tbody><tr>
 				<td style="vertical-align: top; text-align: right; width: 50%">
 					X:<input type="number" placeholder="*8.6*" size=6 step="0.1" bind:value={saisies.X} />
@@ -706,11 +728,6 @@
 				Exemple: la "locale" n'est pas "fr-FR" (français de france),
 				un clavier "custom" est utilisé sur smartphone etc...
 				<br/>
-				Lors de cet entrainement, ton screen ne sera pas réellement stocké sur le serveur.
-				N'en profite pas pour mettre une
-				<span class="videoLink" gpVideo="ff-7/photocopie-fesses">
-					photocopie de tes fesses!
-				</span>
 				<!--
 				<br/>
 				N.B: Contrairement à Google, Discord, FesseLivre, Tiktoké, X-Fake etc.. 

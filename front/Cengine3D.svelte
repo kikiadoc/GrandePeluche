@@ -2,7 +2,9 @@
 	import { onMount, onDestroy  } from 'svelte';
 	import { urlCdn, addNotification, displayInfo, ssms, markClick,
 					 loadIt, storeIt, apiCall, wsSend, isEquipementPC,
-					 jjmmhhmmss, countDownTo, playVideo, playDing } from "./common.js"
+					 jjmmhhmmss, countDownTo, playVideo, playDing,
+					 addScriptTag
+				 } from "./common.js"
 
 	import Info from './Info.svelte'
 
@@ -348,47 +350,6 @@
 	const urlBabylonGUI = engineUrl+"gui/babylon.gui.js"
 	const urlBabylonjsLoader = engineUrl+"loaders/babylonjs.loaders.min.js"
 
-	// ajoute un tag script, promise sur le onLoad
-	function addScriptTag(id,url) {
-		return new Promise((ok)=>{
-			// la promise retourne null si ok ou le nom de l'ID si erreur
-			// verifie si deja chargé
-			if (document.getElementById(id)) { 
-				console.log(id+" déja chargé")
-				// addNotification(id+" déja chargé","green",2)
-				ok(null);
-				return
-			}
-			const heads = document.getElementsByTagName("HEAD")
-			if (heads.length != 1) return alert("nb HEAD invalide != 1")
-			const newScript = document.createElement('script')
-			newScript.id = id
-			newScript.crossorigin = true
-			// append avant les autres attributs
-			heads[0].appendChild(newScript)
-			// gestion des events AVANT le src
-			newScript.onload = function () {
-				newScript.gpDthLoad = Date.now()
-				console.log("onload:",id,Date.now());
-				console.log(id+" chargé en "+ssms(newScript.gpDthLoad-newScript.gpDthStart))
-				// addNotification(id+" chargé","green",2)
-				ok(null) // close promise
-			}
-			newScript.onerror = function (e) {
-				newScript.gpDthError = Date.now()
-				console.log("onerror:",id,Date.now(),e)
-				console.log(id+" erreur en "+ssms(newScript.gpDthLoad-newScript.gpDthStart),"red",15)
-				addNotification("Erreur chargement "+id,"red",30)
-				// supprime le tag du DOM
-				newScript.remove()
-				ok(id) // close promise ok meme en erreur
-			}
-			// chargement du script
-			newScript.gpDthStart=Date.now()
-			newScript.src = url
-			console.log(".src ok",id, Date.now()) 
-		})
-	}
 	/////////////////////////////////////////////////
 	// Gestion de l'Engine 3D
 	/////////////////////////////////////////////////

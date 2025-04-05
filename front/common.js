@@ -91,7 +91,7 @@ export function duree(ms) {
 	let j= Math.floor(delta / 1440); // 24*60
 	let h= Math.floor( (delta - j*1440) / 60);
 	let m= delta % 60;
-	// console.log("duree:",delta,j,h,m)
+	// console.log("duree:",delta,j,h,m) 
 	let ret="";
 	if (j>0) ret = j+"j, ";
 	if (delta >= 60) ret = ret.concat(h+"h, ");
@@ -225,13 +225,18 @@ export function addNotification(text,color,timeout,ding) {
 }
 
 // affichae debug d'un object par propagation du dom (si dspObject non passé en props)
-export function displayObject(o) {
-	document.dispatchEvent(new CustomEvent("dspObject", { detail: o }))
+function dispatchCustomEvent(type,o) {
+	document.dispatchEvent(new CustomEvent(type, { type:type, detail: o }))
 }
-
-// popup d'info - refactoring: tout dans l'objet + bubble event
+export function displayObject(o) {
+	dispatchCustomEvent("dspObject",o)
+}
 export function displayInfo(o) {
-	document.dispatchEvent(new CustomEvent("dspInfo", { detail: o }))
+	dispatchCustomEvent("dspInfo",o)
+}
+export function displayError(o) {
+	o.ding ??="explosion" /// force l'alarme si besoin
+	dispatchCustomEvent("dspError",o)
 }
 ///////////////////////////////////////////////////////////////////////////////////////
 // Websocket 
@@ -248,7 +253,7 @@ let msgWaiting = [] // promise pour attente d'envoi de message ws sur connexion 
 async function waitWsForAPI(url) {
 	let prom = new Promise((ok, ko) => {
 		apiWaiting.push( {u: url, o: ok, k: ko})
-		console.log("API queued en attention validation crypto",url)
+		console.log("API queued en attention validation crypto:",url)
 	})
 	return prom;
 }
@@ -256,7 +261,7 @@ async function waitWsForAPI(url) {
 async function waitWsForMSG(msg) {
 	let prom = new Promise((ok, ko) => {
 		msgWaiting.push( {m: msg, o: ok, k: ko})
-		console.log("MSG queued en attention validation crypto",msg)
+		console.log("MSG queued en attention validation crypto:",msg)
 	})
 	return prom;
 }
@@ -273,13 +278,13 @@ export function disconnectFromServer(user) {
 	if (ws) {
 		console.log("force disconnect: ws close en cours");
 		try { ws.close(); ws = null }
-		catch(e) { console.log("Erreur close ws", e) }
+		catch(e) { console.log("Erreur close ws:", e) }
 	}
 	else
 		console.log("force disconnect: ws non connecté");
 }
 function wsTimeout() {
-	console.log("wsTimeout, soucis de mode background naviateur")
+	console.log("wsTimeout")
 }
 function wsPing() {
 	// console.log("wsPing",Math.floor(Date.now()/1000))
@@ -290,10 +295,11 @@ function wsPing() {
 }
 
 export async function connectToServer(cbStatus, cbMessage,clientVersion) {
-		disconnectFromServer();
-		console.log("WS init connect");
-    ws = new WebSocket(wsUrl);
-		console.log("WS connecting");
+		disconnectFromServer()
+		console.log("WS init connect")
+    ws = new WebSocket(wsUrl)
+		const wsId=Date.now()
+		console.log("WS connecting...id=",wsId)
 		ws.onmessage = (webSocketMessage) => {
 			try{
 				// console.log("webSocketMessage",webSocketMessage);
@@ -347,7 +353,8 @@ export async function connectToServer(cbStatus, cbMessage,clientVersion) {
 				addNotification("Erreur: " + wsUrl + " e=" + e.toString(), "red");
 			}
 	  };
-		ws.onopen = async (ev) => { 
+		ws.onopen = async (ev) => {
+			console.log('WS connecté id=',wsId)
 			const pseudo = loadIt("pseudo","nondefini");
 			const pwd = loadIt("pseudoPwd", "00000000-0000-4000-8000-000000000000");
 			let es = loadIt("elipticSecurity", {})
@@ -374,14 +381,14 @@ export async function connectToServer(cbStatus, cbMessage,clientVersion) {
 		};
 		ws.onclose = (ev) => {
 			wsLastClose = ev.code;
-			console.log("WS close:",wsLastClose);
+			console.log("WS close (id,code):",wsId,wsLastClose);
 			clearTimeout(wsTimerPing)
 			cbStatus(wsStatus=0);
 			// Si la connexion est perdu....
 			displayInfo({
 				titre:"Déconnecté du server multijoueurs "+wsUrl+ " (code:"+wsLastClose+")",
 				body: [
-					"Il faut recharger la page ou fermer/ouvrir ta fenêtre du navigateur.",
+					"Il faut recharger la page ou fermer/ouvrir la fenêtre de ton navigateur.",
 					"Ce message peut-être normal si tu t'es connecté depuis une autre fenêtre "+
 					"ou si ton équipement passe en veille"
 				],
@@ -390,7 +397,7 @@ export async function connectToServer(cbStatus, cbMessage,clientVersion) {
 		};
 		ws.onerror = (ev) => {
 			clearTimeout(wsTimerPing)
-			cbStatus(wsStatus=2);
+			cbStatus(wsStatus=2)
 			addNotification("Erreur avec "+wsUrl+", contacter Kikiadoc sur discord","red",60);
 		}; 
   };
@@ -472,7 +479,7 @@ export async function apiCall(url,method, body, noWaitWs)
 }
 
 /////////////////////////////////////////////////////////////////////
-// Gestion des mecanismes de crypto
+// Gestion des mecanismes de crypto 
 /////////////////////////////////////////////////////////////////////
 const ecKeyGenParams = { name: "ECDSA", namedCurve: "P-384" }
 const ecKeyImportParams = { name: "ECDSA", namedCurve: "P-384" }
@@ -613,11 +620,6 @@ export function markClick(e) {
 	e.gpTimeout ??= e.currentTarget.getAttribute("gpTimeout")
 	e.gpDing ??= e.currentTarget.getAttribute("gpDing")
 }
-export function firstClick() {
-	document.premierClickOk = true
-	playMusic();
-}
-
 /////////////////////////////////////////////////////////////////////
 // fonction nop (usage dans les callbacks)
 /////////////////////////////////////////////////////////////////////
@@ -683,26 +685,31 @@ export function exitFullScreen() {
 	document.exitFullscreen().then(nop).catch(nop)	
 }
 /////////////////////////////////////////////////////////////////////
-// Gestion du wakelock / visibility
+// Gestion du wakelock / visibility 
 /////////////////////////////////////////////////////////////////////
-let wakeLock = null
+let myWakeLock = null
 async function requestWakeLock() {
 	try {
+		if (! navigator.wakeLock) return console.warn("WakeLock non disponible")
+		if (myWakeLock) return console.log("*** Wakelock deja actif")
 		console.log("requestWakeLock");
-		if (! navigator.wakeLock) return console.log("WakeLock non disponible")
-		if (wakeLock) wakeLock.release();
-		wakeLock = await navigator.wakeLock.request();
-		wakeLock.addEventListener('release', () => { console.log('Screen Wake Lock released:') } )
-		console.log('Wake Lock activé:');
+		myWakeLock = await navigator.wakeLock.request();
+		myWakeLock.addEventListener('release', (e)=>{console.log('*** WakeLock released:',e,myWakeLock.released);myWakeLock=null } )
+		console.log('WakeLock activé')
 	}
-	catch (err) {	console.log("Erreur WakeLock", err) }
+	catch (err) { console.log("Erreur WakeLock", err) }
 }
-export function visibilityChange(gState) {
-	// console.log('visibilityChange', document.visibilityState);
-	// changement de visibility
+export function visibilityChange() {
+	console.log('visibilityChange', document.visibilityState);
 	switch(document.visibilityState) {
-		case "visible": audioResume(); requestWakeLock(); break;
-		case "hidden": if (!document.getElementById("musique")?.gpBack) audioPause(); break;
+		case "visible":
+			audioResume()
+			requestWakeLock()
+			break;
+		case "hidden":
+			// myWakeLock?.release()
+			if (!document.getElementById("musique")?.gpBack) audioPause()
+			break;
 	}
 }
 
@@ -803,20 +810,74 @@ export function startBlinkGlobal() {
 	}
 
 /////////////////////////////////////////////////////////////////////
-// Common audio video
+// Common audio video 
 /////////////////////////////////////////////////////////////////////
 // Handler/dump d'une erreur media
 function mediaError(e) {
 	console.error("media onerror event",e)
-	displayInfo({
-		titre:'Erreur media imprevue',trailer:'Fais un screen et contacte Kikiadoc',
+	displayError({
+		titre:'FAIT UN SCREEN ET CONTACTE KIKIADOC',trailer:'Fais un screen et contacte Kikiadoc',
 		back:'rouge', ding:'explosion',
 		body:[
-		 e.srcElement?.src,e.srcElement?.currentSrc,e.srcElement?.error?.code,e.srcElement?.error?.message,
-		 e.target?.src,e.target?.currentSrc,e.target?.error?.code,e.target?.error?.message
+			'Erreur media imprevue dans mediaError():',
+			e.srcElement?.src,e.srcElement?.error?.code,e.srcElement?.error?.message,
+			e.target?.src,e.target?.currentSrc,e.target?.error?.code,e.target?.error?.message
 		]
 	})
 }
+// media play sur le dom
+function mediaPlay(dom) {
+	const domSrc=dom.src
+	const domId=dom.id
+	console.log("mediaPlay",domId,domSrc)
+	dom.play()
+		// .then((e)=>console.log("mediaPlayOk",domId,domSrc)) 
+		.catch((e)=> {
+			const msg = e.toString()
+			console.log("** mediaPlay: Failure",msg)
+			if (msg.indexOf('NotAllowedError')>=0) {
+				// le play n'est pas encore possible
+				if (domId=="video") {
+					displayError({ titre:"Protection contre des sites malveillants",
+												body:["La lecture vidéo automatique n'est pas possible au chargement du site",
+															"Il faut que tu cliques sur la vidéo pour la visionner",
+														 ],
+												trailer:"Ferme ce popup et clique sur la vidéo"
+											})
+					console.error("** mediaPlay: videoFirstLock",domId,msg)
+				}
+				else {
+					console.error("** mediaPlay: audioFirstLock",domId,msg) 
+				}
+				return
+			}
+			if (msg.indexOf('AbortError')>=0) {
+				// le play a ete interrompu 
+				console.warn("*** AbortError (domId,msg)",domId,msg)
+				return
+			}
+			if (msg.indexOf('NotSupportedError')>=0) {
+				// erreur de media
+			}
+			displayError({
+				titre:'FAIT UN SCREEN ET CONTACTE KIKIADOC',trailer:'Fais un screen et contacte Kikiadoc',
+				back:'rouge', ding:'explosion',
+				body:[
+					'Erreur media imprevue dans mediaPlay():',
+					msg,
+					'domId: '+domId,
+					'media: '+domSrc
+				]
+			})
+		})
+}
+export function firstClick() {
+	document.premierClickOk = true
+	if (! document.getElementById("musique")?.gpAmbiance)
+		addNotification("Musique d'ambiance désactivée, clic sur 🔇 en haut à droite pour la réactiver","orange",5)
+	playMusic()
+}
+
 /////////////////////////////////////////////////////////////////////
 // Gestion des parametres audio
 /////////////////////////////////////////////////////////////////////
@@ -863,22 +924,25 @@ export function isPlaying(e) {
 
 // pause l'audio, audioDom facultatif
 export function audioPause() {
-	let ap= document.getElementById("musique");
+	let ap= document.getElementById("musique")
+	if (!ap) return console.log("dom Musique not ready")
 	console.log("audioPause (ambiance,vol): ",ap.gpAmbiance, ap.gpVolume)
-	if (ap?.src?.indexOf("mp3")>0) ap.pause()
+	if (ap.src?.indexOf("mp3")>0) ap.pause()
 }
 
 // resume l'audio si pas de video en cours
 export function audioResume() {
 	const ap= document.getElementById("musique");
 	const vp= document.getElementById("video");
+	if (!ap) return console.log("dom Musique not ready")
+	if (!vp) return console.log("dom Video not ready")
 	// si video en cours ne pas resume l'audio
 	if (isPlaying(vp)) return console.log('audioResume: Video playing, no resume')
 	// recalc le volume car il ests peut être modifié
 	if (ap?.src?.indexOf("mp3")>0 && ap?.gpAmbiance) {
 		ap.volume = Math.min(1.0,ap.gpDesc.vol*ap.gpVolume)
 		console.log("audioResume (ambiance,vol,src):",ap.gpAmbiance, ap.gpVolume, ap.src)
-		ap.play()
+		mediaPlay(ap)
 	}
 }
 
@@ -887,7 +951,7 @@ function getDescAudioByName(nom) {
 	const desc = AUDIODESCS[nom]
 	if (desc) return desc
 	addNotification("Erreur mixer:"+nom)
-	return AUDIODESCS.oracle
+	return null
 };
 
 export function soundEnded() {
@@ -903,9 +967,8 @@ export function playMusic(music,force) {
 	if (!ap.onerror) ap.onerror = function(e) {	 mediaError(e) }
 	if (!ap.onended) ap.onended = soundEnded
 	const nom = music || loadIt('lastMusic',"oracle")
-	let desc = getDescAudioByName(nom)
-	if (!desc) return console.error("pas d'audio desc pour nom")
-	if (! desc.transient) storeIt('lastMusic',nom)
+	let desc = getDescAudioByName(nom) || AUDIODESCS.oracle
+	if (! desc.transient) storeIt('lastMusic',nom) // pour reprise
 	// si pas force et meme musique et encore en cours...
 	let newURI = urlCdn+encodeURI(desc.mp3)
 	if (!force && (ap.src == newURI ) && isPlaying(ap) )
@@ -917,8 +980,9 @@ export function playMusic(music,force) {
 	if (ap.src != newURI) ap.src = newURI
 	// si ambiance et premier clic...
 	const canPlay = ap.gpAmbiance && document.premierClickOk
-	console.log("playMusic: (enable,locVol,gblVol,calcVol,src)",canPlay,ap.gpDesc.vol,ap.gpVolume,ap.volume,ap.src)
-	if (canPlay) ap.play()
+	console.log("playMusic: (canPlay,ambiance,locVol,gblVol,calcVol,src)",canPlay,ap.gpAmbiance,ap.gpDesc.vol,ap.gpVolume,ap.volume,ap.src)
+	// if (canPlay) mediaPlay(ap) // obsolete
+	if (ap.gpAmbiance) mediaPlay(ap) // le cas du first click sera traite par exeception
 }
 
 export function playDing(mp3) {
@@ -926,53 +990,56 @@ export function playDing(mp3) {
 	if (!ap) return addNotification("playDing dom not ready","red",10)
 	// setup handler si besoin
 	if (!ap.onerror) ap.onerror = function(e) {	 mediaError(e) }
-	let desc= getDescAudioByName(mp3 || "Ding")
+	let desc= getDescAudioByName(mp3) || AUDIODESCS.Ding
 	ap.gpDesc= desc
 	ap.src= urlCdn+desc.mp3
 	ap.volume = Math.min(1.0,desc.vol*ap.gpVolume)
-	ap.play()
+	mediaPlay(ap)
 }
 
 let videoCb=null; // callback actuelle de la video
 
 // cb sera appeleé lors du close video, 
-// tTime == "d,e" ou d est le début et e la fin (e optionnel)
+// tTime == "d,e" ou d est le début et e la fin (tTime optionnel)
 export function playVideo(mp4,cb,tTime) {
 	if (mp4==null) return
 	let divVideo = document.getElementById("divVideo")
 	let video = document.getElementById("video")
 	if (!divVideo || !video) return console.log("ERREUR: tag video introuvable")
-	if (!video.oncanplay) video.oncanplay = function(e) { console.log("video canplay event") }
-	if (!video.oncanplaythrough) video.oncanplaythrough = function(e) { console.log("video canplaythrough event") }
-	if (!video.onemptied) video.onemptied = function(e) { console.log("video emptied event") }
-	if (!video.onloadedmetadata) video.onloadedmetadata = function(e) { console.log("video loadedmetadata event") }
-	if (!video.onloadeddata) video.onloadeddata = function(e) { console.log("video loadeddata event") }
-	if (!video.onstalled) video.onstalled = function(e) { console.log("video onstalled event") }
-	// if (!video.onsuspend) video.onsuspend = function(e) { console.log("video onsuspend event") }
-	if (!video.onwaiting) video.onwaiting = function(e) { console.log("video onwaiting event") }
-	
-	if (!video.onplay) video.onplay = function(e) { audioPause() }
-	if (!video.onended) video.onended = function(e) { audioResume() }
-	if (!video.onpause) video.onpause = function(e) { audioResume() }
-	if (!video.onerror) video.onerror = function(e) {	 mediaError(e) }
+	if (!divVideo.gpInit) {
+		// init des hadler
+		divVideo.gpInit=true
+		video.oncanplay = function(e) { console.log("video canplay evt") }
+		video.oncanplaythrough = function(e) { console.log("video canplaythrough evt") }
+		video.onemptied = function(e) { console.log("video emptied evt") }
+		video.onloadedmetadata = function(e) { console.log("video loadedmetadata evt") }
+		video.onloadeddata = function(e) { console.log("video loadeddata evt") }
+		video.onstalled = function(e) { console.log("video onstalled evt") }
+		// video.onsuspend = function(e) { console.log("video onsuspend evt") }
+		video.onwaiting = function(e) { console.log("video onwaiting evt") }
+		video.onplay = function(e) { console.log("video onplay evt"); audioPause() }
+		video.onended = function(e) { console.log("video onend evt"); audioResume() }
+		video.onpause = function(e) { console.log("video onpause evt"); audioResume() }
+		// video.onerror = function(e) {	mediaError(e) }
+	}
 	const desc = VIDEODESCS[mp4]
 	if (!desc) addNotification("video sans normalized: "+mp4,"orange",10)
 	
 	videoCb=cb;
 	divVideo.style.display="block";
-	console.warn('Kiki peut-être un cas bug (uniquement getter dans certains cas??????')
-	video.volume= Math.min(1.0, video.gpVolume * ( (desc)? desc.vol : 2 ) ) // calcul du volume video
+	video.volume= Math.min(1.0, (video?.gpVolume && desc?.vol) ? (video.gpVolume*desc.vol) : 2 ) // calcul du volume video
 	video.src=urlCdn+ ( (desc)? desc.mp4 : mp4 ) +".mp4" + ((tTime)? "#t="+tTime :"") ;
 
 	console.log("playVideo",video.src,"desc",desc,
-							"videoVolume",video.gpVolume,"volCalcul",video.volume)
+							"videoVolume",video.gpVolume,"volCalcul",video.volume,
+							"premierClick",document.premierClickOk)
 	
 	// si aucune intéraction sur le site, la video ne part pas
 	// donc gestion de la propriété premierClickOk
 	if (document.premierClickOk)
-		video.play()
+		mediaPlay(video)
 	else
-		addNotification("Clique sur la vidéo pour la voir","yellow",10)
+		mediaPlay(video)
 }
 
 export function closeVideo() {
@@ -1018,7 +1085,7 @@ export function tryTTS(force) {
 		if (!force && elt.gpPlaying && (elt.gpPlaying+15000>now)) return console.log("TTS playing") // attente erreur ou end
 		elt.gpPlaying=0
 		let next = etatTTS.files.shift()
-		if (!next) { console.log("TTS: no file in queue"); return }
+		if (!next) return console.log("TTS: no file in queue")
 		elt.gpPlaying=now
 		elt.gpRef=next.file
 		if (next.statique)
@@ -1026,29 +1093,124 @@ export function tryTTS(force) {
 		else
 			elt.src = "https://ff14.adhoc.click/grimoire/"+next.file
 		if (next.flash) startBlinkGlobal()
-		elt.play()
+		mediaPlay(elt)
 	}
 	catch(e) {
 		console.error('try tts',e)
 	}
+}
+/////////////////////////////////////////////////////////////////////
+// Ajout dynamique de script (surveillé par le CSP)
+/////////////////////////////////////////////////////////////////////
+// ajoute un tag script, retourne la promise
+export function addScriptTag(id,url) {
+	return new Promise((ok)=>{
+		// la promise retourne null si ok ou le nom de l'ID si erreur
+		// verifie si deja chargé
+		if (document.getElementById(id)) { 
+			console.log(id+" déja chargé")
+			// addNotification(id+" déja chargé","green",2)
+			ok(null);
+			return
+		}
+		const heads = document.getElementsByTagName("HEAD")
+		if (heads.length != 1) return alert("nb HEAD invalide != 1")
+		const newScript = document.createElement('script')
+		newScript.id = id
+		newScript.crossorigin = true
+		// append avant les autres attributs
+		heads[0].appendChild(newScript)
+		// gestion des events AVANT le src
+		newScript.onload = function () {
+			newScript.gpDthLoad = Date.now()
+			console.log("onload:",id,Date.now());
+			console.log(id+" chargé en "+ssms(newScript.gpDthLoad-newScript.gpDthStart))
+			// addNotification(id+" chargé","green",2)
+			ok(null) // close promise
+		}
+		newScript.onerror = function (e) {
+			newScript.gpDthError = Date.now()
+			console.log("onerror:",id,Date.now(),e)
+			console.log(id+" erreur en "+ssms(newScript.gpDthLoad-newScript.gpDthStart),"red",15)
+			addNotification("Erreur chargement "+id,"red",30)
+			// supprime le tag du DOM
+			newScript.remove()
+			ok(id) // close promise ok meme en erreur
+		}
+		// chargement du script
+		newScript.gpDthStart=Date.now()
+		newScript.src = url
+		console.log(".src ok",id, Date.now()) 
+	})
 }
 
 /////////////////////////////////////////////////////////////////////
 // Gestion du CSP
 /////////////////////////////////////////////////////////////////////
 export function securitypolicyviolation(e) {
-	console.log(e.blockedURI)
-  console.log(e.violatedDirective)
-  console.log(e.originalPolicy)
-	displayInfo({
-		titre:"DEEPCHECKSEC: ALERTE SECURITE GRAVE",
-		body: [
-			"Fait un screen, et contacte IMMEDIATEMENT KIKIADOC",
-			e.blockedURI,e.violatedDirective,e.originalPolicy
-		],
-		ding: "AlarmeSecurite"
-	})
-	console.error("securitypolicyviolation",e)
+	try {
+		console.error("securitypolicyviolation: ",e)
+		displayError({
+			titre:"DEEPCHECKSEC: ALERTE SECURITE, PAS DE PANIQUE", back: "rouge",
+			trailer:"Après le screen et le mp Kikiadoc, recharge le site",
+			body: [
+				null,
+				"DeepCheckSec a interrompu un comportement inapproprié de ton navigateur.",
+				"IMPORTANT: FAIT UN SCREEN ET CONTACTE IMMEDIATEMENT KIKIADOC",
+				null,
+				"Stratégie sécurité concernée: "+e?.effectiveDirective,
+				"URI non valide: "+e?.blockedURI,
+				"DocumentURI: "+e?.documentURI,
+				"Source @l,c: "+e?.sourceFile+" @"+e?.lineNumber+","+e?.columnNumber,
+				"Stratégie sécurité active:"+e?.originalPolicy
+			],
+			ding: "AlarmeSecurite"
+		})
+		const body = {
+			effectiveDirective: e?.effectiveDirective,
+			blockedURI: e?.blockedURI,
+			documentURI: e?.documentURI,
+			sourceFile: e?.sourceFile,
+			lineNumber: e?.lineNumber,
+			columnNumber: e?.columnNumber,
+			originalPolicy: e?.originalPolicy
+		}
+		apiCall("/securityReport/csp","POST",body)
+		
+	}
+	catch(err) {
+		console.error('Erreur dans securitypolicyviolation', err)
+	}
+}
+export function generateSecurityAlert(type) {
+	switch (type) {
+		case 1:
+			addScriptTag("checkSecTestScript",urlRaw+"V10/ff-10/deepCheckSecSecurityTest.js")
+			break
+		case 2:
+			const heads = document.getElementsByTagName("HEAD")
+			if (heads.length != 1) return alert("nb HEAD invalide != 1")
+			const newScript = document.createElement('script')
+			const txtNode = document.createTextNode("alert('DEEPCHECKSEC EST DEFAILLANT, CONTACTE KIKIADOC IMMEDIATEMENT')")
+			newScript.appendChild(txtNode)
+			// append avant les autres attributs
+			heads[0].appendChild(newScript)
+			break
+		case 3:
+		default:
+			const div = document.getElementById("topPage")
+			const img = document.createElement("img");
+			const styleAttr = document.createAttribute("style")
+			styleAttr.value = "z-index:9999999; top:0px; left:0px; position:fixed; width: 100%; height: 100%"
+			const srcAttr = document.createAttribute("src")
+			srcAttr.value = urlRaw+"V10/ff-10/deepCheckSecSecurityTest.png"
+			img.setAttributeNode(styleAttr)
+			img.setAttributeNode(srcAttr)
+			div.appendChild(img)
+			break
+			addScriptTag("checkSecTestScript",urlRaw+"V10/ff-10/deepCheckSecSecurityTest.js")
+			break
+	}
 }
 /*
 /////////////////////////////////////////////////////////////////////
@@ -1100,4 +1262,5 @@ export function newdisplayInfo(titre,body,trailer,opt) {
 	displayInfo(o)
 }
 
+console.log("Chargé: common.js")
 // common.js
