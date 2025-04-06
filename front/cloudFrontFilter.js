@@ -2,7 +2,7 @@
 // suite aux scans russes, chinois et turques depuis des ips non authorisées
 
 function handler(event) {
-  // const referer = event.request.headers?.referer?.value // non supporté par JS cloudfront
+  // const refVal = event.request.headers?.referer?.value // non supporté par JS cloudfront
   const referer = event.request.headers.referer
   const refVal = referer && referer.value
   const clientIP = event.viewer.ip
@@ -15,7 +15,7 @@ function handler(event) {
   return {
     statusCode: 404,
     statusDescription: "Indisponible",
-    headers: { "content-type":{ value:"text/html"}, "kiki-ip-origin":{value: event.viewer.ip} },
+    headers: { "content-type":{ value:"text/html"}, "GpInvalidIpOrigin":{value: clientIP} },
     body: "<!DOCTYPE html><html><body><p>Ce document n'est pas disponible</p></body></html>"
   }
 }
