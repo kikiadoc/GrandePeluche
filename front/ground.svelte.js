@@ -7,7 +7,7 @@ export const GBLSTATE = $state({
 	, audioBack: true
 	, audioTTS: 100
 	, audioAmbiance: true
-})
+});
 
 export const GBLCONST = {
 	GENRES: [
@@ -19,7 +19,10 @@ export const GBLCONST = {
 	MONDES: [
 		"Cerberus","Louisoix","Moogle","Omega","Phantom","Ragnarok","Sagittarius","Spriggan",
 		"Alpha","Lich","Odin","Phoenix","Raiden","Shiva","Twintania","Zodiark"
-	]
-}
+	],
+	PAGEASSISTANCE: "https://filedn.eu/lxYwBeV7fws8lvi48b3a3TH/securite/index.html"
+};
 
-// ground.svelte.js
+console.log("Chargé: ground.svelte.js")
+
+// ground.svelte.js 

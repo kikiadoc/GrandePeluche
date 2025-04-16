@@ -280,8 +280,6 @@ export function disconnectFromServer(user) {
 		try { ws.close(); ws = null }
 		catch(e) { console.log("Erreur close ws:", e) }
 	}
-	else
-		console.log("force disconnect: ws non connecté");
 }
 function wsTimeout() {
 	console.log("wsTimeout")
@@ -296,10 +294,9 @@ function wsPing() {
 
 export async function connectToServer(cbStatus, cbMessage,clientVersion) {
 		disconnectFromServer()
-		console.log("WS init connect")
-    ws = new WebSocket(wsUrl)
 		const wsId=Date.now()
 		console.log("WS connecting...id=",wsId)
+		ws = new WebSocket(wsUrl)
 		ws.onmessage = (webSocketMessage) => {
 			try{
 				// console.log("webSocketMessage",webSocketMessage);
@@ -318,7 +315,7 @@ export async function connectToServer(cbStatus, cbMessage,clientVersion) {
 						}
 						break;
 					case "elipticKeyOk" :
-						console.log("iam...crypto ephemere signée acceptée pat serveur")
+						console.log("iam... crypto ephemere signée acceptée par le serveur")
 						// password temporaire accepté
 						storeIt("pseudoDesc",mBody.pseudoDesc)
 						let es = loadIt("elipticSecurity",{})
@@ -363,14 +360,14 @@ export async function connectToServer(cbStatus, cbMessage,clientVersion) {
 				ws.close()
 				return
 			}
-			es.newPwd = uuidv4() 
+			es.newPwd = uuidv4() // generation aleatoire
 			es.signature = await cryptoSign(pseudo+es.newPwd)
 			console.log("iam... creation crypto ephemere signée selon crypto eliptic root")
 			ws.send( JSON.stringify(
 				{
 					op: "iam",
 					pseudo: pseudo,
-					pwd: pwd,
+					pwd: pwd, // inutile en elliptic
 					lastClose: wsLastClose,
 					clientVersion: clientVersion,
 					newPwd: es.newPwd,
@@ -442,11 +439,11 @@ export async function apiCall(url,method, body, noWaitWs)
 		// le WS doit être connecte pour disposer de la clef crypto éphémère... sauf demande exlicite
 		if (wsStatus!=1 && !noWaitWs) {
 			// si besoin attente de la synchro avec la clef signée et queue la requete API et await le dequeue
-			await waitWsForAPI(url)
+			await waitWsForAPI(url) 
 		}
 		// console.log("API Call",url);
 		const user = loadIt("pseudo","nondefini");
-		// clef éphémère
+		// clef éphémère ou précedent ou init, permet l'appel si nowait sur WS
 		const pwd = loadIt("pseudoPwd", "00000000-0000-4000-8000-000000000000")
 		dynMetro.cliReq = performance.now()
 		const res = await fetch(urlApi+url+"?u="+user+"&p="+pwd, {
@@ -518,6 +515,7 @@ async function cryptoSign(texte) {
 		return null;
 	}
 }
+// pour test uniquement, le verify est fait sur le server
 async function cryptoVerify(texte, hexString) {
 	try {
 		console.log("hexString=",hexString)
@@ -720,20 +718,20 @@ let swcReady = null
 let swcCtx = { id:0, queue:[]}
 // Activation Reception des messages depuis le service worker
 export function swcSetup() {
-	console.log("serviceWorker in navigator",("serviceWorker" in navigator))
+	// console.log("serviceWorker in navigator",("serviceWorker" in navigator))
 	if (! ("serviceWorker" in navigator) ) {
-		console.log("swcSetup annule")
+		console.log("swcSetup annule, serviceWorker non disponinle")
 		addNotification("Métacache: Ton navigateur ne permet pas l'usage d'un service worker","red",20)
 		return false
 	}
-	console.log("navigator.serviceWorker.controller",navigator.serviceWorker.controller)
+	// console.log("swcSetup actif:",)
 	if (! navigator.serviceWorker.controller ) {
 		addNotification("Métacache non activée, recharge par F5, si soucis MP Kikiadoc","red",60)
 		return false
 	}
-	console.log("swc Listener Setup")
+	// console.log("swc Listener Setup", navigator.serviceWorker.controller)
 	navigator.serviceWorker.addEventListener("controllerchange", (e) => {
-		console.log("swc controllerchange",e)
+		console.log("swcSetup controllerchange",e)
 	})
 	navigator.serviceWorker.addEventListener("messageerror", (e) => {
 		console.log("swc messageerror",e)
@@ -752,7 +750,7 @@ export function swcSetup() {
 	})
 	// marque le ready pour l'IHM
 	swcReady = true
-	console.log("swc Listener Controller",swcReady)
+	console.log("swcSetup setup:",swcReady,navigator.serviceWorker.controller.scriptURL)
 	return swcReady
 }
 // Envoi d'un message sur le swc, 
@@ -834,7 +832,6 @@ function mediaPlay(dom) {
 		// .then((e)=>console.log("mediaPlayOk",domId,domSrc)) 
 		.catch((e)=> {
 			const msg = e.toString()
-			console.log("** mediaPlay: Failure",msg)
 			if (msg.indexOf('NotAllowedError')>=0) {
 				// le play n'est pas encore possible
 				if (domId=="video") {
@@ -844,10 +841,12 @@ function mediaPlay(dom) {
 														 ],
 												trailer:"Ferme ce popup et clique sur la vidéo"
 											})
-					console.error("** mediaPlay: videoFirstLock",domId,msg)
+				}
+				else if (domId=="musique") {
+					console.log("** mediaPlay: NotAllowedError Musique désactivée avant clic")
 				}
 				else {
-					console.error("** mediaPlay: audioFirstLock",domId,msg) 
+					console.log("** mediaPlay: NotAllowedError sur:",domId)
 				}
 				return
 			}
@@ -1123,15 +1122,13 @@ export function addScriptTag(id,url) {
 		// gestion des events AVANT le src
 		newScript.onload = function () {
 			newScript.gpDthLoad = Date.now()
-			console.log("onload:",id,Date.now());
-			console.log(id+" chargé en "+ssms(newScript.gpDthLoad-newScript.gpDthStart))
+			console.log("addScriptTag: onload(id,ms):",id,ssms(newScript.gpDthLoad-newScript.gpDthStart))
 			// addNotification(id+" chargé","green",2)
 			ok(null) // close promise
 		}
 		newScript.onerror = function (e) {
 			newScript.gpDthError = Date.now()
-			console.log("onerror:",id,Date.now(),e)
-			console.log(id+" erreur en "+ssms(newScript.gpDthLoad-newScript.gpDthStart),"red",15)
+			console.log("Erreur Load Script:",id,e)
 			addNotification("Erreur chargement "+id,"red",30)
 			// supprime le tag du DOM
 			newScript.remove()
@@ -1140,7 +1137,7 @@ export function addScriptTag(id,url) {
 		// chargement du script
 		newScript.gpDthStart=Date.now()
 		newScript.src = url
-		console.log(".src ok",id, Date.now()) 
+		// console.log(".src ok",id, Date.now()) 
 	})
 }
 
@@ -1149,7 +1146,7 @@ export function addScriptTag(id,url) {
 /////////////////////////////////////////////////////////////////////
 export function securitypolicyviolation(e) {
 	try {
-		console.error("securitypolicyviolation: ",e)
+		console.log("Gestion de la securitypolicyviolation: ",e)
 		displayError({
 			titre:"DEEPCHECKSEC: ALERTE SECURITE, PAS DE PANIQUE", back: "rouge",
 			trailer:"Après le screen et le mp Kikiadoc, recharge le site",
@@ -1183,6 +1180,8 @@ export function securitypolicyviolation(e) {
 	}
 }
 export function generateSecurityAlert(type) {
+	if (!confirm("Je vais faire provoquer un test de cybersécurité du site en conditions réelles mais sans risque, tu dois entendre une alerte stridente de 20 secondes, et tu devras peut-être recharger le site par F5. OK ?"))
+				return
 	switch (type) {
 		case 1:
 			addScriptTag("checkSecTestScript",urlRaw+"V10/ff-10/deepCheckSecSecurityTest.js")

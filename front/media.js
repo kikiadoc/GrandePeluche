@@ -72,6 +72,7 @@ export const AUDIODESCS = {
 	"orthoTempsTableau":  { mp3: "ff-10/orthoTempsTableau.mp3", vol: 3.0 },
 	"AlarmeSecurite": { mp3: "AlarmeSecurite.mp3", vol: 50.0 },
 	"dolmen": { mp3: "ff-10/dolmen.mp3", vol: 1.0, repeat: 1 },
+	"mercredi": { mp3: "ff-10/mercredi.mp3", vol: 2.0, repeat: 1 },
 };
 ///////////////////////////////////////////////////////////////////////////////////////
 // GESTION DE LA VIDEO

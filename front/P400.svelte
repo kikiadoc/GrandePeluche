@@ -39,7 +39,6 @@
 		{txt:"dans la Chapelle du Bene Gesserit (La Coupe, secteur 15, appart ??", r:3}, //mage noir
 		{txt:"dans le Temple des Dimensions Quantiques (Lavendière, secteur 5, appart ??)", r:9}, // invocateur
 	]
-	console.warn("NBINDICES=10 A coordonner (constante dans P400)")
 
 	
 	let {

@@ -1,14 +1,14 @@
 <script>
 	const SVELTEVERSION=null // SERA MODIFIE LORS DU COMMIT EN STAGING OU PROD ne pas changer
 	const CLIENTVERSION=null  // SERA MODIFIE LORS DU COMMIT EN STAGING OU PROD ne pas changer
-	const GLOBALSTARTDTH=Date.now() // dth de démarrage des traitements
-	console.log('CLIENT START id=',GLOBALSTARTDTH, "***********************************************************************")
+	const GLOBALSTARTDTH=Date.now() // dth de démarrage des traitements 
+	console.log('******** CLIENT START id:',GLOBALSTARTDTH)
 
 	// divers caractères pour copier/coller : ➤▲⏸◀▶▼⏬🔎📽❓✅🆘⚠️⬇️✅➥📷εΔ⛭👉😈ⓘ(ℹ)🛈႞⒤⇛⏳
 	// ne fonctionne pas sur android 🛈 utiliser (ℹ)
 
 	//////////////////////////////////////////
-	// Imports
+	// Imports 
 	//////////////////////////////////////////
 	import { onMount, onDestroy } from 'svelte'
 	import {
@@ -41,7 +41,7 @@
 	// Gestion du cycle de vie
 	//////////////////////////////////////////
 	onMount(() => {
-		console.log('** Mount ** id=',GLOBALSTARTDTH)
+		console.log('** Mount Début ** id=',GLOBALSTARTDTH)
 		// unlock play media sur first click
 		document.addEventListener("click", firstClick, { once: true })
 		audioInit(GBLSTATE)
@@ -55,7 +55,7 @@
 		visibilityChange()
 		startCountDown()
 		GBLSTATE.swcReady = swcSetup() // init le dialogue avec le service worker controller
-		console.log('** Mount Ok ** id=',GLOBALSTARTDTH)
+		console.log('** Mount Fin ** id=',GLOBALSTARTDTH)
 	});
 	onDestroy(() => {
 		console.log('** UnMount ** id=',GLOBALSTARTDTH)
@@ -69,7 +69,7 @@
 
 	// peut être appelé après l'identification (effect) ou si dejà identifié (loadit)
 	function init(pseudo) {
-		console.log('init pseudo=',pseudo)
+		console.log('Pseudo init:',pseudo)
 		if (pseudo)
 			connectToServer(wsCbStatus, wsCbMessage,CLIENTVERSION)
 		else
@@ -107,7 +107,7 @@
 	// gestion du changement de page (sur $effect)
 	/////////////////////////////////////////////////////////////////////
 	function pageChange(newPage) {
-		console.log('pageChange',newPage)
+		console.log('Changement Page:',newPage)
 		let wPageDesc = pageList.find((e) => e.n == newPage)	// Recherche la description de la page
 		PageComponent = wPageDesc?.component
 		pageDesc = wPageDesc
@@ -133,12 +133,17 @@
 		 after: true,
 		 component: P400
 		},
-		{n: 405, texte: "Kiki's Event X, initiatique", music: "dolmen",
+		{n: 405, texte: "Initiatique (Kiki's Event X)", music: "dolmen",
 		 start: 0,
 		 end: 0,
 		 component: P405
 		},
-		{n: 999, texte: "Kiki's Event X, Epilogue", music: "dolmen",
+		{n: 410, texte: "Mercredi", music: "mercredi",
+		 start: 0,
+		 end: 0,
+		 component: P405
+		},
+		{n: 999, texte: "Epilogue", music: "dolmen",
 		 start: 0,
 		 end: 0,
 		 component: null
@@ -445,7 +450,7 @@
 	div :global(.popupContent) {
 		max-height: 59vh; min-height: 4em; min-width: 10em;
 		scrollbar-color: white grey; scrollbar-width: thin; overflow-y: auto;
-	}
+		/* white-space: normal; word-break: break-all; */	}
 	div :global(.close) {
 		display: block; overflow: visible; text-shadow: none; cursor: pointer;
 		position: absolute; right: -0.3em; top: -0.5em;
@@ -766,7 +771,7 @@
 						<hr />
 						{#if window.crossOriginIsolated}
 							<div style="font-size: 0.8em">
-								DeepCheckSec est <span style="color:lightGreen">actif</span>. 
+								DeepCheckSec est <span style="color:lightGreen">active</span>. 
 								Cette page est isolée via 
 								<a target="_blank" href="https://developer.mozilla.org/fr/docs/Web/HTTP/CSP">
 									CSP
@@ -786,22 +791,19 @@
 						{/if}
 						<div style="font-size: 0.8em; color:red">
 							<div class="infoLink" role="button" onclick={markClick}
-								gpHelp="En cliquant sur 'Provoquer...',
-												je vais provoquer de vraies tentatives de hack du site.
+								gpHelp="En cliquant sur un bouton 'Provoquer...',
+												je vais provoquer une vraie tentative de hack du site.
 												Cela doit déclencher DeepCheckSec.
 												Si il fonctionne correctement, tu verras un message d'alerte.
-												Evidemment, cette attaque est réelle, mais sans risque.">
+												Evidemment, ces attaques sont réelles, mais sans risque.">
 								Tester le fonctionnement de DeepCheckSec
 							</div>
-							<input type="button" value="Provoquer script extern"
-								onclick={(e)=>confirm("Je vais faire provoquer un test de cyber-sécurité du site en conditions réelles mais sans risque, tu dois entendre une alerte stridente de 20 secondes, et tu devras peut-être recharger le site par F5. OK ?")
-												 && generateSecurityAlert(1)} />
+							<input type="button" value="Provoquer script externe"
+								onclick={(e)=>generateSecurityAlert(1)} />
 							<input type="button" value="Provoquer script inline"
-								onclick={(e)=>confirm("Je vais faire provoquer un test de cyber-sécurité du site en conditions réelles mais sans risque, tu dois entendre une alerte stridente de 20 secondes, et tu devras peut-être recharger le site par F5. OK ?")
-												 && generateSecurityAlert(2)} />
+								onclick={(e)=>generateSecurityAlert(2)} />
 							<input type="button" value="Provoquer media"
-								onclick={(e)=>confirm("Je vais faire provoquer un test de cyber-sécurité du site en conditions réelles mais sans risque, tu dois entendre une alerte stridente de 20 secondes, et tu devras peut-être recharger le site par F5. OK ?")
-												 && generateSecurityAlert(3)} />
+								onclick={(e)=>generateSecurityAlert(3)} />
 						</div>
 						<hr />
 						<div style="font-size: 0.8em">
@@ -884,7 +886,11 @@
 	{/if}
 	
 	{#if dspError}
-		<Info bind:dspInfo={dspError}/>
+		<Info bind:dspInfo={dspError}>
+			{#snippet template(t)}
+				<div style="word-break: break-all">{t}</div>
+			{/snippet}
+		</Info>
 	{/if}
 	
 	{#if dspAdminMsg}

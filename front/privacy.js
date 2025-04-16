@@ -11,7 +11,7 @@ export function G(g,m,f) {
 	}
 	return "?Genre?"
 }
-
+/*
 //////////////////////////////////////////
 // Gestion de la console et report d'erreur
 //////////////////////////////////////////
@@ -60,8 +60,11 @@ export function reportNeeded() {
 
 export function reportSend() {
 }
-
-console.log('patchConsole non activé')
+*/
+export function unPatchConsole() {
+	console.log('Les captures de la console étaient désactivées')
+}
+console.log('Chargé: privacy.js (patchConsole non activé)')
 // patchConsole()
 
 // privacy.js

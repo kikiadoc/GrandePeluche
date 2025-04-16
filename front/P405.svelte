@@ -1,7 +1,8 @@
 <script>
 	import { onMount, onDestroy  } from 'svelte';
 	import { loadIt, storeIt, scrollPageToTop, displayInfo,
-					 markClick, playMusic, tts
+					 markClick, playMusic, tts,
+					 generateSecurityAlert
 				 } from './common.js'
 	import { G }  from './privacy.js'
 	import { GBLCONST,GBLSTATE }  from './ground.svelte.js'
@@ -304,10 +305,6 @@
 				Elles ne sont jamais stockées sur le serveur.
 				Les traitements les utilisant sont des post-traitements réalisés uniquement sur ton appareil.
 			</div>
-			<div class="info">
-				Cette fonctionnalité semble simple, mais est en réalité très complexe pour couvrir tous les cas.
-				Tu dois la considérer comme expérimentale.
-			</div>
 			<div style="clear:both" class="br"></div>
 		</div>
 	{/if}
@@ -387,6 +384,7 @@
 			Je vais aussi utiliser ma Voix pour te commander.
 			<div>
 				Tu dois entendre distinctement ma Voix même avec l'ambiance sonore active.
+				<br/>
 				<input type="button" value="Je veux tester ta voix"
 					onclick={(e)=>{tts({o:{statique:true, file:"mavoix.mp3"}});addNotification("Test TTS en cours...","green",3) }} />
 			</div>
@@ -410,28 +408,30 @@
 		<div class="reveal" use:scrollPageToTop>
 			<img class="parchemin" src={urlCdn+"lore.jpg"} style="width:20%; float:right" alt="" />
 			La charge de Game Master Numérique ne peut se maîtriser seule:
-			Je m'appuie sur une équipe de Peluches émérites:
+			Moi-même et mon équipe de Peluches sommes concues par Kikiadoc:
 			<br/>
-			➥ AudioBlaster, LogicServer, SyncServer, Métacache, CheckSec, DeepCheckSec
+			➥ Grande Peluche, Hildiscord, AudioBlaster, LogicServer, SyncServer, Métacache, CheckSec, DeepCheckSec
 			<br/>
-			et deux "moteurs" réputés:
+			Nous sommes animées par deux "engines" très réputés:
 			<br/>
 			➥ Svelte et Babylon
 			<br/>
 			<u>En cas de soucis, recharge la page
 			(F5 su PC, touch top & swipe down sur smartphone)</u>
 			tu ne perdras pas ton avancement dans les challenges et
-			retrouvera ta situation.
+			retrouveras ta situation.
 			<div class="br"></div>
 			<Btn bind:refStep={epiqStep} step=25 val="J'ai compris"
 				msg="Lire attentivement les popups est TRES IMPORTANT. Note bien cette valeur, tu en auras besoin plus tard: {saisies.aleaReq}"
 				/>
 			<div class="info">
+				➥Hildiscord est en charge de nos échanges sur Discord
+				<br/>
 				➥AudioBlaster gère les médias (mixage son, vidéos, synthèse vocale...)
 				<br/>
 				➥LogicServer gère la logique des challenges.
 				<br/>
-				➥SyncServer s'assure de la synchronisation en temps-réel de l'ensemble des participants.
+				➥SyncServer assure la synchronisation en temps-réel de l'ensemble des participants.
 				<br/>
 				➥Métacache optimise ta bande passante, en particuler lors des scènes en 3D.
 				<br/>
@@ -473,14 +473,14 @@
 			➥Il vérifie la sémantique de toutes les requêtes vers le serveur.
 			Une seule requête invalide entraine le bannissement immédiat.
 			<br/>
-			⚠️Accède au site selon l'URL d'accès <u>uniquement</u>: {document.location}
+			⚠️Accède au site en utilisant <u>uniquement</u> l'URL d'accès: {document.location}
 			<br/>
 			➥Son marteau est de grande taille, il bannit par bloc de 64 adresses IP au minimum.
 			<br/>
-			⚠️Si tu utilises un VPN moisi, ou ton IP est proche d'un site malveillant,
+			⚠️Si tu utilises un VPN moisi, ou si ton IP est proche d'un site malveillant,
 			tu risques d'être un dommage colatéral.
 			<div class="br"></div>
-			<Btn bind:refStep={epiqStep} step=30 val="Je ferai attention" />
+			<Btn bind:refStep={epiqStep} step=30 val="J'ai compris" />
 			<div style="clear:both" class="br"></div>
 		</div>
 	{/if}
@@ -516,20 +516,24 @@
 			et comment faire si tu changes ton pseudo sur FF14
 			ou si tu changes d'équipement pour accéder au site.
 			<div class="br"></div>
+			<Btn ifFct={()=>generateSecurityAlert(3)} val="Test DeepCheckSec" />
+			<Btn ifFct={()=>window.open(GBLCONST.PAGEASSISTANCE)} val="Voir la page d'assistance" />
 			<Btn bind:refStep={epiqStep} step=35 val="J'ai regardé la page d'assistance" />
 			<div class="info">
+				<u>Avis personnel de Kikiadoc</u>
+				<br/>
 				AUCUN antivirus ou VPN ne garantit réellement la non collecte de données personnelles,
 				quoiqu'ils en disent.
 				Les VPNs gratuit ne vivent que pour et par ça.
 				<u>Il ne faut JAMAIS utiliser un VPN gratuit</u>.
 				<br/>
-				Kikiadoc utilise AVAST comme antivirus et aucun VPN sur 
-				ses équipements personnels (PC fixe, portable, tablettes et smartphones).
-				Il considère, depuis plus de 20 ans, que Kaspersky est une mauvaise solution,
+				J'utilise AVAST comme antivirus et aucun VPN sur 
+				nos équipements personnels (PC fixe, PC portable, tablettes et smartphones).
+				Je considère, depuis plus de 20 ans, que Kaspersky est une mauvaise solution,
 				et que Norton est une usine à gaz s'inscrutant telle une horde de morpions.
 				<br/>
-				Il utilise de préférence Firefox sinon Chrome. 
-				Ublock Origin sur Firefox est activé par défaut.
+				J'utilise de préférence Firefox sinon Chrome. 
+				L'anti-pub Ublock Origin sur Firefox est activé par défaut.
 				Par éthique, les pubs sont activées sur les
 				sites ayant une vraie valeur et dont les pubs ne sont pas envahissantes.
 				Les sites putapubs ou putaclics sont bloqués. 

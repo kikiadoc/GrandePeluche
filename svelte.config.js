@@ -22,6 +22,8 @@ const config = {
         'base-uri': [ 'none' ],
         'form-action': [ 'none' ],
         'frame-src': [ 'none' ],
+        'child-src': [ 'none' ],
+        'worker-src': [ 'self' ],
         'media-src': [ 'self', 'https://cdn.adhoc.click' ],
         'img-src': [ 'self', 'https://cdn.adhoc.click', 'data:', 'blob:' ],
         'font-src': [ 'self', 'https://fonts.googleapis.com', 'https://fonts.gstatic.com' ],

@@ -8,12 +8,17 @@ const pseudos = require('../infraback/pseudos.js');
 const discord = require('../infraback/discord.js');
 
 async function securityCSP(pseudo,body) {
-	const msg = "## "+pseudo+", je te relaie un message de DeepCheckSec, la Peluche en charge de la cyber-sécurité dans ton navigateur depuis le site https://ff14.adhoc.click."+
-							"\nElle a détecté un comportement inapproprié de ton navigateur."+
-							"\n### Contacte immédiatement Kikiadoc pour analyse."+
-							"\nVoici le détail technique de son message:\n"+
-							JSON.stringify(JSON.parse(body),null,1)
-	await Promise.all([discord.mpKiki(msg),discord.mpPseudo(pseudo,msg)])
+	try {
+		const msg = "## "+pseudo+", je te relaie un message de DeepCheckSec, la Peluche en charge de la cyber-sécurité dans ton navigateur depuis le site https://ff14.adhoc.click."+
+								"\nElle a détecté un comportement inapproprié de ton navigateur."+
+								"\n### Contacte immédiatement Kikiadoc pour analyse."+
+								"\nVoici le détail technique de son message:\n"+
+								JSON.stringify(JSON.parse(body),null,1)
+		await Promise.all([discord.mpKiki(msg),discord.mpPseudo(pseudo,msg)])
+	}
+	catch(e) {
+		console.error(e)
+	}
 }
 
 exports.httpCallback = async (req, res, method, reqPaths, body, pseudo, pwd) => {
@@ -25,6 +30,7 @@ exports.httpCallback = async (req, res, method, reqPaths, body, pseudo, pwd) => 
 			switch(reqPaths[2]) {
 				case "csp": // alerte sur CSP du pseudo
 					await securityCSP(pseudo,body)
+					gbl.exception("ok",200)
 			}
 	}
 	gbl.exception("inv http op securityReport",400);
