@@ -9,10 +9,13 @@ const config = {
 			      pages: 'build',
 			      assets: 'build',
 			      fallback: null,
-     			 }						
+      }						
 		),
 		paths: {
 		      base: '/enjoyTest',
+		},
+		serviceWorker: {
+			register: true,
    	},
 		csp: {
 			mode: 'hash',
@@ -23,6 +26,7 @@ const config = {
         'form-action': [ 'none' ],
         'frame-src': [ 'none' ],
         'child-src': [ 'none' ],
+        'manifest-src': [ 'self' ],
         'worker-src': [ 'self' ],
         'media-src': [ 'self', 'https://cdn.adhoc.click' ],
         'img-src': [ 'self', 'https://cdn.adhoc.click', 'data:', 'blob:' ],

@@ -80,6 +80,7 @@
 </style>
 <div class="adminCadre" style="font-size: 0.4em">
 	<input type="button" value="show/hide Admin" onclick={() => showAdmin=!showAdmin} />
+	<input type="button" value="defaceSite" onclick={() => document.location="https://ff14.adhoc.click/enjoyTest"} /> 
 </div>
 {#if showAdmin}
 	<div style="font-size: 0.7em">

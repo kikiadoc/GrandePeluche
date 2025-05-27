@@ -406,13 +406,13 @@
 	{#if epiqStep==20 && novices}
 		{@const epsilon=Math.abs(getEpsilon())}
 		<div class="reveal" use:scrollPageToTop>
-			<img class="parchemin" src={urlCdn+"lore.jpg"} style="width:20%; float:right" alt="" />
-			La charge de Game Master Numérique ne peut se maîtriser seule:
-			Moi-même et mon équipe de Peluches sommes concues par Kikiadoc:
+			<img class="parchemin" src={urlCdn+"ff-10/lalateam.png"} style="width:20%; float:right" alt="" />
+			La charge de Game Master Numérique ne peut se maîtriser seule.
+			Voici les Peluches composant mon équipe:
 			<br/>
-			➥ Grande Peluche, Hildiscord, AudioBlaster, LogicServer, SyncServer, Métacache, CheckSec, DeepCheckSec
+			➥ Hildiscord, AudioBlaster, LogicServer, SyncServer, Métacache, CheckSec, DeepCheckSec
 			<br/>
-			Nous sommes animées par deux "engines" très réputés:
+			Et nous pouvons compter sur deux "engines" très réputés:
 			<br/>
 			➥ Svelte et Babylon
 			<br/>
@@ -425,6 +425,8 @@
 				msg="Lire attentivement les popups est TRES IMPORTANT. Note bien cette valeur, tu en auras besoin plus tard: {saisies.aleaReq}"
 				/>
 			<div class="info">
+				➥La Grande Peluche est en charge de l'apparence et la dynamique du site.
+				<br/>
 				➥Hildiscord est en charge de nos échanges sur Discord
 				<br/>
 				➥AudioBlaster gère les médias (mixage son, vidéos, synthèse vocale...)
@@ -452,10 +454,10 @@
 	{#if epiqStep==25}
 		<div class="reveal" use:scrollPageToTop>
 			<img class="parchemin" src={urlCdn+"ff-7/checksec.png"} style="width:30%; float:right" alt="" />
-			Un  
+			Un collègue
 			<a href="https://fr.wikipedia.org/wiki/Responsable_de_la_s%C3%A9curit%C3%A9_des_syst%C3%A8mes_d%27information" target="_blank">
 				RSSI
-			</a>, collègue de Kikiadoc, a dit un jour:
+			</a> de Kikiadoc lui a dit un jour:
 			<i>En cybersécurité, il faut faire au mieux et s'attendre au pire</i>.
 			<div class="br"></div>
 			C'est pourquoi je veux te présenter plus en détail 
@@ -475,11 +477,16 @@
 			<br/>
 			⚠️Accède au site en utilisant <u>uniquement</u> l'URL d'accès: {document.location}
 			<br/>
-			➥Son marteau est de grande taille, il bannit par bloc de 64 adresses IP au minimum.
+			➥Son marteau est de grande taille: à chaque frappe,
+			il bannit au minimum 256 adresses IP et au maximum 17 millions d'adresses IP.
+			Plus de 1400 millions d'adresses IP sont actuellement bannies du site.
 			<br/>
 			⚠️Si tu utilises un VPN moisi, ou si ton IP est proche d'un site malveillant,
 			tu risques d'être un dommage colatéral.
 			<div class="br"></div>
+			⚠️Ton pseudo et l'indicateur "multijoueurs" en haut à droite de ton écran doivent
+			toujours être verts.
+			<br/>
 			<Btn bind:refStep={epiqStep} step=30 val="J'ai compris" />
 			<div style="clear:both" class="br"></div>
 		</div>
@@ -487,29 +494,37 @@
 	
 	{#if epiqStep==30}
 		<div class="reveal" use:scrollPageToTop>
-			<img class="parchemin" src={urlCdn+"ff-7/checksec.png"} style="width:30%; float:right" alt="" />
+			<img class="parchemin" src={urlCdn+"ff-10/lalabouclier-resize.png"} style="width:30%; float:right" alt="" />
 			DeepCheckSec est mon Erudit furtif.
 			<br/>
 			Il applique ma
 			<a href="https://developer.mozilla.org/fr/docs/Web/HTTP/Guides/CSP" target="_blank">
 				stratégie de sécurité du contenu
 			</a>
-			directement dans ton navigateur. Il peut ainsi détecter un comportement déviant.
+			directement dans ton navigateur.
+			Il peut ainsi détecter certains comportements déviants.
 			<br/>
-			Dans ce cas, l'accès à la ressource inappropriée est bloqué,
-			il t'alerte par un message dans ton navigateur et sur Discord.
+			Dans ce cas, l'accès à la ressource inappropriée est bloqué.
+			Il t'alerte par un message dans ton navigateur et si possible sur Discord.
 			<br/>
-			➥Un antivirus moisi, un VPN moisi peuvent provoquer un alerte de DeepCheckSec
+			➥Un antivirus moisi, un VPN moisi peuvent provoquer une alerte de DeepCheckSec
 			s'ils bidouillent ta navigation.
 			<br/>
-			⚠️Utilise un antivirus (même gratuit) fiable et bien conçu.
-			Tu peux éventuellement utiliser un VPN <u>payant</u>.
-			<div class="br"/>
-			Tu peux examiner l'état de mes assistants en cliquant sur ton pseudo
-			en haut à droite de ton écran.
+			⚠️Il FAUT utiliser un antivirus (même gratuit) fiable, à jour et bien conçu.
 			<br/>
-			Tu peux aussi consulter ma
-			<a href="https://filedn.eu/lxYwBeV7fws8lvi48b3a3TH/securite/index.html" target="_blank">
+			⚠️Il FAUT activer une fonction firewall sur ton équipement
+			(via ton antivirus ou par une autre solution).
+			<br/>
+			Tu peux éventuellement utiliser un VPN <u>payant</u> (les gratuits sont dangereux).
+			<div class="br"/>
+			⚠️Et n'oublie jamais que la meilleure cyberprotection n'est pas l'IA.
+			C'est l'IN, l'Intelligence Naturelle. Le moteur d'inférence de cet IN est 
+			un réseau de neurones ultra performant localisé entre ta chaise et ton clavier.
+			N'oublie pas de le solliciter en permanence
+			afin d'éviter un comportement compulsif de tes doigts.
+			<div class="br"/>
+			Enfin, tu peux consulter ma
+			<a href={GBLCONST.PAGEASSISTANCE} target="_blank">
 				page d'assistance
 			</a>.
 			Elle te permet de vérifier si CheckSec t'a bloqué
@@ -529,14 +544,15 @@
 				<br/>
 				J'utilise AVAST comme antivirus et aucun VPN sur 
 				nos équipements personnels (PC fixe, PC portable, tablettes et smartphones).
-				Je considère, depuis plus de 20 ans, que Kaspersky est une mauvaise solution,
-				et que Norton est une usine à gaz s'inscrutant telle une horde de morpions.
+				Je considère, depuis plus de 20 ans, et bien avant les avis
+				des instances officielles de cybersécurité, que Kaspersky est une solution dangeureuse.
+				Je considère aussi que Norton est une usine à gaz s'inscrutant telle une horde de morpions.
 				<br/>
 				J'utilise de préférence Firefox sinon Chrome. 
 				L'anti-pub Ublock Origin sur Firefox est activé par défaut.
 				Par éthique, les pubs sont activées sur les
 				sites ayant une vraie valeur et dont les pubs ne sont pas envahissantes.
-				Les sites putapubs ou putaclics sont bloqués. 
+				Les sites putapubs ou putaclics sont bloqués.
 			</div>
 			<div style="clear:both" class="br"></div>
 		</div>

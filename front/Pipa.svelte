@@ -1,6 +1,6 @@
 <script>
 
-	import { playVideo, playMusic, markClick } from './common.js'
+	import { playVideo, playMusic, markClick, urlCdn } from './common.js'
 
 	/** @type {Props} */
 	let {
@@ -221,11 +221,11 @@
 			resume: "Les Aventuriers de Brocéliande ont dissipé les nombreux maléfices en résolvant des énigmes, \
 							puis ils ont établi un itinéraire permettant de partir de la Grande Bibliothèque du Bois Bandé \
 							et rejoindre le chateau de Camelot. Le Grand Grimoire de la Magie a alors été découvert",
-			img: "https://cdn.adhoc.click/Minijeu-Broceliande.png"
+			img: urlCdn+"Minijeu-Broceliande.png"
 		},
 		{
 			nom: "transition", hdr:"La transition Magique (septembre 2023)",
-			mp3: "QueenMagic", gains: 23, 
+			mp3: "QueenMagic", gains: 23,
 			resume: 
 				"Alors que les Quatre, à l'issue de l'Event VI Hypostasis, sont parti explorer de nouvelles dimensions \
 				et étendre l'Univers Connu, \
@@ -255,7 +255,7 @@
 		{
 			nom: "godot", hdr:"En attendant Godot (juin 2023)",
 			mp4: "godot", gains: 10, 
-			img: "https://cdn.adhoc.click/Minijeu-Godot.png",
+			img: urlCdn+"Minijeu-Godot.png",
 			resume: "Les félicités insulaires de FF14 sont des endroits paradisiaques.<br/> \
 				Tels que dans la pièce <b>En Attendant Godot de Samuel Beckett</b>, les arbres de mon île semblent \
 				changer au fil du temps. J'ai proposé aux Aventuriers d'identifier ces changements. \

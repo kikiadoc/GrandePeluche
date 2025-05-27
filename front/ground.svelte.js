@@ -20,7 +20,7 @@ export const GBLCONST = {
 		"Cerberus","Louisoix","Moogle","Omega","Phantom","Ragnarok","Sagittarius","Spriggan",
 		"Alpha","Lich","Odin","Phoenix","Raiden","Shiva","Twintania","Zodiark"
 	],
-	PAGEASSISTANCE: "https://filedn.eu/lxYwBeV7fws8lvi48b3a3TH/securite/index.html"
+	PAGEASSISTANCE: "https://filedn.eu/lxYwBeV7fws8lvi48b3a3TH/V10/securite/index.html"
 };
 
 console.log("Chargé: ground.svelte.js")

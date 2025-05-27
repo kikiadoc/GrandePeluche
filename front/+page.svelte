@@ -8,7 +8,7 @@
 	// ne fonctionne pas sur android 🛈 utiliser (ℹ)
 
 	//////////////////////////////////////////
-	// Imports 
+	// Imports
 	//////////////////////////////////////////
 	import { onMount, onDestroy } from 'svelte'
 	import {

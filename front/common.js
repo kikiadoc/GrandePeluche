@@ -1014,12 +1014,12 @@ export function playVideo(mp4,cb,tTime) {
 		video.onloadedmetadata = function(e) { console.log("video loadedmetadata evt") }
 		video.onloadeddata = function(e) { console.log("video loadeddata evt") }
 		video.onstalled = function(e) { console.log("video onstalled evt") }
-		// video.onsuspend = function(e) { console.log("video onsuspend evt") }
+		video.onsuspend = function(e) { console.log("video onsuspend evt") }
 		video.onwaiting = function(e) { console.log("video onwaiting evt") }
 		video.onplay = function(e) { console.log("video onplay evt"); audioPause() }
 		video.onended = function(e) { console.log("video onend evt"); audioResume() }
 		video.onpause = function(e) { console.log("video onpause evt"); audioResume() }
-		// video.onerror = function(e) {	mediaError(e) }
+		video.onerror = function(e) {	mediaError(e) }
 	}
 	const desc = VIDEODESCS[mp4]
 	if (!desc) addNotification("video sans normalized: "+mp4,"orange",10)
@@ -1180,7 +1180,7 @@ export function securitypolicyviolation(e) {
 	}
 }
 export function generateSecurityAlert(type) {
-	if (!confirm("Je vais faire provoquer un test de cybersécurité du site en conditions réelles mais sans risque, tu dois entendre une alerte stridente de 20 secondes, et tu devras peut-être recharger le site par F5. OK ?"))
+	if (!confirm("Je vais faire provoquer un test de cybersécurité du site en conditions réelles mais sans risque, tu dois entendre une alerte stridente de 20 secondes, et tu devras peut-être recharger le site par F5.\nPS: Si l'alerte se déclenche, inutile de contacter Kikiadoc, mais si elle ne se déclenche pas, alors contacte immédiatement Kikiadoc\nTu es OK?"))
 				return
 	switch (type) {
 		case 1:
