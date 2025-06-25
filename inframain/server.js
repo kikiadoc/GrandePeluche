@@ -32,7 +32,8 @@ const securityReport = require('../inframain/securityReport.js');
 async function httpCallback(req, res, method, reqPaths, body, pseudo, pwd) {
 	switch(reqPaths[1]) {
 		case "pseudos": await pseudos.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
-		case "collections": collections.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
+		case "collections": await collections.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
+		case "contextes": await collections.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
 		case "lodestone": await lodestone.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
 		case "hautsFaits": hautsFaits.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
 		case "discord": await discord.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;

@@ -37,7 +37,7 @@
 	<p>Je suis la Grande Peluche Oracle Des Savoirs du Bois Bandé.</p>
 	<div>Voici la liste de tes Possibles:</div>
 	<div>
-		<a class="active" target="_blank" 
+		<a class="green" target="_blank" 
 			href="https://docs.google.com/spreadsheets/d/1_hho3TD2dr0kqIE-XBVhf6OW62lo2s3RAz_xc_Tkd2Y/edit?usp=sharing"
 			onclick={() => playMusic("Money")}	>
 			👉 Consulter le grimoire des gains et plannings

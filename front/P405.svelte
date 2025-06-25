@@ -2,10 +2,16 @@
 	import { onMount, onDestroy  } from 'svelte';
 	import { loadIt, storeIt, scrollPageToTop, displayInfo,
 					 markClick, playMusic, tts,
-					 generateSecurityAlert
+					 generateSecurityAlert, isEquipementPC,
+					 getEpsilon, getLatence,
+					 addNotification, apiCall,
+					 urlCdn, urlRaw, jjmmhhmmss 
 				 } from './common.js'
 	import { G }  from './privacy.js'
 	import { GBLCONST,GBLSTATE }  from './ground.svelte.js'
+
+	import Btn from './Btn.svelte'
+	import Upload from './Upload.svelte'
 	
 	let {
 		GBLCTX,
@@ -67,14 +73,7 @@
 	//////////////////////////////////////////////////
 	// spécifique composant
 	//////////////////////////////////////////////////
-	import { addNotification, apiCall, getEpsilon,
-					 urlCdn, urlRaw, jjmmhhmmss 
-				 } from './common.js'
-	import Btn from './Btn.svelte'
-	import Upload from './Upload.svelte'
 
-	const EVENEMENT_NOM="Kiki_X_TBD" // literal evenement
-	const EVENEMENT_TEC="Kiki_X" // nom tchnique evenement
 	const VIDEO_PIPO="ff-3-rendez-vous" // Video en attente d'une nouvelle
 
 	//////////////////////////////////////////////////
@@ -89,9 +88,9 @@
 	//////////////////////////////////////////////////
 	// gestion des novices
 	//////////////////////////////////////////////////
-	const NOVICIAT_HF=EVENEMENT_TEC+"_initiatique"
-	const NOVICIAT_LBL = EVENEMENT_NOM // usage en texte
-	const NOVICIAT_DISCORD = EVENEMENT_NOM // nom du channel discord
+	const NOVICIAT_HF="Kiki_X_initiatique" // haut fait
+	const NOVICIAT_LBL = "l'Expansion" // usage en texte
+	const NOVICIAT_DISCORD = "expansion" // nom du channel discord
 	const NOVICIAT_NBMAX = 20 // nombre max d'inscription automatique
 	let novices = $state(null)
 	let dspNoviciat = $state(false);
@@ -231,18 +230,10 @@
 				</div>
 			{/if}
 			<div class="br"></div>
-			Comme lors du précédent événement, 
-			Kikiadoc m'a confié la lourde mission d'être ton Game Master Numérique.
+			<u>Lit attentivement mes instructions</u>,
+			même si tu as déjà participé à de précédents événements.
 			<div class="br"></div>
-			Même si tu as déjà participé à de précédents événements,
-			<u>lit attentivement mes instructions</u>:
-			Il y a toujours quelques nouveautés dans l'initiatique
-			afin de découvrir de nouvelles fonctions
-			du site, même si, en apparence, rien n'a changé.
-			<div class="br"></div>
-			Tu découvriras aussi le début de la trame épique de l'événement.
-			<div class="br"></div>
-			N'hésite pas à cliquer sur les liens marqués d'une
+			N'hésite pas à cliquer sur des éléments identifiés par une
 			<a href="https://fr.wikipedia.org/wiki/Hyperlien" target="_blank">loupe</a>
 			d'un <span class="imgLink" gpImg="ff-7/kiki-1.png" gpImgClass="img100">appareil photo</span>
 			d'un <span class="videoLink" gpVideo={VIDEO_PIPO}>projecteur vidéo</span>,
@@ -254,15 +245,16 @@
 			<u>celà n'impacte jamais tes résultats</u>, au contraire, 
 			c'est parfois une source d'info pour aller plus vite!
 			<div class="br"></div>
-			A tout moment, tu peux cliquer sur "Revoir le lore" en haut de page,
-			tu ne perdras aucune donnée saisie ou Haut Fait réalisé.
+			A tout moment, tu peux cliquer sur le bouton "Revoir le lore" en haut de page
+			pour relire le lore depuis le début,
+			ou cliquer sur "Résultats" pour voir le classement actuel des participants.
 			<br/>
-			<Btn bind:refStep={epiqStep} step=2 val="J'ai compris" />
+			<Btn bind:refStep={epiqStep} step=5 val="J'ai compris" />
 			<div style="clear:both" class="br"></div>
 		</div>
 	{/if}
 
-	{#if epiqStep==2}
+	{#if epiqStep==5}
 		{@const genreLbl = GBLCONST.GENRES.find((e)=> e.val==pseudoGenre).lbl}
 		<div class="reveal" use:scrollPageToTop>
 			<img class="parchemin" src={urlCdn+"gamemaster.jpg"} style="width:20%; float:right" alt="" />
@@ -287,13 +279,13 @@
 			</div>
 			<div onclick={markClick} gpHelp="N'oublie pas, tu peux modifier ton genre à tout moment. Pour celà clique sur ton pseudo en haut à droite de ton écran et modifie-le. Tu en verras les effets immédiats sur la page affichée">
 				<Btn val="Je veux changer mon genre" />
-				<Btn bind:refStep={epiqStep} step=5 val="Pour mon genre, {genreLbl}, c'est OK" />
+				<Btn bind:refStep={epiqStep} step=10 val="Pour mon genre, {genreLbl}, c'est OK" />
 			</div>
 			<div class="info">
 				Pour éviter de passer sous les fourches caudines de la
 				<a href="https://www.cnil.fr/fr" target="_blank">CNIL</a>
 				et respecter au mieux
-				<a href="https://www.cnil.fr/fr/reglement-europeen-protection-donnees">
+				<a href="https://www.cnil.fr/fr/reglement-europeen-protection-donnees" target="_blank">
 					le règlement RGPD
 				</a>,
 				tes données personnelles sensibles (ex: ton genre...) sont uniquement
@@ -309,29 +301,6 @@
 		</div>
 	{/if}
 	
-	{#if epiqStep==5}
-		<div class="reveal" use:scrollPageToTop>
-			<img class="parchemin" src={urlCdn+"gamemaster.jpg"} style="width:20%; float:right" alt="" />
-			En cas de soucis, d'incompréhension ou d'une simple hésitation,
-			c'est MP @Kikiadoc sur Discord ou via le canal #discussions.
-			Kikiadoc ne supporterai pas que tu sois bloqu{G(pseudoGenre,"é","ée")},
-			ennuy{G(pseudoGenre,"é","ée")}
-			ou frustr{G(pseudoGenre,"é","ée")}!
-			<br/>
-			Il n'y a pas de mauvaise question:
-			Si Kikiadoc considère la réponse à ta question comme un "spoiler",
-			il te dira que c'est un "spoiler" 😜
-			<br/>
-				Et si tu découvres un bug notable, il y a même un
-				<a href="https://fr.wikipedia.org/wiki/Prime_aux_bogues" target="_blank">
-					bug bounty
-				</a>
-				avec des gils en récompense!
-			<br/>
-			<Btn bind:refStep={epiqStep} step=10 val="C'est cool" />
-			<div style="clear:both" class="br"></div>
-		</div>
-	{/if}
 		
 	{#if epiqStep==10}
 		<div class="reveal" use:scrollPageToTop>
@@ -407,24 +376,43 @@
 		{@const epsilon=Math.abs(getEpsilon())}
 		<div class="reveal" use:scrollPageToTop>
 			<img class="parchemin" src={urlCdn+"ff-10/lalateam.png"} style="width:20%; float:right" alt="" />
-			La charge de Game Master Numérique ne peut se maîtriser seule.
-			Voici les Peluches composant mon équipe:
-			<br/>
-			➥ Hildiscord, AudioBlaster, LogicServer, SyncServer, Métacache, CheckSec, DeepCheckSec
-			<br/>
-			Et nous pouvons compter sur deux "engines" très réputés:
-			<br/>
-			➥ Svelte et Babylon
-			<br/>
-			<u>En cas de soucis, recharge la page
-			(F5 su PC, touch top & swipe down sur smartphone)</u>
-			tu ne perdras pas ton avancement dans les challenges et
-			retrouveras ta situation.
+			<div>
+				En cas de soucis, recharge la page:
+				tu ne perdras pas ton avancement dans les challenges et
+				retrouveras ta situation.
+			</div>
+			<div class="blinkMsg">
+				Tu peux essayer maintenant: 
+				{#if isEquipementPC()}
+					Appuie sur la touche F5 de ton PC
+				{:else}
+					Appuie sur le haut de ron écran et glisse vers le bas
+					sur ton smartphone.
+				{/if}
+			</div>
+			<div>
+				En cas de soucis, d'incompréhension ou d'une simple hésitation,
+				c'est MP @Kikiadoc sur Discord ou via le canal #discussions.
+				Kikiadoc ne supporterai pas que tu sois bloqu{G(pseudoGenre,"é","ée")},
+				ennuy{G(pseudoGenre,"é","ée")}
+				ou frustr{G(pseudoGenre,"é","ée")}!
+				<br/>
+				Et si tu découvres un bug notable (pas une coquille), il y a même un
+				<a href="https://fr.wikipedia.org/wiki/Prime_aux_bogues" target="_blank">
+					bug bounty
+				</a>
+				avec des gils en récompense!
+			</div>
 			<div class="br"></div>
 			<Btn bind:refStep={epiqStep} step=25 val="J'ai compris"
 				msg="Lire attentivement les popups est TRES IMPORTANT. Note bien cette valeur, tu en auras besoin plus tard: {saisies.aleaReq}"
 				/>
 			<div class="info">
+				La charge de Game Master Numérique ne peut se maîtriser seule.
+				Mon équipe est composée de multiples Peluches (développements par Kikiadoc) et
+				deux "Engines" réputés en "open-source".
+				Tu en verras parfois leurs noms.
+				<br/>
 				➥La Grande Peluche est en charge de l'apparence et la dynamique du site.
 				<br/>
 				➥Hildiscord est en charge de nos échanges sur Discord
@@ -435,14 +423,14 @@
 				<br/>
 				➥SyncServer assure la synchronisation en temps-réel de l'ensemble des participants.
 				<br/>
-				➥Métacache optimise ta bande passante, en particuler lors des scènes en 3D.
+				➥Métacache optimise ta bande passante.
 				<br/>
 				➥CheckSec est en charge de la cybersécurité du server.
 				<br/>
 				➥DeepCheckSec est en charge de la cybersécurité de ton navigateur.
 				<br/>
 				➥<a href="https://fr.wikipedia.org/wiki/Svelte" target="_blank">Svelte</a>
-				assure le rendu et la réactivité des pages web
+				assure le rendu et la réactivité des pages web en 2D
 				<br/>
 				➥<a href="https://fr.wikipedia.org/wiki/Babylon.js" target="_blank">Babylon</a>
 				assure le rendu des scènes en 3D.
@@ -478,8 +466,8 @@
 			⚠️Accède au site en utilisant <u>uniquement</u> l'URL d'accès: {document.location}
 			<br/>
 			➥Son marteau est de grande taille: à chaque frappe,
-			il bannit au minimum 256 adresses IP et au maximum 17 millions d'adresses IP.
-			Plus de 1400 millions d'adresses IP sont actuellement bannies du site.
+			il bannit entre 256 et 17 millions d'adresses IP.
+			Environ 3 milliards d'adresses IP sont actuellement bannies du site.
 			<br/>
 			⚠️Si tu utilises un VPN moisi, ou si ton IP est proche d'un site malveillant,
 			tu risques d'être un dommage colatéral.
@@ -501,21 +489,19 @@
 			<a href="https://developer.mozilla.org/fr/docs/Web/HTTP/Guides/CSP" target="_blank">
 				stratégie de sécurité du contenu
 			</a>
-			directement dans ton navigateur.
+			dans ton navigateur.
 			Il peut ainsi détecter certains comportements déviants.
 			<br/>
 			Dans ce cas, l'accès à la ressource inappropriée est bloqué.
 			Il t'alerte par un message dans ton navigateur et si possible sur Discord.
 			<br/>
-			➥Un antivirus moisi, un VPN moisi peuvent provoquer une alerte de DeepCheckSec
-			s'ils bidouillent ta navigation.
+			➥Un antivirus moisi, un VPN moisi peut provoquer une alerte de DeepCheckSec
+			s'il bidouille ta navigation.
 			<br/>
 			⚠️Il FAUT utiliser un antivirus (même gratuit) fiable, à jour et bien conçu.
 			<br/>
 			⚠️Il FAUT activer une fonction firewall sur ton équipement
 			(via ton antivirus ou par une autre solution).
-			<br/>
-			Tu peux éventuellement utiliser un VPN <u>payant</u> (les gratuits sont dangereux).
 			<div class="br"/>
 			⚠️Et n'oublie jamais que la meilleure cyberprotection n'est pas l'IA.
 			C'est l'IN, l'Intelligence Naturelle. Le moteur d'inférence de cet IN est 
@@ -537,18 +523,39 @@
 			<div class="info">
 				<u>Avis personnel de Kikiadoc</u>
 				<br/>
-				AUCUN antivirus ou VPN ne garantit réellement la non collecte de données personnelles,
+				<img class="parchemin" src={urlCdn+"pc-kiki.jpg"} style="width:30%; float:right" alt="" />
+				AUCUN antivirus ou VPN ne garantit l'absence de collecte de données personnelles,
 				quoiqu'ils en disent.
-				Les VPNs gratuit ne vivent que pour et par ça.
+				Les VPN gratuits ne vivent que par ça.
 				<u>Il ne faut JAMAIS utiliser un VPN gratuit</u>.
 				<br/>
-				J'utilise AVAST comme antivirus et aucun VPN sur 
+				Comme "résolver DNS", j'utilise 
+				<a href="https://www.joindns4.eu/about" target="_blank">
+					DNS4EU
+				</a>
+				avec les parametres bloquant automatiquement la majorité des sites dangereux et
+				des sites dédiés aux pubs.
+				Ce DNS "souverain" est un premier niveau de protection.
+				<br/>
+				Ce DNS n'est pas, aujourd'hui, le back-end par défaut des box Internet
+				ou des réseaux mobiles,
+				mais j'espère que cela le deviendra.
+				<br/>
+				J'utilise AVAST comme antivirus (gratuit) et aucun VPN sur 
 				nos équipements personnels (PC fixe, PC portable, tablettes et smartphones).
 				Je considère, depuis plus de 20 ans, et bien avant les avis
 				des instances officielles de cybersécurité, que Kaspersky est une solution dangeureuse.
 				Je considère aussi que Norton est une usine à gaz s'inscrutant telle une horde de morpions.
 				<br/>
-				J'utilise de préférence Firefox sinon Chrome. 
+				Le sigle VPN est, aujourd'hui, totalement galvaudé.
+				Je considère les VPN "payant grand public" comme un danger plus qu'une solution
+				(ce n'est pas vrai pour un usage professionnel
+				mais ce ne sont pas les mêmes solutions techniques).
+				<br/>
+				J'utilise de préférence Firefox sinon Chrome.
+				En cas de besoin d'anonymat, j'utilise le
+				<a href="https://www.torproject.org/fr/" target="_blank">browser tor</a>,
+				il offre une confidentialité bien plus importante que tous les VPN.
 				L'anti-pub Ublock Origin sur Firefox est activé par défaut.
 				Par éthique, les pubs sont activées sur les
 				sites ayant une vraie valeur et dont les pubs ne sont pas envahissantes.
@@ -560,21 +567,31 @@
 
 	{#if epiqStep==35 && novices}
 		{@const epsilon=Math.abs(getEpsilon())}
+		{@const latence=getLatence()}
 		<div class="reveal" use:scrollPageToTop>
 			<img class="parchemin" src={urlCdn+"lore.jpg"} style="width:20%; float:right" alt="" />
-			Tu vas participer à des challenges où le timing est important:
-			j'applique une "correction temporelle" pour rendre équitable
-			les challenges entre tout le monde.
+			Tu vas participer à des challenges où le timing est important.
+			Deux éléments techniques sont importants:
 			<br/>
-			Pour ton équipement, elle est actuellement de
+			➥La différence entre l'horloge du serveur et celle de ton équipement:
 			{#if epsilon < 300}
-				<span style="color:lightgreen">{epsilon} millisecondes, tu n'as donc pas de soucis</span>
+				<span style="color:lightgreen">{epsilon} millisecondes, tu n'as pas de soucis</span>
 			{:else if epsilon < 1000}
 				<span style="color:yellow">{epsilon} millisecondes, c'est un peu trop mais je peux gérer</span>
 			{:else}
 				<span class="blinkMsg" style="color:red">{epsilon} millisecondes, c'est trop, contacte Kikiadoc</span>
 			{/if}
 			<sup>(*)</sup>.
+			<br/>
+			➥La latence réseau (lag):
+			{#if latence < 40}
+				<span style="color:lightgreen">{latence} millisecondes, tu n'as pas de soucis</span>
+			{:else if latence < 80}
+				<span style="color:yellow">{latence} millisecondes, c'est un peu trop mais je peux gérer</span>
+			{:else}
+				<span class="blinkMsg" style="color:red">{latence} millisecondes, c'est trop, contacte Kikiadoc</span>
+			{/if}
+			<br/>
 			<div class="br"></div>
 			Enfin, attention à ne pas purger les "données de site" de ton navigateur(**).
 			Si tu fais cela, tu perdras ta clé privée(***), tes données saisies et tu ne pourras pas te reconnecter.
@@ -627,15 +644,57 @@
 		<div class="reveal" use:scrollPageToTop>
 			<img class="parchemin" src={urlCdn+"hof-lalalex.png"} style="width:30%; float:right" alt="" />
 			Maintenant, passons aux choses sérieuses!
-			<div class="br" />
-			Te souviens-tu de tout celà?
-			<div class="br"></div>
-			<Btn val="Non, je n'y ai pas participé"
-				msg="Alors clique sur les liens videos de cette page pour voir ce que tu as manqué" />
-			<Btn bind:refStep={epiqStep} step=55 val="Oui. J'y étais"
-				msg="Si tu souhaites revoir les vidéos de ces aventures plus tard, tu pourras te rendre à l'IPA, l'Institut Peluchique de l'Audiovisuel (dans la liste de tes Possibles)"/>
-			<Btn bind:refStep={epiqStep} step=55 val="Je viens de regarder les vidéos"
-				msg="Si tu souhaites revoir les vidéos de ces aventures plus tard, tu pourras te rendre à l'IPA, l'Institut Peluchique de l'Audiovisuel (dans la liste de tes Possibles)"/>
+			<div class="info">Si tu es {G(pseudoGenre,"un nouvel Aventurier","une nouvelle Aventurière")}, 
+				tu pourras découvrir l'Histoire grâce aux liens ci-dessous.
+				Si tu as déjà participé, ces liens
+				te rapelleront tes Haut-faits passés.
+			</div>
+			<div>
+				Voici le résumé des derniers épisodes:
+			</div>
+			<hr/>
+			<div class="videoLink" onclick={markClick} gpVideo="ff-5-trailer">
+				➥Lors d'Hypostasis (Event VII)
+				les dimensions quantiques ont été découvertes par les Jedis des Savoirs
+				et les Quatre sont partis explorer l'Ortho-temps,
+				la cinquième dimension de l'Univers Connu.
+			</div>
+			<hr/>
+			<div class="videoLink" onclick={markClick} gpVideo="ff-6-trailer">
+				➥Les Aventuriers de l'Uchronie (Event VIII) ont réussi à réordonner
+				le temps et l'espace perturbé par le Maitre de la Magie, Méphistophélès.
+			</div>
+			<hr/>
+			<div class="videoLink br" onclick={markClick} gpVideo="ff-7/ff-7-trailer">
+				➥Lors de l'Hégémonie (Event IX),
+				les Aventuriers ont déjoué la tentative de Méhistophélès de 
+				rendre Erozéa inhabitable en répendant le Gaz de Possesion.
+				Méphistophélès va alors se réfuger dans l'Ortho-temps.
+			</div>
+			<hr/>
+			<div class="videoLink" onclick={markClick} gpVideo="ff-10/ff-10-metropolis-3d">
+				➥Grâce au Chronogyre, les Aventuriers se rendent à Métropolis,
+				un cité temporalisée selon l'Ortho-temps.
+				Méphistophélès a déjà fuit cette dimension en laissant des directives
+				aux derniers Nouveaux Anciens d'Eorzéa.
+			</div>
+			<hr/>
+			<div class="videoLink" onclick={markClick} gpVideo="ff-10/ff-10-metro-trailer">
+				➥En explorant Métropolis, les Aventuriers ont retrouvé les indices
+				localisant des runes maléfiques en Erozéa.
+				Je les ai toutes désactivées grâce à une parfaite collaboration des Aventuriers.
+				C'est alors que Thor nous a rendu visite via le Chronogyre, confirmant
+				l'existance de l'Hyper-temps et la neutralisation de Méphistophélès.
+			</div>
+			<div>
+				Te souviens-tu de tout celà?
+				<Btn val="Non, je n'y ai pas participé"
+					msg="Alors clique sur les liens videos de cette page pour voir ce que tu as manqué" />
+				<Btn bind:refStep={epiqStep} step=55 val="Oui. J'y étais"
+					msg="Si tu souhaites revoir les vidéos de ces aventures plus tard, tu pourras te rendre à l'IPA, l'Institut Peluchique de l'Audiovisuel (dans la liste de tes Possibles)"/>
+				<Btn bind:refStep={epiqStep} step=55 val="Je viens de regarder les vidéos"
+					msg="Si tu souhaites revoir les vidéos de ces aventures plus tard, tu pourras te rendre à l'IPA, l'Institut Peluchique de l'Audiovisuel (dans la liste de tes Possibles)"/>
+			</div>
 			<div style="clear:both" class="br"></div>
 		</div>
 	{/if}
@@ -643,9 +702,33 @@
 		<div class="reveal" use:scrollPageToTop>
 			<img class="parchemin" src={urlCdn+"hof-lalalex.png"} style="width:30%; float:right" alt="" />
 			<div>
-				Blablabla
+				Début Epique Kiki's X: Blablabla, vecteurs temporels, synchro Phareo...
 			</div>
-			<Btn bind:refStep={epiqStep} step=70 val="C'est inquiétant" />
+			<Btn bind:refStep={epiqStep} step=60 val="C'est inquiétant" />
+			<div style="clear:both" class="br"></div>
+		</div>
+	{/if}
+	{#if epiqStep==60}
+		<div class="reveal" use:scrollPageToTop>
+			<img class="parchemin" src={urlCdn+"hof-lalalex.png"} style="width:30%; float:right" alt="" />
+			<div>
+				Blablabla... 
+				Il te faut un équipement compatible
+				permettant l'exploration de l'Ortho-temps.
+			</div>
+			<div>
+				Vérifie que la scene 3D ci-dessous s'affiche corectement.
+			</div>
+			<div>
+				{#if isEquipementPC()}
+					Sur PC, utilise ta souris (appuyer puis glisser) pour changer l'axe de vision.
+				{:else}
+					Sur smartphone, tu peux changer l'axe de vision en glissant avec ton doigt.
+					Le passage du mode Portait au mode "paysage" doit ajuster la scene à ton écran.
+				{/if}
+			</div>
+			<div class="blinkMsg">En cas de souci, MP Kikiadoc sur Discord</div>
+			<Btn bind:refStep={epiqStep} step=70 val="Je sais visiter les Dimensions!!!" />
 			<div style="clear:both" class="br"></div>
 		</div>
 	{/if}

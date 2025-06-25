@@ -47,10 +47,16 @@
 				<a class="active" href="https://fr.wikipedia.org/wiki/Licence_CC0" target="_blank">CC0</a>
 			</div>
 			<div>Ce site utilise différentes ressources lors de l'éxécution ou pendant la phase de développement:</div>
-			<div>➥Des polices de caractères téléchargeables <a class="active" href="https://fonts.google.com/" target="_blank">Google Fonts</a></div>
-			<div>➥Des samples de musiques et vidéos remixées depuis différentes sources dont
+			<div>➥Des samples de musiques et vidéos remixées depuis différentes sources Internet dont
 				<a class="active" href="https://youtube.com/" target="_blank">Youtube</a>
 			</div>
+			<div>➥Des images de musées, bibliothèques et autres institutions. A titre d'exemple:
+				<br/>
+				<a class="active" href="https://collections.musee-rodin.fr/" target="_blank">le Musée Rodin</a>
+				<br/>
+				<a class="active" href="https://www.bnf.fr/fr" target="_blank">La Bibliothèque Nationale de France</a>
+			</div>
+			<div>➥Des polices de caractères téléchargeables <a class="active" href="https://fonts.google.com/" target="_blank">Google Fonts</a></div>
 			<div>➥Des fragments de code refactorés depuis
 				<a class="active" href="https://github.com/" target="_blank">Github</a>
 				ou

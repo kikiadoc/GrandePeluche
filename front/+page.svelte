@@ -34,8 +34,11 @@
 	import Padmin from './Padmin.svelte'
 	import Pipa from './Pipa.svelte'
 	
-	import P400 from './P400.svelte' // metropolis
+	// import P400 from './P400.svelte' // metropolis
+	import P401 from './P401.svelte' // Kiki's Event X - le bug bounty
 	import P405 from './P405.svelte' // Kiki's Event X - initiatique
+	import P410 from './P410.svelte' // Kiki's Event X - Pharao
+	// import P499 from './P499.svelte' // Pharao
 
 	//////////////////////////////////////////
 	// Gestion du cycle de vie
@@ -121,27 +124,49 @@
 	// beta: true inidique que c'est disponible en avant premiere
 	// prereq: nnn element prérequis (doit être dans pageDone)
 	let pageList = $state([
-		{n: 10, texte: "Revoir nos Aventures en visitant l'Institut Peluchique de l'Audiovisuel", music: "Alice",
+		{n: 10, texte: "L'IPA, l'Institut Peluchique de l'Audiovisuel",
+		 music: "derniere-seance",
 		 start: 0,
 		 end: 0,
 		 always: true,
 		 component: Pipa
 		},
+		/*
 		{n: 400, texte: "Métropolis", music: "le-jeu",
 		 start: geUtcMsFrom(2025,3,21,19,0,0),
 		 end: geUtcMsFrom(2025,3,25,8,0,0),
 		 after: true,
 		 component: P400
 		},
-		{n: 405, texte: "Initiatique (Kiki's Event X)", music: "dolmen",
-		 start: 0,
-		 end: 0,
-		 component: P405
+		*/
+		{n: 401, texte: "Le Bug Bounty de l'IPA", music: "Alice",
+		 start: geUtcMsFrom(2025,6,20,18,0,0),
+		 end: geUtcMsFrom(2025,7,15,18,0,0),
+		 component: P401,
 		},
-		{n: 410, texte: "Mercredi", music: "mercredi",
+		{n: 405, texte: "Initiatique (Kiki's Event X)", music: "pharao-secrets",
 		 start: 0,
 		 end: 0,
-		 component: P405
+		 component: P405,
+		 // beta: true
+		},
+		{n: 410, texte: "Pharao", music: "plus-pres-des-etoiles",
+		 start: 0,
+		 end: 0,
+		 component: P410
+		},
+		{n: 415, texte: "Mercredi", music: "mercredi",
+		 start: 0,
+		 end: 0,
+		 component: null
+		 // idée: des fantomes popent a différents endroits
+		 // il permettent de trouver l'album de la comtesse
+		},
+		{n: 420, texte: "La comtesse", music: "dolmen",
+		 start: 0,
+		 end: 0,
+		 // component: P415
+		 // idée: une horreur a modifie le poèms 
 		},
 		{n: 999, texte: "Epilogue", music: "dolmen",
 		 start: 0,
@@ -152,7 +177,7 @@
 		{n: 400, texte: "Métropolis", music: "le-jeu",
 		 start: (isProd)? geUtcMsFrom(2025, 3, 21, 19, 0, 0) : geUtcMsFrom(2025, 3, 18, 19, 0, 0),
 		 end:  geUtcMsFrom(2025, 3, 25, 8, 0, 0),
-		 betaTest: true,
+		 beta: true,
 		 component: P400
 		},
 		*/
@@ -160,7 +185,7 @@
 		{n: 490, texte: "Kiki's Event X, épilogue", music: "BlindingLights",
 		 start: 0,
 		 end: 0,
-		 // betaTest: true,
+		 // beta: true,
 		 // component: Psample
 		},
 		*/
@@ -634,6 +659,13 @@
 							</a>
 							valide sur cet appareil.
 							<u>Tes échanges sont cryptés, signés et vérifiés</u>.
+						</div>
+						<div>
+							Tu utiliseras une 
+							<a href="https://fr.wikipedia.org/wiki/Cryptographie_post-quantique" target="_blank">
+								signature post-quantique
+							</a>
+							dès que possible
 						</div>
 					{:else}
 						<div style="color:red">

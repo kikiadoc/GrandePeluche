@@ -431,6 +431,9 @@ export async function apiCallExtern(url,method,body)
 let dynMetro = {} // métrologie du dernier apiCall
 export function getDynMetro() { return dynMetro }
 export function getEpsilon() { return Math.round(dynMetro.epsilon || 0.0) }
+export function getLatence() { return dynMetro.srv && (Math.round(Math.floor(1000*(( (dynMetro.cliRes - dynMetro.cliReq) - (dynMetro.srv.load + dynMetro.srv.run + 1.0) ) / 2.0))/1000))
+}
+
 
 // appel api de la grande peluche: url, mehod, body, noWaitWS: ne pas attendre le WS pour l'api call
 export async function apiCall(url,method, body, noWaitWs)
@@ -812,12 +815,12 @@ export function startBlinkGlobal() {
 /////////////////////////////////////////////////////////////////////
 // Handler/dump d'une erreur media
 function mediaError(e) {
-	console.error("media onerror event",e)
+	console.error("media onerror/abort event",e)
 	displayError({
 		titre:'FAIT UN SCREEN ET CONTACTE KIKIADOC',trailer:'Fais un screen et contacte Kikiadoc',
 		back:'rouge', ding:'explosion',
 		body:[
-			'Erreur media imprevue dans mediaError():',
+			'Erreur media imprevue eventType='+e.type,
 			e.srcElement?.src,e.srcElement?.error?.code,e.srcElement?.error?.message,
 			e.target?.src,e.target?.currentSrc,e.target?.error?.code,e.target?.error?.message
 		]
@@ -862,7 +865,7 @@ function mediaPlay(dom) {
 				titre:'FAIT UN SCREEN ET CONTACTE KIKIADOC',trailer:'Fais un screen et contacte Kikiadoc',
 				back:'rouge', ding:'explosion',
 				body:[
-					'Erreur media imprevue dans mediaPlay():',
+					'Erreur media imprevue dans mediaPlay().catch:',
 					msg,
 					'domId: '+domId,
 					'media: '+domSrc
@@ -956,7 +959,7 @@ function getDescAudioByName(nom) {
 export function soundEnded() {
 	console.log("event Musique ended");
 	const ap=document.getElementById("musique");
-	playMusic((ap.gpDesc?.repeat)? ap.gpDesc?.nom : 'peergynt')
+	playMusic((ap.gpDesc?.repeat)? ap.gpDesc?.nom : loadIt('lastMusic',"peergynt"))
 }
 
 export function playMusic(music,force) {
@@ -967,7 +970,7 @@ export function playMusic(music,force) {
 	if (!ap.onended) ap.onended = soundEnded
 	const nom = music || loadIt('lastMusic',"oracle")
 	let desc = getDescAudioByName(nom) || AUDIODESCS.oracle
-	if (! desc.transient) storeIt('lastMusic',nom) // pour reprise
+	if (desc.repeat) storeIt('lastMusic',nom) // pour reprise
 	// si pas force et meme musique et encore en cours...
 	let newURI = urlCdn+encodeURI(desc.mp3)
 	if (!force && (ap.src == newURI ) && isPlaying(ap) )
@@ -996,17 +999,57 @@ export function playDing(mp3) {
 	mediaPlay(ap)
 }
 
-let videoCb=null; // callback actuelle de la video
+let videoMp4=null // nom logique du m4 en cours
+let videoCbClose=null // callback actuelle de la video appelé on close de la fenetre video
+let videoCbLue=null // callback actuelle de la video appelé si toute la vidéo a été lue
+let videoDuree=null // duree de la video
+let videoLastStart=null // dth demarrage
+let videoTotal=0 // durée de visionnage
+function videoInitTrack(mp4,cb,cbLu) {
+	videoMp4 = mp4
+	videoCbClose=cb
+	videoCbLue=cbLu
+	videoDuree=null
+	videoLastStart=null
+	videoTotal=0
+}
+function videoCumul(e) {
+	if (!videoLastStart) return // rien à cumuler
+	videoTotal += Date.now() - videoLastStart
+	videoLastStart = null
+	console.log("Duree lecture actuelle",videoMp4,videoTotal)
+}
+function videoPauseEvt(e) {
+	console.log("video onpause evt")
+	videoCumul(e)
+	audioResume()
+}
+function videoEndEvt(e) {
+	console.log("video onend evt",e)
+	videoDuree=e.srcElement?.duration*1000 || 999999
+	videoCumul(e)
+	console.log("video onend tracking (cb,duree,total):",videoMp4!=null,videoDuree,videoTotal)
+	if (videoCbLue) videoCbLue(videoMp4,videoDuree,videoTotal)
+	videoInitTrack(null,null,null) // reset lle tracking
+	audioResume()	
+}
+function videoPlayEvt(e) {
+	videoLastStart = Date.now()
+	console.log("video onplay evt")
+	audioPause()
+}
+function videoDurationEvt(e) {
+}
 
-// cb sera appeleé lors du close video, 
+
+// cb sera appeleé lors du close video, cbLu en fin de lecture
 // tTime == "d,e" ou d est le début et e la fin (tTime optionnel)
-export function playVideo(mp4,cb,tTime) {
-	if (mp4==null) return
+export function playVideo(mp4,cb,tTime,cbLu) {
 	let divVideo = document.getElementById("divVideo")
 	let video = document.getElementById("video")
-	if (!divVideo || !video) return console.log("ERREUR: tag video introuvable")
+	if (!mp4 || !divVideo || !video) return console.log("ERREUR: tag introuvable ou pas de mp4",mp4)
 	if (!divVideo.gpInit) {
-		// init des hadler
+		// init des handler
 		divVideo.gpInit=true
 		video.oncanplay = function(e) { console.log("video canplay evt") }
 		video.oncanplaythrough = function(e) { console.log("video canplaythrough evt") }
@@ -1014,40 +1057,40 @@ export function playVideo(mp4,cb,tTime) {
 		video.onloadedmetadata = function(e) { console.log("video loadedmetadata evt") }
 		video.onloadeddata = function(e) { console.log("video loadeddata evt") }
 		video.onstalled = function(e) { console.log("video onstalled evt") }
-		video.onsuspend = function(e) { console.log("video onsuspend evt") }
+		// video.onsuspend = function(e) { console.log("video onsuspend evt") }
 		video.onwaiting = function(e) { console.log("video onwaiting evt") }
-		video.onplay = function(e) { console.log("video onplay evt"); audioPause() }
-		video.onended = function(e) { console.log("video onend evt"); audioResume() }
-		video.onpause = function(e) { console.log("video onpause evt"); audioResume() }
-		video.onerror = function(e) {	mediaError(e) }
+		video.ondurationchange = videoDurationEvt
+		video.onplay = videoPlayEvt
+		video.onended = videoEndEvt
+		video.onpause = videoPauseEvt 
+		video.onerror = mediaError
+		// video.onabort = mediaError
+		video.onabort = function(e) { console.log("video onabort evt") }
 	}
 	const desc = VIDEODESCS[mp4]
-	if (!desc) addNotification("video sans normalized: "+mp4,"orange",10)
-	
-	videoCb=cb;
-	divVideo.style.display="block";
+	if (!desc) console.log("***** video sans normalized: ",mp4)
+	//setup des callback sur la video
+	videoInitTrack(mp4,cb,cbLu)
+	// affichage, calul volume et src
+	divVideo.style.display="block"
 	video.volume= Math.min(1.0, (video?.gpVolume && desc?.vol) ? (video.gpVolume*desc.vol) : 2 ) // calcul du volume video
-	video.src=urlCdn+ ( (desc)? desc.mp4 : mp4 ) +".mp4" + ((tTime)? "#t="+tTime :"") ;
-
+	video.src=urlCdn+ ( (desc)? desc.mp4 : mp4 ) +".mp4" + ((tTime)? "#t="+tTime :"#t=0") ;
 	console.log("playVideo",video.src,"desc",desc,
 							"videoVolume",video.gpVolume,"volCalcul",video.volume,
 							"premierClick",document.premierClickOk)
-	
-	// si aucune intéraction sur le site, la video ne part pas
-	// donc gestion de la propriété premierClickOk
-	if (document.premierClickOk)
-		mediaPlay(video)
-	else
-		mediaPlay(video)
+	// Play la video, la gestion de la propriété premierClickOk est dans mediaplay
+	mediaPlay(video)
 }
 
 export function closeVideo() {
+	//ne doit être appelée que si le dom a un divVideo et un video
 	let divVideo = document.getElementById("divVideo");
 	let video = document.getElementById("video");
 	video.pause();
 	divVideo.style.display="none";
 	audioResume();
-	if (videoCb) videoCb();
+	if (videoCbClose) videoCbClose()
+	videoInitTrack(null,null,null) // reset lle tracking
 }
 
 	// ordre de jouer un truc multimedia (depuis le serveur)

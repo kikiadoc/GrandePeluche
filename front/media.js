@@ -27,7 +27,7 @@ export const AUDIODESCS = {
 	"Viens":  { mp3: "Viens.mp3#t=00:00:30", vol: 1.0, transient: 1 },
 	"Come":  { mp3: "Come.mp3#t=00:00:00", vol: 2.0, transient: 1 },
 	"Money":  { mp3: "Money.mp3#t=00:00:47", vol: 1.0, transient: 1 },
-	"Alice":  { mp3: "Alice.mp3#t=00:00:00", vol: 1.0 },
+	"Alice":  { mp3: "Alice.mp3#t=00:00:00", vol: 1.0, repeat: 1 },
 	"Alex-nes":  { mp3: "Alex-nes.mp3#t=00:00:00", vol: 1.0, repeat: 1 },
 	"Demons":  { mp3: "Demons.mp3#t=00:00:00", vol: 1.0, repeat: 1 },
 	"BienMal":  { mp3: "BienMal.mp3#t=00:00:00", vol: 1.0, repeat: 1 },
@@ -73,6 +73,10 @@ export const AUDIODESCS = {
 	"AlarmeSecurite": { mp3: "AlarmeSecurite.mp3", vol: 50.0 },
 	"dolmen": { mp3: "ff-10/dolmen.mp3", vol: 1.0, repeat: 1 },
 	"mercredi": { mp3: "ff-10/mercredi.mp3", vol: 2.0, repeat: 1 },
+	"derniere-seance": { mp3: "ff-10/derniere-seance.mp3", vol: 0.7, repeat: 1 },
+	"pharao-secrets": { mp3: "ff-10/pharao-secrets.mp3", vol: 0.8, repeat: 1 },
+	"Memoire-qui-flanche": { mp3: "Memoire-qui-flanche.mp3", vol: 1.2, repeat: 0 },
+	"plus-pres-des-etoiles": { mp3: "ff-10/plus-pres-des-etoiles.mp3", vol: 0.7, repeat: 1 },
 };
 ///////////////////////////////////////////////////////////////////////////////////////
 // GESTION DE LA VIDEO
@@ -111,6 +115,7 @@ export const VIDEODESCS = {
 	"ff-10/ff-10-ortho-ring": { mp4: "ff-10/ff-10-ortho-ring", vol: 2},
 	"ff-10/ff-10-metro-trailer": { mp4: "ff-10/ff-10-metro-trailer", vol: 2},
 	"ff-10/IPA-BNF": { mp4: "ff-10/IPA-BNF", vol: 4},
+	"ff-10/ff-10-sans-video": { mp4: "ff-10/ff-10-sans-video", vol: 4},
 }
 
 

@@ -106,34 +106,31 @@ function init(newCol) {
 	return newCol;
 }
 
-
-
 //////////////////////////////////////////////////////////////////////////////////////////////
-
-exports.get = get
-exports.save = save
-exports.init = init
-exports.reset = reset
-exports.loadJsonFile = loadJsonFile
-
-exports.stringify = (col) => {
-	console.log("** A FAIRE, cache de collections");
-	return JSON.stringify(col);
+// pseudoContext
+// c'est une collection dont les membres sont indexes par les pseudos
+// {name: ??, pseudos:[{}]
+//////////////////////////////////////////////////////////////////////////////////////////////
+function pseudoContextLoad(nom){
+	const col = init( {name: "pseudoContext_"+nom, pseudos: {} } )
+	return col
 }
-
-exports.httpCallback = (req, res, method, reqPaths, body, pseudo, pwd) => {
-	if (method=="GET") {
-		pseudos.check(pseudo,pwd);
-		let ret = collectionsMap.get(reqPaths[2]);
-		if (ret==null) gbl.exception("bad col",400);
-		gbl.exception(ret,200);
-	}
-	gbl.exception("bad op",400);
+function pseudoContextGet(nom,pseudo){
+	const col = pseudoContextLoad(nom)
+	return col.pseudos[pseudo] || { }
 }
-
-initCollections();
-
-
+function pseudoContextSet(nom,pseudo,o){
+	const col = pseudoContextLoad(nom)
+	col.pseudos[pseudo] = o
+	save(col)
+	return col.pseudos[pseudo]
+}
+function pseudoContextDelete(nom,pseudo){
+	const col = pseudoContextLoad(nom)
+	delete col.pseudos[pseudo]
+	save(col)
+	return {}
+}
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 // SimpleObject
@@ -177,5 +174,64 @@ exports.saveSimpleObject = (name,obj) => {
 	}
 	return { name: name }
 }
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////
+
+exports.get = get
+exports.save = save
+exports.init = init
+exports.reset = reset
+exports.loadJsonFile = loadJsonFile
+exports.pseudoContextLoad=pseudoContextLoad
+exports.pseudoContextGet=pseudoContextGet
+exports.pseudoContextSet=pseudoContextSet
+
+exports.stringify = (col) => {
+	console.log("** A FAIRE, cache de collections");
+	return JSON.stringify(col);
+}
+
+// GET collections/{name}
+// GET contextes/{name}
+// GET contextes/{name}/{pseudo}
+// POST contextes/{name}/{pseudo} {body}
+// DELETE contextes/{name}/{pseudo}
+exports.httpCallback = async (req, res, method, reqPaths, body, pseudo, pwd) => {
+	pseudos.check(pseudo,pwd);
+	switch (method) {
+		case "OPTIONS": {
+			res.setHeader('Access-Control-Allow-Methods', 'DELETE');
+			gbl.exception("AllowedCORS",200);
+		}
+		case  "GET": {
+			switch(reqPaths[1]) {
+				case "collections":
+					gbl.exception(collectionsMap.get(reqPaths[2]),200)
+				case "contextes":
+					if (! reqPaths[3] )
+						gbl.exception(pseudoContextLoad(reqPaths[2]),200)
+					else
+						gbl.exception(pseudoContextGet(reqPaths[2],reqPaths[3]),200)
+			}
+			gbl.exception("bad GET",400);
+		}
+		case  "POST": {
+			switch(reqPaths[1]) {
+				case "contextes":
+					if (reqPaths[3]!=pseudo) gbl.exception('bad pseudo in req',400)
+					gbl.exception(pseudoContextSet(reqPaths[2],reqPaths[3],JSON.parse(body)),200)
+			}
+			gbl.exception("bad POST",400);
+		}
+		case  "DELETE": {
+			pseudos.check(pseudo,pwd,true); // admin
+			gbl.exception(pseudoContextDelete(reqPaths[2],reqPaths[3]),200)
+		}
+	}
+	gbl.exception("bad op",400);
+}
+
+initCollections();
 
 console.log("collection et simpleObjects loaded");

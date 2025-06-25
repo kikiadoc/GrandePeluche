@@ -128,7 +128,7 @@ async function definePseudo(body, ipFor) {
 	if (!discordRec && ipFor!=gbl.ipAdmin) gbl.exception("Tu n'es pas validé sur le Discord des Kiki's Events",400);
 	// if (!discordRec) gbl.exception("Tu n'es pas validé sur le Discord des Kiki's Events",400);
 
-	// le ff14Id n'est pas encore connu, construit le pseudo en evitant les pseudos existants
+	// construit le pseudo
 	let suffixe = "";
 	while (pseudos[pseudo+suffixe])
 		suffixe = (suffixe!="")? suffixe+1 : 1;
