@@ -1,10 +1,11 @@
 ////////////////////////////////////////////////////////////
 // Varaible constante globales et variables à state globales
 ////////////////////////////////////////////////////////////
+import {urlCdn} from "./common.js"
 export const GBLSTATE = $state({
 	swcReady: false // etat du service worker
 	, audioVolume: 30
-	, audioBack: true
+	, audioBack: false
 	, audioTTS: 100
 	, audioAmbiance: true
 });
@@ -20,7 +21,7 @@ export const GBLCONST = {
 		"Cerberus","Louisoix","Moogle","Omega","Phantom","Ragnarok","Sagittarius","Spriggan",
 		"Alpha","Lich","Odin","Phoenix","Raiden","Shiva","Twintania","Zodiark"
 	],
-	PAGEASSISTANCE: "https://filedn.eu/lxYwBeV7fws8lvi48b3a3TH/V10/securite/index.html"
+	PAGEASSISTANCE: urlCdn+"securite/index.html"
 };
 
 console.log("Chargé: ground.svelte.js")

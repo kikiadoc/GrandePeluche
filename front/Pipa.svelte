@@ -2,7 +2,7 @@
 	import { onMount, onDestroy  } from 'svelte';
 	import { playVideo, playMusic, markClick, urlCdn,
 					 apiCall, displayInfo, scrollPageToTop,
-					 loadIt, storeIt
+					 loadIt, storeIt, isAdmin
 				 } from './common.js'
 
 	/** @type {Props} */
@@ -732,7 +732,7 @@
 <!-- svelte-ignore element_invalid_self_closing_tag -->
 <!-- svelte-ignore a11y_interactive_supports_focus -->
 <div use:scrollPageToTop>
-	{#if pseudo.startsWith('Kikiadoc')}
+	{#if isAdmin(pseudo)}
 		<div class="adminCadre" style="font-size: 0.5em">
 			<input type="button" value="resetLecture"
 				onclick={()=>{ apiCall('/contextes/ipa/'+pseudo,'DELETE'); videosStatus={} }}

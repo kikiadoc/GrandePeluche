@@ -1,6 +1,6 @@
 <script>
 	import { onMount, onDestroy  } from 'svelte';
-	import { urlRaw, urlCdn, scrollPageToTop,
+	import { urlCdn, scrollPageToTop,
 					 jjmmhhmmss, countDownTo, displayInfo, playMusic,
 					 capitalizeFirstLetter, isPseudoValid, crypoCreateKeyPair } from './common.js'
 	import { G }  from './privacy.js'

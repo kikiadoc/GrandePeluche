@@ -563,8 +563,8 @@
 	</titre>
 	<blinkGlobal id="blinkGlobal" />
 
-	<audio id="ding" />
-	<audio id="musique" />
+	<audio id="ding" onerror={(e)=>mediaError(e)}  />
+	<audio id="musique" onerror={(e)=>mediaError(e)} />
 	<audio id="tts" onended={()=>tryTTS(true)} onerror={(e)=>mediaError(e)}></audio>
 	<div id="divVideo" class="divVideo">
 		<div class="close" onclick={closeVideo} role="button" tabindex=0>X</div>

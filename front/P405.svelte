@@ -5,7 +5,8 @@
 					 generateSecurityAlert, isEquipementPC,
 					 getEpsilon, getLatence,
 					 addNotification, apiCall,
-					 urlCdn, urlRaw, jjmmhhmmss 
+					 urlCdn, jjmmhhmmss,
+					 isPWA, isAndroid
 				 } from './common.js'
 	import { G }  from './privacy.js'
 	import { GBLCONST,GBLSTATE }  from './ground.svelte.js'
@@ -233,6 +234,26 @@
 			<u>Lit attentivement mes instructions</u>,
 			même si tu as déjà participé à de précédents événements.
 			<div class="br"></div>
+			{#if ! isPWA()}
+				{#if isAndroid()}
+					<div class="adminCadre">
+						Tu utilises un smartphone Android.
+						Si tu utilises Chrome comme navigateur par défaut sur ton smartphone,
+						tu peux activer le mode
+						<a href="https://developer.mozilla.org/fr/docs/Web/Progressive_web_apps" target="_blank">
+							PWA
+						</a> et transformer le site en une application.
+						<br/>
+						<a href="{urlCdn}Installation Grande Peluche comme PWA sur smartphone (portait).pdf" target="_blank">
+						Suis ces instructions pour installer l'application.
+						</a>.
+						<br/>
+						Après installation, ferme cette fenêtre et lance l'application.
+					</div>
+				{/if}
+			{/if}
+			<div class="br"></div>
+			
 			N'hésite pas à cliquer sur des éléments identifiés par une
 			<a href="https://fr.wikipedia.org/wiki/Hyperlien" target="_blank">loupe</a>
 			d'un <span class="imgLink" gpImg="ff-7/kiki-1.png" gpImgClass="img100">appareil photo</span>
@@ -240,6 +261,11 @@
 			ou d'un <span class="infoLink" gpHelp="Exemple de message d'information">signe d'information</span>,
 			ça peut être une surprise ou une explication importante! 
 			<div class="br"></div>
+			{#if ! isEquipementPC()}
+				Pour une meilleure expérience, tu peux passer ton smartphone en mode paysage
+				pour les vidéos ou les scènes en 3D.
+				<div class="br"></div>
+			{/if}
 			Prends le temps de lire le texte du Lore, regarder les vidéos en intégralité,
 			et même les vidéos qui peuvent poper au milieu d'un challenge, 
 			<u>celà n'impacte jamais tes résultats</u>, au contraire, 
@@ -397,21 +423,19 @@
 				ennuy{G(pseudoGenre,"é","ée")}
 				ou frustr{G(pseudoGenre,"é","ée")}!
 				<br/>
-				Et si tu découvres un bug notable (pas une coquille), il y a même un
+				Et si tu découvres un bug notable, il y a même un
 				<a href="https://fr.wikipedia.org/wiki/Prime_aux_bogues" target="_blank">
 					bug bounty
 				</a>
 				avec des gils en récompense!
 			</div>
 			<div class="br"></div>
-			<Btn bind:refStep={epiqStep} step=25 val="J'ai compris"
-				msg="Lire attentivement les popups est TRES IMPORTANT. Note bien cette valeur, tu en auras besoin plus tard: {saisies.aleaReq}"
-				/>
+			<Btn bind:refStep={epiqStep} step=25 val="J'ai compris" />
 			<div class="info">
 				La charge de Game Master Numérique ne peut se maîtriser seule.
 				Mon équipe est composée de multiples Peluches (développements par Kikiadoc) et
 				deux "Engines" réputés en "open-source".
-				Tu en verras parfois leurs noms.
+				Tu verras parfois leurs noms.
 				<br/>
 				➥La Grande Peluche est en charge de l'apparence et la dynamique du site.
 				<br/>
@@ -455,25 +479,29 @@
 			Il manie le Marteau du Bannissement et l'utilise plusieurs fois par jour contre
 			des sites malveillants.
 			<br/>
-			➥Il surveille en temps réel les connexions vers le serveur.
-			<br/>
-			⚠️Si vous êtes plusieurs à partager ta connexion Internet, indique le à Kikiadoc.
-			Normalement à 2, ca doit passer, mais à 3 ça bloque.
+			➥Il surveille en temps réel le nombre de connexions par adresse IP vers le serveur.
 			<br/>
 			➥Il vérifie la sémantique de toutes les requêtes vers le serveur.
 			Une seule requête invalide entraine le bannissement immédiat.
 			<br/>
-			⚠️Accède au site en utilisant <u>uniquement</u> l'URL d'accès: {document.location}
-			<br/>
 			➥Son marteau est de grande taille: à chaque frappe,
 			il bannit entre 256 et 17 millions d'adresses IP.
 			Environ 3 milliards d'adresses IP sont actuellement bannies du site.
+			<div class="br"></div>
+			⚠️Si vous êtes plusieurs à partager ta connexion Internet, indique le à Kikiadoc.
+			Normalement à 2, ca doit passer, mais à 3 ça bloque.
+			<br/>
+			{#if isPWA()}
+				⚠️Accède au site en utilisant <u>uniquement</u> l'application
+			{:else}
+				⚠️Accède au site en utilisant <u>uniquement</u> l'URL d'accès: {document.location}
+			{/if}
 			<br/>
 			⚠️Si tu utilises un VPN moisi, ou si ton IP est proche d'un site malveillant,
-			tu risques d'être un dommage colatéral.
-			<div class="br"></div>
+			tu risques d'être un dommage colatéral d'une frappe du Marteau du Bannissement.
+			<br/>
 			⚠️Ton pseudo et l'indicateur "multijoueurs" en haut à droite de ton écran doivent
-			toujours être verts.
+			toujours être verts. Cela indique une communication temps-réel sécurisée et signée.
 			<br/>
 			<Btn bind:refStep={epiqStep} step=30 val="J'ai compris" />
 			<div style="clear:both" class="br"></div>
@@ -488,8 +516,7 @@
 			Il applique ma
 			<a href="https://developer.mozilla.org/fr/docs/Web/HTTP/Guides/CSP" target="_blank">
 				stratégie de sécurité du contenu
-			</a>
-			dans ton navigateur.
+			</a>.
 			Il peut ainsi détecter certains comportements déviants.
 			<br/>
 			Dans ce cas, l'accès à la ressource inappropriée est bloqué.
@@ -498,12 +525,15 @@
 			➥Un antivirus moisi, un VPN moisi peut provoquer une alerte de DeepCheckSec
 			s'il bidouille ta navigation.
 			<br/>
+			➥Un malware ou un virus présent sur ton équipement peut aussi 
+			provoquer une alerte de DeepCheckSec. Dans ce cas, tu devras agir rapidement.
+			<br/>
 			⚠️Il FAUT utiliser un antivirus (même gratuit) fiable, à jour et bien conçu.
 			<br/>
 			⚠️Il FAUT activer une fonction firewall sur ton équipement
 			(via ton antivirus ou par une autre solution).
-			<div class="br"/>
-			⚠️Et n'oublie jamais que la meilleure cyberprotection n'est pas l'IA.
+			<br/>
+			⚠️N'oublie jamais que la meilleure cyberprotection n'est pas l'IA.
 			C'est l'IN, l'Intelligence Naturelle. Le moteur d'inférence de cet IN est 
 			un réseau de neurones ultra performant localisé entre ta chaise et ton clavier.
 			N'oublie pas de le solliciter en permanence
@@ -529,6 +559,16 @@
 				Les VPN gratuits ne vivent que par ça.
 				<u>Il ne faut JAMAIS utiliser un VPN gratuit</u>.
 				<br/>
+				Comme "gestionnaire de mots de passe", j'utilise 
+				<a href="https://keepass.info/" target="_blank">
+					Keypass
+				</a>,
+				ce n'est pas le plus ergonomique, mais le seul
+				outil gratuit et 
+				<a href="https://www.cybermalveillance.gouv.fr/tous-nos-contenus/bonnes-pratiques/mots-de-passe" target="_blank">
+					recommandé par l'ANSSI
+				</a>.
+				<br/>
 				Comme "résolver DNS", j'utilise 
 				<a href="https://www.joindns4.eu/about" target="_blank">
 					DNS4EU
@@ -536,10 +576,9 @@
 				avec les parametres bloquant automatiquement la majorité des sites dangereux et
 				des sites dédiés aux pubs.
 				Ce DNS "souverain" est un premier niveau de protection.
-				<br/>
-				Ce DNS n'est pas, aujourd'hui, le back-end par défaut des box Internet
+				Il n'est pas, aujourd'hui, le back-end par défaut des box Internet
 				ou des réseaux mobiles,
-				mais j'espère que cela le deviendra.
+				mais j'espère qu'il le deviendra.
 				<br/>
 				J'utilise AVAST comme antivirus (gratuit) et aucun VPN sur 
 				nos équipements personnels (PC fixe, PC portable, tablettes et smartphones).
@@ -556,7 +595,7 @@
 				En cas de besoin d'anonymat, j'utilise le
 				<a href="https://www.torproject.org/fr/" target="_blank">browser tor</a>,
 				il offre une confidentialité bien plus importante que tous les VPN.
-				L'anti-pub Ublock Origin sur Firefox est activé par défaut.
+				L'anti-pub Ublock Origin sur Firefox (PC ou mobiles) est activé par défaut.
 				Par éthique, les pubs sont activées sur les
 				sites ayant une vraie valeur et dont les pubs ne sont pas envahissantes.
 				Les sites putapubs ou putaclics sont bloqués.
@@ -571,9 +610,8 @@
 		<div class="reveal" use:scrollPageToTop>
 			<img class="parchemin" src={urlCdn+"lore.jpg"} style="width:20%; float:right" alt="" />
 			Tu vas participer à des challenges où le timing est important.
-			Deux éléments techniques sont importants:
 			<br/>
-			➥La différence entre l'horloge du serveur et celle de ton équipement:
+			➥Ta correction temporelle actuelle est de
 			{#if epsilon < 300}
 				<span style="color:lightgreen">{epsilon} millisecondes, tu n'as pas de soucis</span>
 			{:else if epsilon < 1000}
@@ -583,8 +621,8 @@
 			{/if}
 			<sup>(*)</sup>.
 			<br/>
-			➥La latence réseau (lag):
-			{#if latence < 40}
+			➥Ta latence réseau actuelle est de
+			{#if latence < 50}
 				<span style="color:lightgreen">{latence} millisecondes, tu n'as pas de soucis</span>
 			{:else if latence < 80}
 				<span style="color:yellow">{latence} millisecondes, c'est un peu trop mais je peux gérer</span>
@@ -597,7 +635,7 @@
 			Si tu fais cela, tu perdras ta clé privée(***), tes données saisies et tu ne pourras pas te reconnecter.
 			Il faudra alors contacter Kikiadoc sur Discord.
 			<div class="br"></div>
-			<Btn bind:refStep={epiqStep} step=40 val="J'ai compris" />
+			<Btn bind:refStep={epiqStep} step=50 val="J'ai compris" />
 			<div style="font-size:0.8em">
 				(*) la correction temporelle est l'écart entre l'horloge du serveur et celle de ton équipement.
 				Cet écart est compensé par les algorithmes utilisés dans la limite du raisonnable,
@@ -610,7 +648,7 @@
 				utilisant des utilitaires de "ménage". Si c'est possible, paramètre le ménage en indiquant de ne pas purger
 				les informations relatives à "ff14.adhoc.click".
 				<br/>
-				(***) Ta clé privée est utilisée pour générer des "mots de passe" aléatoires, éphémères et signés.
+				(***) Ta clé privée est utilisée pour générer des "jetons" aléatoires, éphémères et signés.
 				C'est bien plus sécurisé que l'usage d'un mot de passe classique.
 				Elle est obligatoire pour que le serveur t'authentifie.
 			</div>
@@ -653,18 +691,6 @@
 				Voici le résumé des derniers épisodes:
 			</div>
 			<hr/>
-			<div class="videoLink" onclick={markClick} gpVideo="ff-5-trailer">
-				➥Lors d'Hypostasis (Event VII)
-				les dimensions quantiques ont été découvertes par les Jedis des Savoirs
-				et les Quatre sont partis explorer l'Ortho-temps,
-				la cinquième dimension de l'Univers Connu.
-			</div>
-			<hr/>
-			<div class="videoLink" onclick={markClick} gpVideo="ff-6-trailer">
-				➥Les Aventuriers de l'Uchronie (Event VIII) ont réussi à réordonner
-				le temps et l'espace perturbé par le Maitre de la Magie, Méphistophélès.
-			</div>
-			<hr/>
 			<div class="videoLink br" onclick={markClick} gpVideo="ff-7/ff-7-trailer">
 				➥Lors de l'Hégémonie (Event IX),
 				les Aventuriers ont déjoué la tentative de Méhistophélès de 
@@ -688,6 +714,7 @@
 			</div>
 			<div>
 				Te souviens-tu de tout celà?
+				<br/>
 				<Btn val="Non, je n'y ai pas participé"
 					msg="Alors clique sur les liens videos de cette page pour voir ce que tu as manqué" />
 				<Btn bind:refStep={epiqStep} step=55 val="Oui. J'y étais"

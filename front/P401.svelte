@@ -4,7 +4,7 @@
 					 markClick, playMusic, tts,
 					 isEquipementPC,
 					 addNotification, apiCall, getEpsilon,
-					 urlCdn
+					 urlCdn, isAdmin
 				 } from './common.js'
 	import { G }  from './privacy.js'
 	import { GBLCONST,GBLSTATE }  from './ground.svelte.js'
@@ -87,7 +87,7 @@
 <!-- svelte-ignore a11y_interactive_supports_focus -->
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <div>
-	{#if pseudo.startsWith('Kikiadoc')}
+	{#if isAdmin(pseudo)}
 		<div class="adminCadre" style="font-size: 0.5em">
 			<div>
 				Admin:

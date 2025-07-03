@@ -1,5 +1,5 @@
 <script>
-	import { urlRaw, urlCdn, clearStorage } from './common.js'
+	import { urlCdn, clearStorage } from './common.js'
 
 	let dspAssistance=$state(false)
 	let dspCredits=$state(false)
@@ -19,7 +19,7 @@
 			<div>Si tu as des "errreurs imprévues" ou un soucis d'accès au site:</div>
 			<div>
 				👉
-				<a class="active" href={urlRaw+'V10/securite/index.html'} target="_blank">
+				<a class="active" href={urlCdn+'securite/index.html'} target="_blank">
 					Affichage de la page de diagnostic et assistance du site
 				</a>
 			</div>

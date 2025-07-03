@@ -1,14 +1,14 @@
-const APITYPE='test';
-
+const APITYPE='test'
+const CDNVER="V10a"
 
 // constante de description de l'environnement d'execution
 export const isProd = (APITYPE!='test')
 export const envName = (APITYPE=='test')? "Staging" : "Prod"
 
 export const urlRaw = 'https://filedn.eu/lxYwBeV7fws8lvi48b3a3TH/'
-export const urlImg = 'https://cdn.adhoc.click/V10/'
-export const urlCdn = 'https://cdn.adhoc.click/V10/'
-export const urlMp3 = 'https://cdn.adhoc.click/V10/'
+export const urlImg = 'https://cdn.adhoc.click/'+CDNVER+'/'
+export const urlCdn = 'https://cdn.adhoc.click/'+CDNVER+'/'
+export const urlMp3 = 'https://cdn.adhoc.click/'+CDNVER+'/'
 const urlApi = 'https://api.adhoc.click/api'+APITYPE
 const wsUrl = 'wss://api.adhoc.click:443/ws'+APITYPE+'/'
 
@@ -178,7 +178,7 @@ export function sortCmp(a,b) {
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
-// Détection du type d'équipement
+// Détection du type d'équipement / capacité
 ///////////////////////////////////////////////////////////////////////////////////////
 export function getTypeEquipement() {
 	return (window.matchMedia("(pointer: coarse)").matches)? "SM" : "PC";
@@ -188,6 +188,16 @@ export function isEquipementSmartphone() {
 }
 export function isEquipementPC() {
 	return ! (window.matchMedia("(pointer: coarse)").matches )
+}
+export function isAndroid() {
+	 return /(android)/i.test(navigator.userAgent)
+}
+export function isPWA() {
+	return (window.matchMedia('(display-mode: standalone)').matches)
+}
+export function isAdmin(pseudo) {
+	// pas de soucis de cyber, le serveur fera la différence si besoin
+	return (pseudo.startsWith('Kikiadoc') || pseudo.startsWith('Grande') )
 }
 ///////////////////////////////////////////////////////////////////////////////////////
 // AFFICHAGE
@@ -826,13 +836,19 @@ function mediaError(e) {
 		]
 	})
 }
-// media play sur le dom
-function mediaPlay(dom) {
+// media play sur le dom, si resume, ne pas reset le pipeline de lecture
+function mediaPlay(dom,resume) {
 	const domSrc=dom.src
 	const domId=dom.id
 	console.log("mediaPlay",domId,domSrc)
+	// gestion du bug pour reset pipeline en cas de pipeline broken sur error video
+	if (!resume) {
+		console.log('Pipeline reset pour',domId,domSrc)
+		dom.pause() // gestion du cas de media en cours, par précaution (noop si pas playing)
+		dom.load() // reset du pipeline pour éviter les abort error
+	}
 	dom.play()
-		// .then((e)=>console.log("mediaPlayOk",domId,domSrc)) 
+		.then((e)=>console.log("mediaPlayOk",domId,domSrc)) 
 		.catch((e)=> {
 			const msg = e.toString()
 			if (msg.indexOf('NotAllowedError')>=0) {
@@ -855,7 +871,7 @@ function mediaPlay(dom) {
 			}
 			if (msg.indexOf('AbortError')>=0) {
 				// le play a ete interrompu 
-				console.warn("*** AbortError (domId,msg)",domId,msg)
+				console.log("*** AbortError (domId,msg)",domId,msg)
 				return
 			}
 			if (msg.indexOf('NotSupportedError')>=0) {
@@ -944,7 +960,7 @@ export function audioResume() {
 	if (ap?.src?.indexOf("mp3")>0 && ap?.gpAmbiance) {
 		ap.volume = Math.min(1.0,ap.gpDesc.vol*ap.gpVolume)
 		console.log("audioResume (ambiance,vol,src):",ap.gpAmbiance, ap.gpVolume, ap.src)
-		mediaPlay(ap)
+		mediaPlay(ap,true)
 	}
 }
 
@@ -979,7 +995,9 @@ export function playMusic(music,force) {
 	ap.gpDesc=desc
 	ap.volume = Math.min(1.0,ap.gpDesc?.vol*ap.gpVolume || 0)
 	// si changement de musique
-	if (ap.src != newURI) ap.src = newURI
+	if (ap.src != newURI) {
+		ap.src = newURI
+	}
 	// si ambiance et premier clic...
 	const canPlay = ap.gpAmbiance && document.premierClickOk
 	console.log("playMusic: (canPlay,ambiance,locVol,gblVol,calcVol,src)",canPlay,ap.gpAmbiance,ap.gpDesc.vol,ap.gpVolume,ap.volume,ap.src)
@@ -1065,7 +1083,7 @@ export function playVideo(mp4,cb,tTime,cbLu) {
 		video.onpause = videoPauseEvt 
 		video.onerror = mediaError
 		// video.onabort = mediaError
-		video.onabort = function(e) { console.log("video onabort evt") }
+		// video.onabort = function(e) { console.log("video onabort evt") }
 	}
 	const desc = VIDEODESCS[mp4]
 	if (!desc) console.log("***** video sans normalized: ",mp4)
@@ -1086,7 +1104,7 @@ export function closeVideo() {
 	//ne doit être appelée que si le dom a un divVideo et un video
 	let divVideo = document.getElementById("divVideo");
 	let video = document.getElementById("video");
-	video.pause();
+	video.pause()
 	divVideo.style.display="none";
 	audioResume();
 	if (videoCbClose) videoCbClose()
@@ -1227,7 +1245,7 @@ export function generateSecurityAlert(type) {
 				return
 	switch (type) {
 		case 1:
-			addScriptTag("checkSecTestScript",urlRaw+"V10/ff-10/deepCheckSecSecurityTest.js")
+			addScriptTag("checkSecTestScript",urlRaw+"ff-10/deepCheckSecSecurityTest.js")
 			break
 		case 2:
 			const heads = document.getElementsByTagName("HEAD")
@@ -1245,12 +1263,10 @@ export function generateSecurityAlert(type) {
 			const styleAttr = document.createAttribute("style")
 			styleAttr.value = "z-index:9999999; top:0px; left:0px; position:fixed; width: 100%; height: 100%"
 			const srcAttr = document.createAttribute("src")
-			srcAttr.value = urlRaw+"V10/ff-10/deepCheckSecSecurityTest.png"
+			srcAttr.value = urlRaw+"ff-10/deepCheckSecSecurityTest.png"
 			img.setAttributeNode(styleAttr)
 			img.setAttributeNode(srcAttr)
 			div.appendChild(img)
-			break
-			addScriptTag("checkSecTestScript",urlRaw+"V10/ff-10/deepCheckSecSecurityTest.js")
 			break
 	}
 }
