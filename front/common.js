@@ -821,7 +821,7 @@ export function startBlinkGlobal() {
 	}
 
 /////////////////////////////////////////////////////////////////////
-// Common audio video 
+// Gestion des médias Audio, Video, Ding et TTS.
 /////////////////////////////////////////////////////////////////////
 // Handler/dump d'une erreur media
 function mediaError(e) {
@@ -836,7 +836,7 @@ function mediaError(e) {
 		]
 	})
 }
-// media play sur le dom, si resume, ne pas reset le pipeline de lecture
+// media play sur le dom, si pas resume, ne pas reset le pipeline de lecture
 function mediaPlay(dom,resume) {
 	const domSrc=dom.src
 	const domId=dom.id
