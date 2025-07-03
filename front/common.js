@@ -161,13 +161,13 @@ function uint8ArrayToHex(buffer) {
   return out;
 }
 export function hexToUint8Array(hexStr) {
-	var bytes = new Uint8Array(Math.ceil(hexStr.length / 2));
-	for (var i = 0; i < bytes.length; i++) bytes[i] = parseInt(hexStr.substr(i * 2, 2), 16);
+	let bytes = new Uint8Array(Math.ceil(hexStr.length / 2));
+	for (let i = 0; i < bytes.length; i++) bytes[i] = parseInt(hexStr.substr(i * 2, 2), 16);
 	return bytes
 }
 export function uuidv4() {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-    var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+    let r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
     return v.toString(16);
   });
 }
