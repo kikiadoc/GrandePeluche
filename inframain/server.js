@@ -26,6 +26,7 @@ const metropolis = require('../inframain/metropolis.js');
 const rubans = require('../inframain/rubans.js');
 const shared = require('../inframain/shared.js');
 const securityReport = require('../inframain/securityReport.js');
+const pharao = require('../inframain/pharao.js');
 // inutile const votation = require('../infraback/votation.js');
 // inutile const webAuth = require('../infraback/webAuth.js');
 
@@ -47,8 +48,9 @@ async function httpCallback(req, res, method, reqPaths, body, pseudo, pwd) {
 		case "shared": await shared.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
 		case "securityReport": await securityReport.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
 		// eleents liés aux activités présentes
-		case "metropolis": await metropolis.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
+		case "pharao": await pharao.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
 		// eleents liés aux activités anciennes
+		case "metropolis": await metropolis.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
 		case "innommable": innommable.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
 		case "torches": torches.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
 		case "asciens": asciens.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
