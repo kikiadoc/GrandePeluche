@@ -43,6 +43,7 @@ function setAll() {
 // analyse une proposition
 function proposition(pseudo,reqPaths) {
 	// verification de la proposition
+	console.warn("******************* Verif proposition a faire")
 	// proposition ok
 	// recherche d'un elt non découvert
 	let tblPossibles = []
@@ -61,8 +62,8 @@ function proposition(pseudo,reqPaths) {
 }
 // echange de deux elements
 function swapElt(pseudo,reqPaths) {
-	let pFrom = gbl.checkInt(reqPaths[3],0,SIZE*SIZE)
-	let pTo = gbl.checkInt(reqPaths[4],0,SIZE*SIZE)
+	let pFrom = gbl.checkInt(reqPaths[3],0,SIZE*SIZE - 1)
+	let pTo = gbl.checkInt(reqPaths[4],0,SIZE*SIZE - 1)
 
 	etat.elts[pFrom].posePseudo = pseudo
 	etat.elts[pFrom].poseDth = Date.now()

@@ -177,6 +177,12 @@ export function sortCmp(a,b) {
 	return (a<b)? -1: (a>b)? 1 : 0
 }
 
+// return true/false selon la distance quadratique
+export function isDistance(x,y,tX,tY,d) {
+  return (x>=tX-d && x<=tX+d && y>=tY-d && y<=tY+d)
+}
+
+
 ///////////////////////////////////////////////////////////////////////////////////////
 // Détection du type d'équipement / capacité
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -641,6 +647,11 @@ function nop(e) { console.log('e=',e) }
 /////////////////////////////////////////////////////////////////////
 // gestion des countdown
 let timerCountdownId = null
+// countDownInit usage avec use: sur countdown
+export function countDownInit(node) {
+	let dth = parseInt(node.getAttribute("dth"),10)
+	node.innerHTML = countDownTo(dth)
+}
 function timerCountDown() {
 	// console.log("timerCoundDownStart")
 	let tblElt = document.getElementsByTagName('countdown')
@@ -968,7 +979,7 @@ export function audioResume() {
 function getDescAudioByName(nom) {
 	const desc = AUDIODESCS[nom]
 	if (desc) return desc
-	addNotification("Erreur mixer:"+nom)
+	addNotification("AudioBlaster: pas normalized "+nom,"yellow",10)
 	return null
 };
 
@@ -1086,7 +1097,10 @@ export function playVideo(mp4,cb,tTime,cbLu) {
 		// video.onabort = function(e) { console.log("video onabort evt") }
 	}
 	const desc = VIDEODESCS[mp4]
-	if (!desc) console.log("***** video sans normalized: ",mp4)
+	if (!desc) {
+		console.log("***** video sans normalized: ",mp4)
+		addNotification("Audioblaster: Not mormalized"+mp4,"yellow",10)
+	}
 	//setup des callback sur la video
 	videoInitTrack(mp4,cb,cbLu)
 	// affichage, calul volume et src

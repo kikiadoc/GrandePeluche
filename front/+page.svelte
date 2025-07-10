@@ -4,7 +4,7 @@
 	const GLOBALSTARTDTH=Date.now() // dth de démarrage des traitements 
 	console.log('******** CLIENT START id:',GLOBALSTARTDTH)
 
-	// divers caractères pour copier/coller : ➤▲⏸◀▶▼⏬🔎📽❓✅🆘⚠️⬇️✅➥📷εΔ⛭👉😈ⓘ(ℹ)🛈႞⒤⇛⏳
+	// divers caractères pour copier/coller : ⁜➤▲⏸◀▶▼⏬🔎📽❓✅🆘⚠️⬇️✅➥📷εΔ⛭👉😈ⓘ(ℹ)🛈႞⒤⇛⏳
 	// ne fonctionne pas sur android 🛈 utiliser (ℹ)
 
 	//////////////////////////////////////////
@@ -38,7 +38,7 @@
 	import P401 from './P401.svelte' // Kiki's Event X - le bug bounty
 	import P405 from './P405.svelte' // Kiki's Event X - initiatique
 	import P410 from './P410.svelte' // Kiki's Event X - Pharao
-	// import P499 from './P499.svelte' // Pharao
+	import P420 from './P420.svelte' // Kiki's Event X - Les bases
 
 	//////////////////////////////////////////
 	// Gestion du cycle de vie
@@ -155,18 +155,30 @@
 		 end: 0,
 		 component: P410
 		},
-		{n: 415, texte: "Mercredi", music: "mercredi",
+		{n: 420, texte: "Les Bases", music: "dolmen",
+		 start: 0,
+		 end: 0,
+		 component: P420
+		},
+		{n: 430, texte: "Le lancement", music: "dolmen",
 		 start: 0,
 		 end: 0,
 		 component: null
-		 // idée: des fantomes popent a différents endroits
-		 // il permettent de trouver l'album de la comtesse
 		},
-		{n: 420, texte: "La comtesse", music: "dolmen",
+		{n: 998, texte: "Mercredi", music: "mercredi",
 		 start: 0,
 		 end: 0,
-		 // component: P415
+		 component: null
+		 // component: Pxxx
+		 // explication du projet pharao sur terre
+		 // 
+		 // idée: trouver les lieux propices pour des horloges 
+		 // upgrade du chronogyre avec un pupitre de commande
+		 // idée: construire el cadmos dans l'hypertemps
 		 // idée: une horreur a modifie le poèms 
+		 // idée: des fantomes popent a différents endroits
+		 // idée: construire el cadmos dans l'hypertemps
+		 // il permettent de trouver l'album de la comtesse
 		},
 		{n: 999, texte: "Epilogue", music: "dolmen",
 		 start: 0,
@@ -526,6 +538,15 @@
 		from { text-decoration-color: black; }
 		to { text-decoration-color: white; }
 	}
+	:global(.tdBlink) { 
+		outline: 5px solid yellow;
+		animation-duration: 2s; animation-name: tdBlinkFrames; animation-iteration-count: infinite;
+	}
+	@keyframes -global-tdBlinkFrames {
+		from { outline-color: black; }
+		to { outline-color: yellow; }
+	}
+
 
 </style> 
 

@@ -6,7 +6,7 @@
 					 getEpsilon, getLatence,
 					 addNotification, apiCall,
 					 urlCdn, jjmmhhmmss,
-					 isPWA, isAndroid
+					 isPWA, isAndroid, isAdmin
 				 } from './common.js'
 	import { G }  from './privacy.js'
 	import { GBLCONST,GBLSTATE }  from './ground.svelte.js'
@@ -174,7 +174,7 @@
 <!-- svelte-ignore a11y_interactive_supports_focus -->
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <div>
-	{#if pseudo.startsWith('Kikiadoc')}
+	{#if isAdmin(pseudo)}
 		<div class="adminCadre" style="font-size: 0.5em">
 			<div>
 				Admin:
@@ -403,6 +403,20 @@
 		<div class="reveal" use:scrollPageToTop>
 			<img class="parchemin" src={urlCdn+"ff-10/lalateam.png"} style="width:20%; float:right" alt="" />
 			<div>
+				N'hésite pas à MP @Kikiadoc sur Discord ou via le canal #discussions
+				à la moindre hésitation,
+				il ne supporterai pas que tu sois bloqu{G(pseudoGenre,"é","ée")},
+				ennuy{G(pseudoGenre,"é","ée")}
+				ou frustr{G(pseudoGenre,"é","ée")}!
+				<br/>
+				Et si tu découvres un bug notable, il y a même un
+				<a href="https://fr.wikipedia.org/wiki/Prime_aux_bogues" target="_blank">
+					bug bounty
+				</a>
+				avec des gils en récompense!
+			</div>
+			<div class="br"></div>
+			<div>
 				En cas de soucis, recharge la page:
 				tu ne perdras pas ton avancement dans les challenges et
 				retrouveras ta situation.
@@ -415,19 +429,6 @@
 					Appuie sur le haut de ron écran et glisse vers le bas
 					sur ton smartphone.
 				{/if}
-			</div>
-			<div>
-				En cas de soucis, d'incompréhension ou d'une simple hésitation,
-				c'est MP @Kikiadoc sur Discord ou via le canal #discussions.
-				Kikiadoc ne supporterai pas que tu sois bloqu{G(pseudoGenre,"é","ée")},
-				ennuy{G(pseudoGenre,"é","ée")}
-				ou frustr{G(pseudoGenre,"é","ée")}!
-				<br/>
-				Et si tu découvres un bug notable, il y a même un
-				<a href="https://fr.wikipedia.org/wiki/Prime_aux_bogues" target="_blank">
-					bug bounty
-				</a>
-				avec des gils en récompense!
 			</div>
 			<div class="br"></div>
 			<Btn bind:refStep={epiqStep} step=25 val="J'ai compris" />
@@ -477,9 +478,9 @@
 			<div class="br"></div>
 			CheckSec, mon Tank Gardien, est en charge de la cybersécurité du server.
 			Il manie le Marteau du Bannissement et l'utilise plusieurs fois par jour contre
-			des sites malveillants.
+			des sites malveillants. En cas d'attaque massive, il peut placer le server en PLS.
 			<br/>
-			➥Il surveille en temps réel le nombre de connexions par adresse IP vers le serveur.
+			➥Il surveille en temps réel le nombre de connexions vers le serveur.
 			<br/>
 			➥Il vérifie la sémantique de toutes les requêtes vers le serveur.
 			Une seule requête invalide entraine le bannissement immédiat.
@@ -551,34 +552,29 @@
 			<Btn ifFct={()=>window.open(GBLCONST.PAGEASSISTANCE)} val="Voir la page d'assistance" />
 			<Btn bind:refStep={epiqStep} step=35 val="J'ai regardé la page d'assistance" />
 			<div class="info">
-				<u>Avis personnel de Kikiadoc</u>
-				<br/>
 				<img class="parchemin" src={urlCdn+"pc-kiki.jpg"} style="width:30%; float:right" alt="" />
-				AUCUN antivirus ou VPN ne garantit l'absence de collecte de données personnelles,
-				quoiqu'ils en disent.
-				Les VPN gratuits ne vivent que par ça.
-				<u>Il ne faut JAMAIS utiliser un VPN gratuit</u>.
+				<u>Configuration et avis personnel de Kikiadoc</u>
+				<br/>
+				Comme "résolver DNS", j'utilise le DNS "souverain" 
+				<a href="https://www.joindns4.eu/about" target="_blank">
+					DNS4EU
+				</a>
+				avec les parametres bloquant automatiquement la majorité des sites dangereux et
+				des sites dédiés aux pubs.
+				Ce DNS n'est pas, aujourd'hui, le back-end par défaut des box Internet
+				ou des réseaux mobiles,
+				mais j'espère qu'il le deviendra.
 				<br/>
 				Comme "gestionnaire de mots de passe", j'utilise 
 				<a href="https://keepass.info/" target="_blank">
-					Keypass
+					Keepass
 				</a>,
 				ce n'est pas le plus ergonomique, mais le seul
 				outil gratuit et 
 				<a href="https://www.cybermalveillance.gouv.fr/tous-nos-contenus/bonnes-pratiques/mots-de-passe" target="_blank">
 					recommandé par l'ANSSI
 				</a>.
-				<br/>
-				Comme "résolver DNS", j'utilise 
-				<a href="https://www.joindns4.eu/about" target="_blank">
-					DNS4EU
-				</a>
-				avec les parametres bloquant automatiquement la majorité des sites dangereux et
-				des sites dédiés aux pubs.
-				Ce DNS "souverain" est un premier niveau de protection.
-				Il n'est pas, aujourd'hui, le back-end par défaut des box Internet
-				ou des réseaux mobiles,
-				mais j'espère qu'il le deviendra.
+				Je génère un mot de passe "fort et unique" pour chaque site que j'utilise.
 				<br/>
 				J'utilise AVAST comme antivirus (gratuit) et aucun VPN sur 
 				nos équipements personnels (PC fixe, PC portable, tablettes et smartphones).
@@ -586,6 +582,12 @@
 				des instances officielles de cybersécurité, que Kaspersky est une solution dangeureuse.
 				Je considère aussi que Norton est une usine à gaz s'inscrutant telle une horde de morpions.
 				<br/>
+				AUCUN antivirus ou VPN ne garantit l'absence de collecte de données personnelles,
+				quoiqu'ils en disent.
+				Les VPN gratuits ne vivent que par ça.
+				<u>Il ne faut JAMAIS utiliser un VPN gratuit</u>.
+				<br/>
+
 				Le sigle VPN est, aujourd'hui, totalement galvaudé.
 				Je considère les VPN "payant grand public" comme un danger plus qu'une solution
 				(ce n'est pas vrai pour un usage professionnel
@@ -611,7 +613,7 @@
 			<img class="parchemin" src={urlCdn+"lore.jpg"} style="width:20%; float:right" alt="" />
 			Tu vas participer à des challenges où le timing est important.
 			<br/>
-			➥Ta correction temporelle actuelle est de
+			➥Ta correction temporelle instantannée actuelle est de
 			{#if epsilon < 300}
 				<span style="color:lightgreen">{epsilon} millisecondes, tu n'as pas de soucis</span>
 			{:else if epsilon < 1000}
@@ -621,10 +623,10 @@
 			{/if}
 			<sup>(*)</sup>.
 			<br/>
-			➥Ta latence réseau actuelle est de
+			➥Ta latence réseau instantannée actuelle est de
 			{#if latence < 50}
 				<span style="color:lightgreen">{latence} millisecondes, tu n'as pas de soucis</span>
-			{:else if latence < 80}
+			{:else if latence < 150}
 				<span style="color:yellow">{latence} millisecondes, c'est un peu trop mais je peux gérer</span>
 			{:else}
 				<span class="blinkMsg" style="color:red">{latence} millisecondes, c'est trop, contacte Kikiadoc</span>
@@ -700,7 +702,7 @@
 			<hr/>
 			<div class="videoLink" onclick={markClick} gpVideo="ff-10/ff-10-metropolis-3d">
 				➥Grâce au Chronogyre, les Aventuriers se rendent à Métropolis,
-				un cité temporalisée selon l'Ortho-temps.
+				un cité instanciée selon l'Ortho-temps.
 				Méphistophélès a déjà fuit cette dimension en laissant des directives
 				aux derniers Nouveaux Anciens d'Eorzéa.
 			</div>
@@ -712,6 +714,7 @@
 				C'est alors que Thor nous a rendu visite via le Chronogyre, confirmant
 				l'existance de l'Hyper-temps et la neutralisation de Méphistophélès.
 			</div>
+			<hr/>
 			<div>
 				Te souviens-tu de tout celà?
 				<br/>
@@ -808,19 +811,12 @@
 			<div style="clear:both" class="br"></div>
 		</div>
 	{/if}
-	
-	{#if epiqStep==80}
-		<div class="reveal" use:scrollPageToTop>
-			<img class="parchemin" src={urlCdn+"boussole.png"} style="width:50%; float:right" alt="" />
+
+	<!--
 			<div class="info">
 				Cette étape semble chiante, mais
 				<span class="infoLink" gpHelp="Voir en bas de page">c'est justifié</span>.
 			</div>
-			Maintenant que tu es dans le jardin de la maison de CL de Kikiadoc,
-			tu es à proximité du servant Kikiadoc Lebogosse. (voir l'image)
-			<div class="br"></div>
-			Entraine-toi à te positionner juste à coté d'un pnj (ici Kikiadoc Lebogosse),
-			à m'indiquer ses coordonnées (ici X:8.6 Y:11.7)
 			et faire un screen où les noms des servants ou pnjs sont lisibles.
 			<div class="info">
 				Lors de cet entrainement, ton screen ne sera pas réellement stocké sur le serveur,
@@ -829,27 +825,8 @@
 				<span class="videoLink" gpVideo="ff-7/photocopie-fesses">
 					photocopie de tes fesses!
 				</span>
-			</div>
-			<table width="95%"><tbody><tr>
-				<td style="vertical-align: top; text-align: right; width: 50%">
-					X:<input type="number" placeholder="*8.6*" size=6 step="0.1" bind:value={saisies.X} />
-					<br/>
-					Y:<input type="number" placeholder="*11.7*" size=6 step="0.1" bind:value={saisies.Y} />
-					<br/>
-					{#if saisies.X!='8.6' || saisies.Y!='11.7'}
-						<span style="color:red">Coordonnées?</span>
 					{:else if !saisies.imageDataRaw}
 						<span style="color:red">Screen non défini</span>
-					{:else}
-						<Btn style="color:green" bind:refStep={epiqStep} step=90 val="C'est OK ➤" />
-					{/if}
-					<br/>
-				</td>
-				<td style="vertical-align: top; width: 50%">
-					<Upload cbImageRaw={(raw)=>saisies.imageDataRaw=raw} />
-				</td>
-			</tr></tbody></table>
-			<div style="clear:both" class="br"></div>
 			<div class="info">
 				Cette étape d'entrainement peut sembler très chiante,
 				mais c'est lié aux difficultés rencontrées lors de précédents événements:
@@ -858,7 +835,6 @@
 				Exemple: la "locale" n'est pas "fr-FR" (français de france),
 				un clavier "custom" est utilisé sur smartphone etc...
 				<br/>
-				<!--
 				<br/>
 				N.B: Contrairement à Google, Discord, FesseLivre, Tiktoké, X-Fake etc.. 
 				je n'utilise pas les "métadatas" de tes images sur le serveur
@@ -869,9 +845,35 @@
 				<br/>
 				Pour t'éviter un soucis au milieu d'un challenge, je préfère faire un
 				test dès maintenant en espérant que j'ai traité tous les cas rencontrés précédemment.
-				-->
-				
+				<td style="vertical-align: top; width: 50%">
+					<Upload cbImageRaw={(raw)=>saisies.imageDataRaw=raw} />
+				</td>
+	-->
+	{#if epiqStep==80}
+		<div class="reveal" use:scrollPageToTop>
+			<img class="parchemin" src={urlCdn+"boussole.png"} style="width:50%; float:right" alt="" />
+			Maintenant que tu es dans le jardin de la maison de CL de Kikiadoc,
+			tu es à proximité du servant Kikiadoc Lebogosse. (voir l'image)
+			<div class="br" />
+			Positionne toi juste à côté d'un pnj (ici Kikiadoc Lebogosse).
+			<br/>
+			Quand tu es juste à côté, indique moi ses coordonnées (X:8.6 Y:11.7)
+			<div class="br" />
+			X:<input type="number" placeholder="*8.6*" size=6 step="0.1" bind:value={saisies.X} />
+			<br/>
+			Y:<input type="number" placeholder="*11.7*" size=6 step="0.1" bind:value={saisies.Y} />
+			<br/>
+			{#if saisies.X!='8.6' || saisies.Y!='11.7'}
+				<span style="color:red">Coordonnées?</span>
+			{:else}
+				<Btn style="color:green" bind:refStep={epiqStep} step=90 val="C'est OK ➤" />
+			{/if}
+			<div class="info">
+				Ce petit test permet de vérifier que tu n'as pas de pertubateur de saisies
+				(en particulier sur iPhone)
+				et que tu vois bien la distance minimum pour être "près" d'un pnj ou d'un lieu.
 			</div>
+			<div style="clear:both" class="br"></div>
 		</div>
 	{/if}
 	

@@ -12,7 +12,7 @@ const config = {
       }						
 		),
 		paths: {
-		      base: '/enjoy',
+		      base: '/enjoyTest',
 		},
 		serviceWorker: {
 			register: true,

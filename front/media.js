@@ -71,12 +71,12 @@ export const AUDIODESCS = {
 	"orthoTempsMission":  { mp3: "ff-10/orthoTempsMission.mp3", vol: 3.0 },
 	"orthoTempsTableau":  { mp3: "ff-10/orthoTempsTableau.mp3", vol: 3.0 },
 	"AlarmeSecurite": { mp3: "AlarmeSecurite.mp3", vol: 50.0 },
-	"dolmen": { mp3: "ff-10/dolmen.mp3", vol: 1.0, repeat: 1 },
+	"dolmen": { mp3: "ff-10/dolmen.mp3", vol: 0.5, repeat: 1 },
 	"mercredi": { mp3: "ff-10/mercredi.mp3", vol: 2.0, repeat: 1 },
 	"derniere-seance": { mp3: "ff-10/derniere-seance.mp3", vol: 0.7, repeat: 1 },
-	"pharao-secrets": { mp3: "ff-10/pharao-secrets.mp3", vol: 0.8, repeat: 1 },
+	"pharao-secrets": { mp3: "ff-10/pharao-secrets.mp3", vol: 0.7, repeat: 1 },
 	"Memoire-qui-flanche": { mp3: "Memoire-qui-flanche.mp3", vol: 1.2, repeat: 0 },
-	"plus-pres-des-etoiles": { mp3: "ff-10/plus-pres-des-etoiles.mp3", vol: 0.7, repeat: 1 },
+	"plus-pres-des-etoiles": { mp3: "ff-10/plus-pres-des-etoiles.mp3", vol: 0.3, repeat: 1 },
 };
 ///////////////////////////////////////////////////////////////////////////////////////
 // GESTION DE LA VIDEO
@@ -116,6 +116,8 @@ export const VIDEODESCS = {
 	"ff-10/ff-10-metro-trailer": { mp4: "ff-10/ff-10-metro-trailer", vol: 2},
 	"ff-10/IPA-BNF": { mp4: "ff-10/IPA-BNF", vol: 4},
 	"ff-10/ff-10-sans-video": { mp4: "ff-10/ff-10-sans-video", vol: 4},
+	"pharao/Pharao": { mp4: "pharao/Pharao", vol: 2},
+	"lesbases/lesbases-1": { mp4: "lesbases/lesbases-1", vol: 1},
 }
 
 
