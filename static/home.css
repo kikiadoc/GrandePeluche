@@ -1,0 +1,17 @@
+/* fichie disponible dans le CDN */
+.splash {
+	z-index: 9999;
+	position: fixed;
+	background-color: red;
+	background-image: url("https://cdn.adhoc.click/V10/kikisplash.png");
+	background-size: cover;
+	background-repeat: no-repeat;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	width: 77vmin;
+	height: 88vmin;
+	display: table-cell;
+	cursor: wait;
+}
+

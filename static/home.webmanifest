@@ -1,0 +1,27 @@
+{
+  "name": "Kiki's Event, La Grande Peluche",
+  "short_name": "Grande Peluche",
+  "description": "La Grande Peluche est l'application web permettant de participer aux Kiki's Event.",
+  "background_color": "purple",
+  "display": "standalone",
+	"lang": "fr",
+  "icons": [
+    {
+      "src": "icon64.png",
+      "sizes": "64x64",
+      "type": "image/png"
+    },
+    {
+      "src": "icon192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "start_url": "https://ff14.adhoc.click/enjoyTest"
+}
+

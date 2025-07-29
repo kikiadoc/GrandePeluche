@@ -960,11 +960,11 @@
 				<div>Mon relevé indique un FPS moyen de {Number(FPS).toFixed(1)}.</div>
 				{#if FPS>55}
 					<div style="color:lightgreen">
-						Ton équipement semble parfaitement compatible aux voyage dans l'Ortho-Temps.
+						Ton équipement semble suffisant pour voyager dans l'Ortho-Temps.
 					</div>
 				{:else if FPS>40}
 					<div style="color:orange">
-						Ton équipement semble suffisant pour voyager dans l'Ortho-Temps.
+						Ton équipement semble permettre pour voyager dans l'Ortho-Temps.
 					</div>
 				{:else if FPS>30}
 					<div style="color:red">
