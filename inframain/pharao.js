@@ -6,6 +6,19 @@ const wsserver = require('../infraback/wsserver.js');
 // nom de la collection
 const COLNAME="pharao"
 const SIZE=6 // 6x6 lieux et objets
+const ZONES = {
+	ENIGMES: [
+		{ l:"enigme0",
+			x:0.0, y: 0.0, r:0, o:["pipo1","pipo2"] },
+		{ l:"enigme1",
+			x:0.0, y: 0.0, r:0, o:["pipo1","pipo2"] },
+		{ l:"enigme2",
+			x:0.0, y: 0.0, r:0, o:["pipo1","pipo2"] },
+		{ l:"enigme3",
+			x:0.0, y: 0.0, r:0, o:["pipo1","pipo2"] }
+	]
+}
+const ZONESJSON = JSON.stringify(ZONES)
 
 // Avancement du mini jeu
 let etat = normalize(collections.get(COLNAME,true))
@@ -20,9 +33,10 @@ function normalize(e) {
 	return e
 }
 // synch clients
-function syncClients() {
+function syncClients(texte,ding) {
 	wsserver.broadcastSimpleOp(COLNAME+".etat", etat )
 	collections.save(etat)
+	if (texte) wsserver.broadcastSimpleText(texte, ding ,null, 10)
 }
 // Reset global du mini-jeu
 function globalReset() {
@@ -58,7 +72,7 @@ function proposition(pseudo,reqPaths) {
 	etat.elts[choix].trouveDth = Date.now()
 	// etat.elts[choix].posePseudo = pseudo
 	// etat.elts[choix].poseDth = Date.now()
-	syncClients()
+	syncClients(pseudo+" a découvert un composant de Pharao *** Controle server de la réponse à faire", "Ding")
 }
 // echange de deux elements
 function swapElt(pseudo,reqPaths) {
@@ -72,7 +86,7 @@ function swapElt(pseudo,reqPaths) {
 	let t = etat.elts[pFrom]
 	etat.elts[pFrom] = etat.elts[pTo]
 	etat.elts[pTo] = t
-	syncClients()
+	syncClients(pseudo+" a echangé deux composants de Pharao","Ding")
 }
 
 // API Calls
@@ -87,6 +101,9 @@ exports.httpCallback = (req, res, method, reqPaths, body, pseudo, pwd) => {
 				case "etat":
 					// retroune l'état global
 					gbl.exception( etat , 200) 
+       case "zones":
+          // retroune les zones
+          gbl.exception( ZONESJSON , 200, true)
 			}
 			gbl.exception("phareo get",400);
 		case "POST": 

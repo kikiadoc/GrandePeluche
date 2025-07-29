@@ -62,7 +62,20 @@ function admDiscordReport() {
 									"\n"+JSON.stringify(sauvegardeJson)
 	discord.postMessage( "checksec",message,true)
 }
-
+async function checkSecAlert1() {
+	const message = "# C'est CHECKSEC, je vous informe avoir enclenché une procédure de mise en sécurité du serveur de la Grande Peluche\n"+
+									"Raison: Saturation de l'analyseur temps réel des requêtes invalides.\n"+
+									"Action: blocage de tous les acces par vérouillage du firewall externe, arret du proxy interne, purge des files d'attente de traitement\n"+
+									"Kikiadoc vous informera sur Discord\n"
+	discord.postMessage( "annonces",message,true)
+}
+async function checkSecAlert2() {
+	const message = "# C'est CHECKSEC, je vous informe avoir enclenché une procédure de mise en sécurité du serveur de la Grande Peluche\n"+
+									"Raison: Cause inconnue\n"+
+									"Action: Arret du serveur\n"+
+									"Kikiadoc vous informera sur Discord\n"
+	discord.postMessage( "annonces",message,true)
+}
 exports.httpCallback = async (req, res, method, reqPaths, body, pseudo, pwd) => {
 	switch (method) {
 		case "OPTIONS":
@@ -167,6 +180,12 @@ exports.httpCallback = async (req, res, method, reqPaths, body, pseudo, pwd) => 
 					let metaFiltered = pCloudInfo.metadata.contents.filter((e) => e.name=="AI-Generated");
 					console.log(metaFiltered);
 					gbl.exception("pCloudInfo" ,200);
+				case "checkSecAlert1":
+					await checkSecAlert1()
+					gbl.exception( "ok" ,200);
+				case "checkSecAlert2":
+					await checkSecAlert2()
+					gbl.exception( "ok" ,200);
 				default:
 					gbl.exception("adminTest PUT invalide",400);
 			}

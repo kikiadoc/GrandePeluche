@@ -11,25 +11,27 @@ const adminTest = require('../infraback/adminTest.js');
 const lodestone = require('../infraback/lodestone.js');
 const tts = require('../infraback/tts.js');
 const chat = require('../infraback/chat.js');
-const metrologie = require('../inframain/metrologie.js');
-const clientConfig = require('../inframain/clientConfig.js');
-const innommable = require('../inframain/innommable.js');
-const torches = require('../inframain/torches.js');
-const asciens = require('../inframain/asciens.js');
-const pnjs = require('../inframain/pnjs.js');
-const doctrineDuMal = require('../inframain/doctrineDuMal.js');
 const uploadFile = require('../inframain/uploadFile.js');
-const usinesGaz = require('../inframain/usinesGaz.js');
-const spartaci = require('../inframain/spartaci.js');
-const omega = require('../inframain/omega.js');
-const metropolis = require('../inframain/metropolis.js');
-const rubans = require('../inframain/rubans.js');
-const shared = require('../inframain/shared.js');
 const securityReport = require('../inframain/securityReport.js');
+const metrologie = require('../inframain/metrologie.js');
+// const innommable = require('../inframain/innommable.js');
+// const torches = require('../inframain/torches.js');
+// const asciens = require('../inframain/asciens.js');
+// const pnjs = require('../inframain/pnjs.js');
+// const doctrineDuMal = require('../inframain/doctrineDuMal.js');
+// const usinesGaz = require('../inframain/usinesGaz.js');
+// const spartaci = require('../inframain/spartaci.js');
+// const omega = require('../inframain/omega.js');
+// const metropolis = require('../inframain/metropolis.js');
 const pharao = require('../inframain/pharao.js');
 const lesbases = require('../inframain/lesbases.js');
+const orthocomposants = require('../inframain/orthocomposants.js');
 // inutile const votation = require('../infraback/votation.js');
 // inutile const webAuth = require('../infraback/webAuth.js');
+// Elements pour des tests
+const clientConfig = require('../inframain/clientConfig.js');
+const rubans = require('../inframain/rubans.js');
+const shared = require('../inframain/shared.js');
 
 async function httpCallback(req, res, method, reqPaths, body, pseudo, pwd) {
 	switch(reqPaths[1]) {
@@ -40,31 +42,34 @@ async function httpCallback(req, res, method, reqPaths, body, pseudo, pwd) {
 		case "hautsFaits": hautsFaits.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
 		case "discord": await discord.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
 		case "adminTest": await adminTest.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
-		case "clientConfig": await clientConfig.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
 		case "uploadFile": await uploadFile.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
 		case "tts": await tts.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
 		case "chat": await chat.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
 		case "metrologie": await metrologie.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
+		case "securityReport": await securityReport.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
+		// eleents liés aux test
+		case "clientConfig": await clientConfig.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
 		case "rubans": await rubans.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
 		case "shared": await shared.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
-		case "securityReport": await securityReport.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
 		// eleents liés aux activités présentes
 		case "pharao": await pharao.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
 		case "lesbases": await lesbases.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
+		case "orthocomposants": await orthocomposants.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
 		// eleents liés aux activités anciennes
-		case "metropolis": await metropolis.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
-		case "innommable": innommable.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
-		case "torches": torches.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
-		case "asciens": asciens.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
-		case "pnjs": await pnjs.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
-		case "doctrineDuMal": await doctrineDuMal.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
-		case "usinesGaz": await usinesGaz.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
-	 	case "spartaci": await spartaci.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
-	 	case "omega": await omega.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
+		// case "metropolis": await metropolis.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
+		// case "innommable": innommable.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
+		// case "torches": torches.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
+		// case "asciens": asciens.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
+		// case "pnjs": await pnjs.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
+		// case "doctrineDuMal": await doctrineDuMal.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
+		// case "usinesGaz": await usinesGaz.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
+	 	// case "spartaci": await spartaci.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
+	 	// case "omega": await omega.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
 	}
 	gbl.exception( { m: method, rp: reqPaths, body: body, pseudo: pseudo, pwd: pwd  } ,404);
 }
 function wsCallback(pseudo,m) {
+	/*
 	switch (m.op) {
 		case "metro.sync":
 			metropolis.syncPseudo(pseudo,m)
@@ -73,6 +78,7 @@ function wsCallback(pseudo,m) {
 			metropolis.emote(pseudo,m)
 			return
 	}
+	*/
 	gbl.exception("ERREUR FATALE: Bad ws op",400);
 };
 

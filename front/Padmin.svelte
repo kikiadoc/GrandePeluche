@@ -1,7 +1,8 @@
 <script>
 	import { onMount, onDestroy } from 'svelte'
-	import { apiCall, parseJJMMHHMM, jjmmhhmmss, sortCmp,
-					 storeIt, removeIt, displayObject } from "./common.js"
+	import { apiCall, apiCallExtern, parseJJMMHHMM, jjmmhhmmss, sortCmp, urlCdn,
+					 playDing, displayObject,
+					 storeIt, removeIt } from "./common.js"
 
 	let { wsCallComponents } = $props();
 
@@ -10,10 +11,15 @@
 
 	async function myWsCallback(m) {	}
 	
-	function init() {	loadDiscordActions()	}
+	async function init() {
+		loadDiscordActions()
+		enumMusiques= await apiCallExtern(urlCdn+"musiques/index.json","GET")
+	}
 
-	// generique non sauvegardées
-	let saisies = {}
+	let saisies = {} // generique non sauvegardées
+	let showAdmin=$state(false)
+	let showMusiques=$state(false)
+	let enumMusiques=$state(false)
 	
 	/////////////////////////////////////////////////////////////////////
 	// Gestion discord
@@ -72,15 +78,17 @@
 	/////////////////////////////////////////////////////////////////////
 	// test 
 	/////////////////////////////////////////////////////////////////////
-	let showAdmin=$state(false)
-
+	async function displayMusiqueDetail(i) {
+		let detail = await apiCallExtern(urlCdn+"musiques/item_"+enumMusiques[i].itemId+".json","GET")
+		displayObject(detail)
+	}
 </script>
 <style>
 	input {font-size: 0.7em}
 </style>
 <div class="adminCadre" style="font-size: 0.4em">
 	<input type="button" value="show/hide Admin" onclick={() => showAdmin=!showAdmin} />
-	<input type="button" value="defaceSite" onclick={() => document.location="https://ff14.adhoc.click/enjoyTest"} /> 
+	<input type="button" value="show/hide Musiques" onclick={() => showMusiques=!showMusiques} />
 </div>
 {#if showAdmin}
 	<div style="font-size: 0.7em">
@@ -208,6 +216,40 @@
 			</div>
 		{/if}
 	
+	</div>
+{/if}
+{#if showMusiques && enumMusiques}
+	<div class="adminCadre">
+		<audio id="debugMusiqueOgg" src="" autoplay controls loop style="position: fixed"></audio>
+		<br/>
+		<br/>
+		<table>
+			<tbody>
+				<tr>
+					<td></td>
+					<td>i</td>
+					<td>m.itemId</td>
+					<td>m.oggId</td>
+					<td>m.ad.fields.Name</td>
+					<td>m.ad.fields.Description</td>
+				</tr>				
+				{#each enumMusiques as m,i}
+					{@const urlOgg=urlCdn+"musiques/item_"+m.itemId+"_"+m.oggId+".ogg"}
+					<tr style="border: 1px solid white">
+						<td>
+							<input type="button" value="🔊" onclick={()=>document.getElementById("debugMusiqueOgg").src=urlOgg} />
+							<input type="button" value="🔎" onclick={()=>displayMusiqueDetail(i)}/>
+						</td>
+						<td style="border: 1px solid white">{i}</td>
+						<td>{m.itemId}</td>
+						<td>{m.oggId}</td>
+						<td>{m.ad.fields.Name}</td>
+						<td>{m.ad.fields.Description}</td>
+					</tr>				
+				{/each}
+				
+			</tbody>
+		</table>
 	</div>
 {/if}
 <!-- Padmin.svelte -->

@@ -84,16 +84,12 @@ exports.deepCompact = (val) => {
   );
 };
 
-exports.exception = (message,code,startDth) => {
-	// console.log("----------------------------------------");
-	// console.log(message,code,startDth);
-	// console.log("----------------------------------------");
+exports.exception = (message,code,msgIsJson) => {
 	throw {
 		code: code, 
 		msg : (typeof message == "string")? message : "nomsg",
 		o : (typeof message == "object")? message : null,
-		dth: Date.now(),
-		startDth: startDth
+		msgIsJson: msgIsJson
 	}
 }
 

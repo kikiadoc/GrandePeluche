@@ -4,11 +4,11 @@
 	const GLOBALSTARTDTH=Date.now() // dth de démarrage des traitements 
 	console.log('******** CLIENT START id:',GLOBALSTARTDTH)
 
-	// divers caractères pour copier/coller : ⁜➤▲⏸◀▶▼⏬🔎📽❓✅🆘⚠️⬇️✅➥📷εΔ⛭👉😈ⓘ(ℹ)🛈႞⒤⇛⏳
+	// divers caractères pour copier/coller : 🔊🔇⁜➤▲⏸◀▶▼⏬🔎📽❓✅🆘⚠️⬇️✅➥📷εΔ⛭👉😈ⓘ(ℹ)🛈႞⒤⇛⏳
 	// ne fonctionne pas sur android 🛈 utiliser (ℹ)
 
 	//////////////////////////////////////////
-	// Imports
+	// Imports 
 	//////////////////////////////////////////
 	import { onMount, onDestroy } from 'svelte'
 	import {
@@ -21,7 +21,8 @@
 		playMusic, playDing, playVideo, closeVideo, audioInit, audioSetup, wsMedia,
 		tts, tryTTS,
 		securitypolicyviolation, generateSecurityAlert,
-		metaCacheList, metaCacheClear, swcGetWaitingIds
+		metaCacheList, metaCacheClear, swcGetWaitingIds,
+		isAdmin
 	} from "./common.js";
 	
 	import { G, unPatchConsole } from "./privacy.js"
@@ -39,6 +40,8 @@
 	import P405 from './P405.svelte' // Kiki's Event X - initiatique
 	import P410 from './P410.svelte' // Kiki's Event X - Pharao
 	import P420 from './P420.svelte' // Kiki's Event X - Les bases
+	import P430 from './P430.svelte' // Kiki's Event X - Les Failles
+	import P440 from './P440.svelte' // Kiki's Event X - Les orth-composants
 
 	//////////////////////////////////////////
 	// Gestion du cycle de vie
@@ -153,21 +156,44 @@
 		{n: 410, texte: "Pharao", music: "plus-pres-des-etoiles",
 		 start: 0,
 		 end: 0,
+		 rootName: "pharao",
+		 delaiDebut: 20,
 		 component: P410
 		},
 		{n: 420, texte: "Les Bases", music: "dolmen",
 		 start: 0,
 		 end: 0,
+		 rootName: "lesbases",
+		 delaiDebut: 20,
 		 component: P420
 		},
-		{n: 430, texte: "Le lancement", music: "dolmen",
+		{n: 425, texte: "Les portes vers l'Ortho-Temps (sur Cerberus)", music: "dolmen",
 		 start: 0,
 		 end: 0,
+		 rootName: "??",
+		 delaiDebut: 20,
 		 component: null
 		},
-		{n: 998, texte: "Mercredi", music: "mercredi",
+		{n: 430, texte: "Les Failles", music: "dolmen",
 		 start: 0,
 		 end: 0,
+		 rootName: "lesfailles",
+		 delaiDebut: 20,
+		 component: P430
+		 // Dans l'ortho temp
+		},
+		{n: 440, texte: "Les Ortho-Composants", music: "mercredi",
+		 start: 0,
+		 end: 0,
+		 rootName: "orthocomposants",
+		 delaiDebut: 20,
+		 component: P440
+		},
+		{n: 480, texte: "Synchronisation multi-temporelle", music: "mercredi",
+		 start: 0,
+		 end: 0,
+		 rootName: "TBD",
+		 delaiDebut: 20,
 		 component: null
 		 // component: Pxxx
 		 // explication du projet pharao sur terre
@@ -467,15 +493,15 @@
 	div :global(.adminCadre) { border: 2px solid red; background-color: black; margin: 2px }
 	div :global(.papier) {
 		background-color: grey; background-position: center;
-		background-image: url("https://cdn.adhoc.click/V10/texture-papier-noir.jpg");
+		background-image: url("https://cdn.adhoc.click/V10a/texture-papier-noir.jpg");
 	}
 	div :global(.rouge) {
 		background-color: grey; background-position: center;
-		background-image: url("https://cdn.adhoc.click/V10/backRouge.gif");
+		background-image: url("https://cdn.adhoc.click/V10a/backRouge.gif");
 	}
 	div :global(.stars)  {
 		background-color: grey; background-position: center;
-		background-image: url("https://cdn.adhoc.click/V10/stars.gif");
+		background-image: url("https://cdn.adhoc.click/V10a/stars.gif");
 	}
 	div :global(.popupCadre) {
 		position: fixed; top: 10%; left: 20%;
@@ -485,7 +511,7 @@
 	}
 	div :global(.popupZone) { padding: 1.5em 0.5em 1.0em 1.0em;	}
 	div :global(.popupContent) {
-		max-height: 59vh; min-height: 4em; min-width: 10em;
+		max-height: 79vh; min-height: 4em; min-width: 10em;
 		scrollbar-color: white grey; scrollbar-width: thin; overflow-y: auto;
 		/* white-space: normal; word-break: break-all; */	}
 	div :global(.close) {
@@ -593,7 +619,7 @@
 	</div>
 
 	<div id="contenu" class="contenu">
-		{#if pseudo?.startsWith("Kikiadoc")}
+		{#if isAdmin(pseudo)}
 			<Padmin wsCallComponents={wsCallComponents} />
 		{/if}
 		
@@ -640,7 +666,7 @@
 						<input bind:value={chatInput.msg} type="text" maxlength="140"
 							onkeypress={(e) => e.key=="Enter" && chatSend()} />
 						<input type="button" value="►" onclick={()=>chatSend()} />
-						{#if pseudo=="Kikiadoc"}
+						{#if isAdmin(pseudo)}
 							<label>Admin:<input type="checkbox" bind:checked={chatInput.msgAdm} /></label>
 						{/if}
 					</div>

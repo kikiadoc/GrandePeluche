@@ -125,8 +125,8 @@ async function definePseudo(body, ipFor) {
 
 	// verification que le FF14Id est défini sur discord (bypass si ip admin)
 	const discordRec = discord.getDiscordByFf14Id(ff14Id)
-	if (!discordRec && ipFor!=gbl.ipAdmin) gbl.exception("Tu n'es pas validé sur le Discord des Kiki's Events",400);
-	// if (!discordRec) gbl.exception("Tu n'es pas validé sur le Discord des Kiki's Events",400);
+	// if (!discordRec && ipFor!=gbl.ipAdmin) gbl.exception("Tu n'es pas validé sur le Discord des Kiki's Events",400);
+	if (!discordRec) gbl.exception("Tu n'es pas validé sur le Discord des Kiki's Events",400);
 
 	// construit le pseudo
 	let suffixe = "";

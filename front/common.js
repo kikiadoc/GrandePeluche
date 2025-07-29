@@ -1,9 +1,13 @@
-const APITYPE='test'
-const CDNVER="V10a"
+const APITYPE='test' // SERA MODIFIE LORS DU COMMIT selon environnement
+const CDNVER="V10a" // A Modifier manuellement lors d'un basculement de version
+										// ne pas oublier de modifier aussi dans la page d'assistance
 
 // constante de description de l'environnement d'execution
 export const isProd = (APITYPE!='test')
 export const envName = (APITYPE=='test')? "Staging" : "Prod"
+const typeDeviceSM = window.matchMedia("(pointer: coarse)").matches
+const typeDeviceAndroid = /(android)/i.test(navigator.userAgent)
+const typeDevicePWA= window.matchMedia('(display-mode: standalone)').matches
 
 export const urlRaw = 'https://filedn.eu/lxYwBeV7fws8lvi48b3a3TH/'
 export const urlImg = 'https://cdn.adhoc.click/'+CDNVER+'/'
@@ -119,13 +123,17 @@ export function hhmmssms(ms) {
 
 export function countDownTo(dth) {
 	if (dth==null || dth==undefined)
-		return "--:--:--";
-	const nbSec = Math.floor( (dth- Date.now()) / 1000);
-	if (nbSec <= 0) return "00:00:00";
-	const h = Math.floor(nbSec/3600);
-	const m = Math.floor( (nbSec - h*3600) / 60);
-	const s = Math.floor( nbSec % 60);
-	return p2(h) + ":" + p2(m) + ":" + p2(s);
+		return "--:--:--"
+	const nbSec = Math.floor( (dth- Date.now()) / 1000)
+	if (nbSec <= 0) return "00:00:00"
+	const h = Math.floor(nbSec/3600)
+	const m = Math.floor( (nbSec - h*3600) / 60)
+	const s = Math.floor( nbSec % 60)
+	return p2(h) + ":" + p2(m) + ":" + p2(s)
+}
+export function nbSecTo(dth) {
+	if (dth==null || dth==undefined) return 0
+	return Math.floor( (dth- Date.now()) / 1000)
 }
 
 export function geUtcMsFrom(y,m,d,hh,mm,ss) {
@@ -187,23 +195,29 @@ export function isDistance(x,y,tX,tY,d) {
 // Détection du type d'équipement / capacité
 ///////////////////////////////////////////////////////////////////////////////////////
 export function getTypeEquipement() {
-	return (window.matchMedia("(pointer: coarse)").matches)? "SM" : "PC";
+	return (typeDeviceSM)? "SM" : "PC";
 }
 export function isEquipementSmartphone() {
-	return (window.matchMedia("(pointer: coarse)").matches)
+	return typeDeviceSM
 }
 export function isEquipementPC() {
-	return ! (window.matchMedia("(pointer: coarse)").matches )
+	return ! typeDeviceSM
+}
+export function isSM() {
+	return typeDeviceSM
+}
+export function isPC() {
+	return ! typeDeviceSM
 }
 export function isAndroid() {
-	 return /(android)/i.test(navigator.userAgent)
+	return typeDeviceAndroid
 }
 export function isPWA() {
-	return (window.matchMedia('(display-mode: standalone)').matches)
+	return typeDevicePWA
 }
 export function isAdmin(pseudo) {
-	// pas de soucis de cyber, le serveur fera la différence si besoin
-	return (pseudo.startsWith('Kikiadoc') || pseudo.startsWith('Grande') )
+	// pas de soucis de cybersecu, le serveur fera la différence si besoin
+	return (pseudo.startsWith('Kikiadoc') || pseudo.startsWith('Grande') || pseudo.startsWith('Althea') )
 }
 ///////////////////////////////////////////////////////////////////////////////////////
 // AFFICHAGE
@@ -420,7 +434,7 @@ export async function connectToServer(cbStatus, cbMessage,clientVersion) {
 // API management
 ///////////////////////////////////////////////////////////////////////////////////////
 
-// Retourne toujours un objet avec un champ status de code http
+// Retourne toujours un objet ou null
 export async function apiCallExtern(url,method,body)
 {
 	try {
@@ -430,16 +444,16 @@ export async function apiCallExtern(url,method,body)
 			cache: "no-cache",
 			body: (body)? JSON.stringify(body) : null
 		});
-	  const json = await res.json();
-		json.status = res.status;
-		if (res.status >= 300)
-				addNotification("Erreur sur "+url+ ": ("+ res.status+ ") -- contactez Kikiadoc sur discord", "red", 60);
-		return json;
+		if (res.status >= 300) {
+			addNotification("Erreur sur "+url+ ": ("+ res.status+ ") -- contactez Kikiadoc sur discord", "red", 60);
+			return null
+		}
+	  return await res.json()
 	}
 	catch(e) {
 		console.log(e);
 		addNotification("Erreur imprévue sur "+url+ ", contactez Kikiadoc sur discord","red",60);
-		return { status: 503 };
+		return null
 	}
 }
 
@@ -472,8 +486,9 @@ export async function apiCall(url,method, body, noWaitWs)
 
 		dynMetro.cliRes = performance.now()
 		dynMetro.cliDth = Date.now()
-	  let json = await res.json() // reponse serveur
-		// const cliJson = performance.now() // inutile pour le calcul
+	  let json = await res.json() // parse reponse serveur
+		// gestion du cas ou l'objet est déjà sérilisé dans le message 
+		if (json.msgIsJson && json.o==null) json.o = JSON.parse(json.msg)
 		// metrologie depuis le serveur
 		dynMetro.srv = json.tr || {load: 1.0, run:1.0, dth:Date.now() } // load: lecture requete, run: exécution requete, dth: timestamp serveur
 		// calcul ecart temporel dynamique - disponible par import getEpsilon() ou getMetro()
@@ -534,7 +549,7 @@ async function cryptoSign(texte) {
 		return null;
 	}
 }
-// pour test uniquement, le verify est fait sur le server
+// pour test uniquement, le verify est fait sur le server 
 async function cryptoVerify(texte, hexString) {
 	try {
 		console.log("hexString=",hexString)
@@ -564,13 +579,13 @@ async function cryptoClearKey() {
 ///////////////////////////////////////////////////////////////////////////////////////
 export function loadIt(cle,defaut)
 {
-	// console.log("loadIt:", cle);
-	let valeur = localStorage.getItem(cle);
+	// console.log("loadIt:", cle)
+	let valeur = localStorage.getItem(cle)
 	if (valeur==null) return defaut
 	try { return JSON.parse(valeur) }
 	catch(e) {
-		console.log("loadIt error: ",cle,e);
-		return defaut;
+		console.log("loadIt erreur: ",cle,e)
+		return defaut
 	}
 }
 
@@ -652,6 +667,9 @@ export function countDownInit(node) {
 	let dth = parseInt(node.getAttribute("dth"),10)
 	node.innerHTML = countDownTo(dth)
 }
+// triement périodique pour les coundown sur timer ou sur compteur
+// dans le cas d'un compteur, on peut récup la valeur actuelle dans l'attribut curval
+// curval peut-être >0, 0 ou <0
 function timerCountDown() {
 	// console.log("timerCoundDownStart")
 	let tblElt = document.getElementsByTagName('countdown')
@@ -659,18 +677,50 @@ function timerCountDown() {
 	// console.log('countdown #elt in dom:',nb)
 	for (let i = 0; i<nb; i++) {
 		let elt = tblElt.item(i)
-		let dth = parseInt(elt.getAttribute("dth"),10)
-		// si timer deja echu, ne fait rien
-		if (dth==0) continue
-		if (dth>Date.now())
-			elt.innerHTML = countDownTo(dth)
-		else {
-			elt.setAttribute('dth',"0")
-			elt.innerHTML = elt.getAttribute('txtTimeout') || "00:00:00"
-			// propage l'event timeout
-			// console.log("event cdTimeout (dth):", dth)
-			const event = new Event("cdTimeout",{ bubbles: true} );
-			elt.dispatchEvent(event);
+		let tDth=elt.getAttribute("dth")
+		if (tDth) {
+			// cas du timer
+			let dth = parseInt(tDth,10)
+			// si timer deja echu, ne fait rien
+			if (dth==0) continue // countdown suivant
+			if (dth>Date.now())
+				elt.innerHTML = countDownTo(dth)
+			else {
+				elt.setAttribute('dth',"0")
+				elt.innerHTML = elt.getAttribute('txtTimeout') || "00:00:00"
+				// propage l'event timeout
+				// console.log("event cdTimeout (dth):", dth)
+				elt.dispatchEvent(new Event("cdTimeout",{ bubbles: true} ))
+			}
+			continue // countdown suivant
+		}
+		let tCnt=elt.getAttribute("cnt")
+		if (tCnt) {
+			// cas du compteur
+			let cnt = parseInt(tCnt,10)
+			let step = parseInt(elt.getAttribute("step"),10) || 1
+			let tStart = elt.getAttribute("start")
+			if (!tStart) {
+				tStart = Date.now()
+				elt.setAttribute('start',tStart)
+			}
+			else {
+				tStart = parseInt(tStart,10)
+			}
+			// calcul de la valeur : Date.now()-tStart est le nombre de ms a prendre en compte
+			let current= cnt- ((step* (Date.now()-tStart) / 1000))
+			elt.setAttribute('curval',current)
+			if (current > 0) {
+				elt.innerHTML = String(Math.floor(current))
+			}
+			else if (elt.getAttribute('over')) {
+					// le compteur est deja "over" on ne fait rien
+			}
+			else {
+				elt.setAttribute('over',1)
+				elt.innerHTML = elt.getAttribute('txtTimeout') || "0"
+				elt.dispatchEvent(new Event("cdTimeout",{ bubbles: true} ))
+			}
 		}
 	}
 	// console.log("timerCoundDownEnd")
@@ -979,7 +1029,7 @@ export function audioResume() {
 function getDescAudioByName(nom) {
 	const desc = AUDIODESCS[nom]
 	if (desc) return desc
-	addNotification("AudioBlaster: pas normalized "+nom,"yellow",10)
+	addNotification("AudioBlaster: pas normalized: "+nom,"yellow",10)
 	return null
 };
 
@@ -1099,7 +1149,7 @@ export function playVideo(mp4,cb,tTime,cbLu) {
 	const desc = VIDEODESCS[mp4]
 	if (!desc) {
 		console.log("***** video sans normalized: ",mp4)
-		addNotification("Audioblaster: Not mormalized"+mp4,"yellow",10)
+		addNotification("Audioblaster: Not mormalized "+mp4,"yellow",10)
 	}
 	//setup des callback sur la video
 	videoInitTrack(mp4,cb,cbLu)

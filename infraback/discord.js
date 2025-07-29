@@ -17,7 +17,7 @@ const discordHeaders = {
 const mpKikiadoc = "<@289493566278074368>"
 const idKikiadoc = '289493566278074368'
 const idGrandePeluche='1188482855026839583';
-const genericDiscordTrailer="\n-\nSigné: *Hildiscord, assistant Discord de la Grande Peluche*" +
+const genericDiscordTrailer="\n-\n"+((gbl.isProd())?"":"**(STAGING)**")+"Signé: *Hildiscord, assistant Discord de la Grande Peluche*" +
                   "\nSoucis? MP "+mpKikiadoc
 
 // Channels disponibles pour les posts de la grande peluche (pour sécurité)
@@ -141,6 +141,12 @@ function getDiscordByFf14Id(ff14Id) {
 	const runCtx = getRunCtx(null)
 	return getDiscordPseudoByGuidFf14(runCtx.guildId,ff14Id)
 }
+function getDiscordByPseudo(pseudo) {
+	const ff14Id = pseudos.get(pseudo)?.ff14Id
+	if (!ff14Id) return null
+	return getDiscordByFf14Id(ff14Id)
+}
+
 function setDiscordPseudo(guildId,usrId,ff14Id,prenom,nom,monde) {
 	discordPseudos[guildId] ??= {}
 	discordPseudos[guildId][ff14Id] = {usrId:usrId, guildId:guildId, ff14Id:ff14Id, prenom:prenom, nom:nom, monde:monde }
@@ -900,6 +906,7 @@ exports.mpKiki = discordMpKiki
 exports.mpPseudo = discordMpPseudo
 exports.postMessage = exportDiscordPostMessage;
 exports.getDiscordByFf14Id = getDiscordByFf14Id
+exports.getDiscordByPseudo = getDiscordByPseudo
 
 exports.start = async (callback) => {
 	wsCallback = callback

@@ -4,7 +4,7 @@
 					 markClick, playMusic, tts,
 					 urlCdn, apiCall, isAdmin,
 					 displayObject, addNotification, playVideo,
-					 isProd
+					 isProd, countDownInit
 				 } from './common.js'
 	import { G }  from './privacy.js'
 	import { GBLCONST,GBLSTATE }  from './ground.svelte.js'
@@ -23,6 +23,7 @@
 
 	const PAGEEPIQLBL= "P"+pageDesc.n+"_epiqStep"
 	const PAGESAISIESLBL = "P"+pageDesc.n + "_saisies"
+	const APIROOT = '/'+pageDesc.rootName+'/'
 	
 	onMount(() => { if (wsCallComponents) wsCallComponents.add(myWsCallback); init() });
 	onDestroy(() => { if (wsCallComponents) wsCallComponents.delete(myWsCallback); reset() });
@@ -40,7 +41,7 @@
 	let dspResultats=$state(false) 	// affichage des résltats
 
 	// appelé apres mount du component
-	function init() { calcDebutChallengeDth(); getEtat() }
+	function init() { calcDebutChallengeDth(); getZones(); getEtat() }
 	
 	// appelé apres unmount du component
 	function reset() {	}
@@ -68,15 +69,11 @@
 		console.log("epiqStepChange="+newStep)
 	}
 
-	// Listes des enigmes
-	const enigmes = [
-		{ l:"enigme0", x:0.0, y: 0.0, r:0, o:["pipo1","pipo2"] }
-	]
-
+	
 	// calcul de la date effective pour le challenge
 	let debutChallengeDth = $state(Date.now()+60000) // par defaut en attente de la synchro initt
 	function calcDebutChallengeDth() {
-		debutChallengeDth = (isProd)? pageDesc.start + 15*60000 : Date.now()+3*60000 // 
+		debutChallengeDth = (isProd)? pageDesc.start + pageDesc.delaiDebut*60000 : Date.now()+pageDesc.delaiDebut*1000
 	}
 	
 	// calcul des timers
@@ -86,10 +83,12 @@
 		if (lastBad) return lastBad+ 10*60000 // 10 minutes si mauvaise réponse
 		switch(nb) {
 			case 0 : return dthRef + 1
-			case 1 : return dthRef+ 30*60000 // 1/2H
-			case 2 : return dthRef+ 2*3600000 // 2H
+			case 1 : return dthRef+ 20*60000
+			case 2 : return dthRef+ 40*60000 
+			case 3 : return dthRef+ 80*60000
+			default: return dthRef+ 180*60000
 		}
-		return dthRef+ 4*3600000 // 4H
+		return dthRef+ 4*3600000 
 	}
 	function getSwapEcheance(dthRef,nb) {
 		console.log("getSwapEcheance",dthRef,nb)
@@ -97,17 +96,24 @@
 		switch(nb) {
 			case 0 : return dthRef + 1
 			case 1 :
-			case 2 : return dthRef+ 10*60000 // 10min
+			case 2 : return dthRef+ 5*60000
 			case 3 :
-			case 4 : return dthRef+ 20*60000 // 20min
+			case 4 : return dthRef+ 10*60000
 		}
-		return dthRef+ 30*60000 // 30min
+		return dthRef+ 20*60000
 	}
-	// chargement etat du challenge
+	// chargement etat du challenge 
+	let ENIGMES = $state(null)
 	let etat = $state(null)
+	async function getZones(msgWs) {
+		let ret = msgWs || await apiCall(APIROOT+'zones');
+		if (ret.status != 200) return console.error("erreur sur",APIROOT,"zones", ret.status)
+		// Listes des ENIGMES
+		ENIGMES = ret.o.ENIGMES
+	}
 	async function getEtat(msgWs) {
-		let ret = msgWs || await apiCall('/pharao/etat');
-		if (ret.status != 200) return console.error("erreur sur /pharao/etat", ret.status)
+		let ret = msgWs || await apiCall(APIROOT+'etat');
+		if (ret.status != 200) return console.error("erreur sur ", APIROOT,"etat", ret.status)
 		let tEtat = ret.o
 		// recalc selon le pseudo
 		tEtat.trouveNb=0
@@ -140,13 +146,13 @@
 		etat = tEtat
 		// Si challenge termine, envoi la vidéo
 		if (tEtat.poseNbTotal==tEtat.elts.length)
-			playVideo("pharao/Pharao2")
+			playVideo("pharao/pharao2")
 	}
 	// une proposition est faite pour une enigme
 	function proposition(i) {
 		// vérification de la validite de la réponse
 		if (saisies.nuEnigme<0) return // pas d'énigme en cours
-		if (enigmes[saisies.nuEnigme].r != i) {
+		if (ENIGMES[saisies.nuEnigme].r != i) {
 			saisies.lastBadReponse = Date.now()
 			saisies.nuEnigme = -1
 			etat.trouveEcheance = Date.now() + 10*60000 // 10 minutes
@@ -154,7 +160,7 @@
 			displayInfo({titre:"Noob!",body:["Tu n'as pas indiqué la bonne réponse","Une nouvelle enigme te sera proposée plus tard"], autoClose:10})
 			return
 		}
-		apiCall('/pharao/proposition/idxSol/idxProp','POST')
+		apiCall(APIROOT+'proposition/idxSol/idxProp','POST')
 		saisies.nuEnigme = -1
 		saisies.lastBadReponse = 0
 	}
@@ -185,7 +191,7 @@
 	function newQuestion() {
 		console.log("newQuestion")
 		if (saisies.nuEnigme >= 0) return // si question en cours
-		saisies.nuEnigme = Math.floor(Math.random() * enigmes.length)
+		saisies.nuEnigme = Math.floor(Math.random() * ENIGMES.length)
 	}
 	// click sur un element
 	function pharaoClick(n){
@@ -210,7 +216,7 @@
 			etat.fromIdx = null
 		else {
 			// tentative de switch  
-			apiCall("/pharao/swap/"+etat.fromIdx+'/'+n,'POST')
+			apiCall(APIROOT+"swap/"+etat.fromIdx+'/'+n,'POST')
 		}
 	}
 
@@ -271,8 +277,8 @@
 				{epiqStep}
 				<input type="number" min=0 max=99 placeholder="epiqStep" bind:value={saisies.admGoStep} />
 				<input type="button" value="goEpiq" onclick={() => epiqStep=saisies.admGoStep} />
-				<input type="button" value="ResetAll" onclick={() => confirm("Tout effacer?") && apiCall('/pharao/etat','DELETE') } />
-				<input type="button" value="SetAll-2" onclick={() => confirm("Tout valider?") && apiCall('/pharao/setAll','DELETE') } />
+				<input type="button" value="ResetAll" onclick={() => confirm("Tout effacer?") && apiCall(APIROOT+'etat','DELETE') } />
+				<input type="button" value="SetAll-2" onclick={() => confirm("Tout valider?") && apiCall(APIROOT+'setAll','DELETE') } />
 				<label><input type="checkbox" bind:checked={saisies.debug} />DebugLocal</label>
 				<label><input type="checkbox" bind:checked={saisies.noTimer} />NoTimer</label>
 			</div>
@@ -321,22 +327,20 @@
 	{#if epiqStep==0}
 		<div class="reveal" use:scrollPageToTop>
 			<img class="parchemin" src={urlCdn+"pharao/hilbert-espace.jpg"} style="width:30%; float:right" alt="" />
-			Bienvenue {pseudo}.
-			<br/>
 			{#if debutChallengeDth > Date.now()}
-				<div class="info" style="color:red">
+				<div class="info adminCadre" style="color:red">
 					Le challenge commencera dans
-					<countdown dth={debutChallengeDth} oncdTimeout={()=>debutChallengeDth=0} />.
+					<countdown dth={debutChallengeDth} oncdTimeout={()=>debutChallengeDth=0} use:countDownInit />.
 					<br/>
 					Tu as le temps de bien lire le lore!
 				</div>
 			{/if}
-			Depuis la venue de Thor,
-			nous savons qu'une
-				sixième dimension existe.
-			<br/>
+			Bienvenue {pseudo}.
+			<div class="br"/>
+			Depuis la venue de Thor, nous savons qu'une	sixième dimension existe.
+			<div class="br"/>
 			Lors de trop rares visios interdimensionnelles,
-			le Docteur Daniel Jackson, depuis l'Hyper-Temps, nous a fait part
+			le docteur Daniel Jackson nous a fait part
 			de ses découvertes.
 			<br/>
 			Dernièrement, il s'est rendu sur un lieu appelé
@@ -345,49 +349,46 @@
 			du
 			Système Solaire
 			de la 
-			Voie Lactée.
-			<br/>
-			Les Humains de cette "Terre"
-			étudient le Temps pour en vérifier les Equations 
-			car ils ont détecté des fluctuations.
-			<br/>
-			Hélas, ils n'ont pas pris conscience de l'importance
-			de ces fluctuations.
-			<br/>
+			Voie Lactée
+			et a rencontré les Humains de la Terre.
+			<div class="br"/>
 			Selon Daniel, leur Temps est notre Hyper-Temps.
+			<div class="br"/>
+			Inquiets de la stabilité de leur Temps,
+			les Humains de la Terre ont entrepris le projet Pharao pour vérifier que leur Temps
+			ne présente pas de fluctuation.
 			<br/>
-			Les Humains de la Terre ont entrepris le projet Pharao pour vérifier leur Temps
-			mais il prendra des années alors que, selon Daniel, il y a urgence.
-			<br/>
-			<Btn bind:refStep={epiqStep} step=10 video="pharao/Pharao" val="Le projet Pharao?" />
+			<Btn bind:refStep={epiqStep} step=10 video="pharao/pharao1" val="Le projet Pharao?" />
 			<div style="clear:both" class="br"></div>
 		</div>
 	{/if}
 
 	{#if epiqStep==10}
 		<div class="reveal" use:scrollPageToTop>
-			<input type="button" value="Revoir la video" gpVideo="pharao/Pharao" onclick={markClick} />
+			<img class="parchemin" src={urlCdn+"pharao/hilbert-espace.jpg"} style="width:30%; float:right" alt="" />
+			<input type="button" value="Revoir la video" gpVideo="pharao/pharao1" onclick={markClick} />
 			<br/>
 			C'est ainsi que les Humains de la Terre ont présenté leur projet Pharao à Daniel.
-			<br/>
-			Si certains Humains de la Terre ont théorisé la probabilité
-			que d'autres dimensions existent en développant la
-			<a href="https://fr.wikipedia.org/wiki/Physique_quantique" target="_blank">
-				physique quantique
-			</a>,
-			les Humains de la Terre n'en sont qu'à la vérification
-			d'une Physique régissant un Univers Connu à quatre dimensions
+			<div class="br"/>
+			Les Humains de la Terre n'en sont qu'à la vérification
+			d'une Physique régissant un univers à quatre dimensions
 			selon la
 			<a href="https://fr.wikipedia.org/wiki/Relativit%C3%A9_g%C3%A9n%C3%A9rale" target="_blank">
-				Relativité générale
+				relativité générale
 			</a>.
-			<br/>
-			Depuis que les Quatre sont partis explorer l'Ortho-Temps et depuis la visite
-			de Thor depuis l'Hyper-temps, nous savons que notre Univers Connu
-			comporte au moins 6 dimensions.
 			<div class="br"/>
-			Le Savoir des Peluches est plus avancé que celui des Humains de la Terre,
-			pourtant Daniel était très troublé lors de notre dernière visio intertemporelle.
+			Depuis que les Quatre sont partis explorer l'Ortho-Temps et depuis la visite
+			de Thor depuis l'Hyper-Temps, nous savons que notre univers
+			comporte au moins 6 dimensions de base (3 spaciales, 3 temporelles).
+			C'est encore bien peu si on considère les
+			<a href="https://fr.wikipedia.org/wiki/Introduction_%C3%A0_la_th%C3%A9orie_M" target="_blank">
+				11 dimensions quantiques de la Théorie M
+			</a>, théorie que les plus éminentes Peluches Mathématiciennes et Physiciennes tentent de
+			finaliser.
+
+			<div class="br"/>
+			Le savoir des Peluches est plus avancé que celui des Humains de la Terre,
+			pourtant Daniel était très troublé lors de notre dernière visio interdimensionnelle.
 			<br/>
 			<Btn bind:refStep={epiqStep} step=20 val="Daniel? Troublé?" />
 			<div style="clear:both" class="br"></div>
@@ -396,24 +397,31 @@
 
 	{#if epiqStep==20}
 		<div class="reveal" use:scrollPageToTop>
-			Les Humains de la Terre supputent des fluctuations dans leur Temps.
-			<div class="br"/>
-			L'hypothèse de Daniel est que ceci est du aux explosions temporelles
+			<img class="parchemin" src={urlCdn+"pharao/hilbert-espace.jpg"} style="width:30%; float:right" alt="" />
+			Oui {pseudo}, Daniel était troublé!
+			<br/>
+			Selon son hypothèse, les fluctuations du Temps des Humains de la Terre
+			seraient dues aux explosions temporelles survenues
 			lorsque Méphistophélès s'est transporté depuis notre Temps vers l'Ortho-Temps puis
-			ensuite vers l'Hyper-Temps sans précaution.
+			ensuite vers l'Hyper-Temps sans capote temporelle.
+			<div class="br"/>
+			Bref, Méphistophélès a souillé les Dimensions!
 			<div class="br"/>
 			Pour nous, comme pour les Humains de la Terre,
 			il est simple d'appréhender les coordonnées spatiales
 			X,Y,Z indiquées sur nos boussoles.
 			<br/>
-			Mais imagine que, face à un monstre, tu veux faire un pas à gauche,
-			et qu'au lieu de t'en éloigner, tu t'en approches en faisant 2 pas en avant!
-			En ne maîtrisant plus tes mouvements, tu n'as plus aucune chance de le vaincre!
+			Mais imagine que, face à un primordial, tu veux faire un pas à gauche,
+			et qu'au lieu de t'en éloigner, tu t'en approches en faisant un demi-pas à gauche
+			et un pas en avant!
+			<br/>
+			En ne maîtrisant plus tes mouvements, 
+			tu n'as plus aucune chance de le vaincre!
 			<div class="br"/>
-			C'est ce que Daniel redoute pour nos trois Dimensions Temporelles:
-			Une rupture de leurs
+			Voila ce que Daniel redoute pour nos trois dimensions temporelles:
+			Une fluctuation de leurs
 			<a href="https://fr.wikipedia.org/wiki/Orthogonalit%C3%A9" target="_blannk">
-				Orthogonalités
+				orthogonalités
 			</a>.
 			<div class="br"/>
 			Je commence à bien te connaitre {pseudo}.
@@ -427,9 +435,10 @@
 
 	{#if epiqStep==25}
 		<div class="reveal" use:scrollPageToTop>
+			<img class="parchemin" src={urlCdn+"pharao/hilbert-espace.jpg"} style="width:30%; float:right" alt="" />
 			Je m'en doutais, mais tu es un petit scarabée.
 			<div class="br"/>
-			La téléportation multi-dimensionnelle se base au contraire
+			La téléportation multidimensionnelle se base au contraire
 			sur de parfaites orthogonalités entre les Dimensions.
 			<div class="br"/>
 			<Btn bind:refStep={epiqStep} step=30 val="Evidemment!" />
@@ -438,9 +447,10 @@
 	{/if}
 	{#if epiqStep==26}
 		<div class="reveal" use:scrollPageToTop>
+			<img class="parchemin" src={urlCdn+"pharao/hilbert-espace.jpg"} style="width:30%; float:right" alt="" />
 			C'est vilain de mentir, je sais que tu y as pensé.
 			<div class="br"/>
-			Mais la téléportation multi-dimensionnelle se base au contraire
+			Mais la téléportation multidimensionnelle se base au contraire
 			sur de parfaites orthogonalités entre les Dimensions.
 			<div class="br"/>
 			<Btn bind:refStep={epiqStep} step=30 val="Evidemment!" />
@@ -450,6 +460,7 @@
 	
 	{#if epiqStep==30}
 		<div class="reveal" use:scrollPageToTop>
+			<img class="parchemin" src={urlCdn+"pharao/hilbert-espace.jpg"} style="width:30%; float:right" alt="" />
 			Je pense que Thor, de façon invisible, va aider les Humains de la Terre à
 			analyser les fluctuations de leur Temps, notre Hyper-Temps.
 			<div class="br"/>
@@ -457,7 +468,7 @@
 			ni de l'Ortho-Temps.
 			<div class="br"/>
 			Pour vérifier la théorie de Daniel, il nous faut construire
-			une matrice d'horloges afin d'examiner les fluctuations de ces deux Dimensions.
+			des Pharao afin d'examiner les fluctuations de ces deux Dimensions.
 			<br/>
 			<Btn bind:refStep={epiqStep} step=40 val="On va construire des Pharao!" />
 			<div style="clear:both" class="br"></div>
@@ -466,36 +477,55 @@
 
 	{#if epiqStep==40}
 		<div class="reveal" use:scrollPageToTop>
+			<img class="parchemin" src={urlCdn+"pharao/hilbert-espace.jpg"} style="width:30%; float:right" alt="" />
 			Tout à fait {pseudo}.
-			<br/>
+			<div class="br"/>
 			Et nous avons un peu de chance: Si Méhistophélès s'est transporté facilement
 			entre les Dimensions, c'est parce que les Nouveaux Anciens avaient construit
-			un Pharao sur Eorzéa, mais les explosions temporelles de Méphistophélès l'ont détruit.
-			<br/>
-			Pourrons-nous stabiliser le Temps, l'Ortho-Temps et l'Hyper-Temps?
-			<br/>
-			Ainsi, nous pourrions
-			<span class="blinkMsg">sécuriser l'EXPANSION de notre Univers Connu</span>.
-			<br/>
-			<Btn bind:refStep={epiqStep} step=50 val="J'en suis {G(pseudoGenre,'tout excité','toute excitée')}!" />
+			un Pharao sur Eorzéa, mais les explosions temporelles de Méphistophélès l'ont brisé.
+			Les composants ont alors été dispersés dans différents lieux d'Eorzéa.
+			<div class="br"/>
+			{pseudo}, contriburas-tu à maintenir les Orthogonalités entre
+			le Temps, l'Ortho-Temps et l'Hyper-Temps?
+			<div class="br"/>
+			<div class="">
+				C'est la condition pour que 
+				<a href="https://fr.wikipedia.org/wiki/Expansion_de_l%27Univers" target="_blank">
+					l'Expansion de notre Univers Connu
+				</a>
+				se poursuive sans un
+				<a href="https://fr.wikipedia.org/wiki/Expansion_de_l%27Univers" target="_blank">
+				Armageddon
+				</a>
+				entre les Dimensions.
+			</div>
+			<Btn bind:refStep={epiqStep} step=50 val="Sauver l'EXPANSION de l'univers!" />
 			<div style="clear:both" class="br"></div>
 		</div>
 	{/if}
 
 	{#if epiqStep==50}
 		<div class="reveal" use:scrollPageToTop>
-			Alors, ta nouvelle Aventure commence!
+			<img class="parchemin" src={urlCdn+"pharao/hilbert-espace.jpg"} style="width:30%; float:right" alt="" />
+			Bien sûr que je compte sur toi, {pseudo}.
+			<div class="br" />
+			Je suis sûre que tu seras bientôt
+			{G(pseudoGenre,"l'un des aventuriers","l'une des aventurières")}
+			dont le nom brillera sur la première de couverture du
+			Grand Grimoire des Savoirs.
+			<div class="br" />
+			Mais avant cela, nous devons reconstituer le Pharao brisé.
 			<div class="info">
-				Lors de ce challenge, tu devras retrouver des composants de Pharao dispersés
-				en Eorzéa et les réassembler pour en faire une horloge Pharao.
+				Je te laisse découvrir les mécaniques de ce challenge.
 				<br/>
+				N'hésite pas à partager questionnement et stratégie sur Discord.
 			</div>
 			{#if debutChallengeDth < Date.now()}
 				<Btn bind:refStep={epiqStep} step=90 val="J'y vais tout de suite" />
 			{:else}
-				<div class="info" style="color:red">
+				<div class="info adminCadre" style="color:red">
 					Le challenge commencera dans
-					<countdown dth={debutChallengeDth} oncdTimeout={()=>debutChallengeDth=0} />.
+					<countdown dth={debutChallengeDth} oncdTimeout={()=>debutChallengeDth=0} use:countDownInit />.
 					<br/>
 					Prend le temps de bien lire le lore!
 					Si tu as envie de le revoir ou si tu as zappé des informations,
@@ -505,30 +535,13 @@
 			<div style="clear:both" class="br"></div>
 		</div>
 	{/if}
-	<!--
-			Peut-être pourrions les aider ?
-			https://www.youtube.com/watch?v=UGvLvL8uliM
-			https://www.youtube.com/watch?v=c-6-qBR1EPo
-			file:///D:/Telechargement/Horloge%20atomique%20et%20temps%20qui%20passe...%20On%20teste%20nos%20experts%20!%20%E2%9C%85%E2%9D%8C.mp4
-			file:///D:/Telechargement/Une%20horloge%20atomique%20%C3%A0%20bord%20de%20l%E2%80%99ISS%20%E2%8F%B2%EF%B8%8F.mp4
-			file:///D:/Telechargement/STARGATE%20(1994)%20Best%20of%20James%20Spader%20as%20Daniel%20Jackson%20Compilation%20MGM.mp4
-			<br/>
-			Il semble que ce temps ne soit autre que l'Hyper-Temps, la 6ème dimension
-			mentionnée par Thor.
-			<br/>
-			Fédérer notre 6ème dimension et le temps des Humains de la Terre,
-			ce serait une fanstastique Expansion de notre Univers Connu.
-			<br/>
-			Principe de pharao:
-			Protéger les composants nécessaires à Pharao.
-	-->
-	
+
 	{#if epiqStep==90 && etat}
 		<div>
 			{#if etat.isTrouvePossible}
 				<span onclick={markClick} style="cursor:pointer" gpHelp="Pour tenter de découvrir un composant de Pharao, réponds à l'énigme quand elle est affichée">
 					<span style="color: green">🔎</span>
-					<countdown dth={etat.trouveEcheance} oncdTimeout={newQuestion} txtTimeout="Possible"></countdown>
+					<countdown dth={etat.trouveEcheance} oncdTimeout={newQuestion} txtTimeout="Possible" use:countDownInit />
 				</span>
 			{:else}
 				<span onclick={markClick} style="color:red; cursor:pointer" gpHelp="Tous les composants de Pharao ont été trouvés">
@@ -538,7 +551,7 @@
 			{#if etat.isPosePossible}
 				<span onclick={markClick} style="cursor:pointer" gpHelp="Clique sur un composant de Pharao pour l'échanger avec un autre afin d'en reconstituer la structure" >
 					<span style="color: green">✥</span>
-					<countdown dth={etat.swapEcheance} txtTimeout="Possible"></countdown>
+					<countdown dth={etat.swapEcheance} txtTimeout="Possible" use:countDownInit />
 				</span>
 			{:else}
 				<span onclick={markClick} style="color:red; cursor:pointer" gpHelp="Tous les composants de Pharao ont été assemblés">
@@ -548,7 +561,7 @@
 		</div>
 		<div class="adminCadre papier scrollbar" style="height: 4em">
 			{#if etat.isTrouvePossible && saisies.nuEnigme >= 0}
-				{@const enigme=enigmes[saisies.nuEnigme]}
+				{@const enigme=ENIGMES[saisies.nuEnigme]}
 				Question #{saisies.nuEnigme}
 				{enigme.l}
 				<br />
@@ -569,7 +582,7 @@
 								{#key etat.elts[idx] || etat.fromIdx }
 									{@const cls = (idx===etat.fromIdx)?"tdBlink canvas":"canvas"}
 									<td class={cls} onclick={()=>pharaoClick(idx,etat.elts)}>
-											<canvas idx={idx} use:buildCanvas></canvas>
+										<canvas idx={idx} use:buildCanvas></canvas>
 									</td>
 								{/key}
 							{/each}

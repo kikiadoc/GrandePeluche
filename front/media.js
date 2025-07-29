@@ -82,6 +82,7 @@ export const AUDIODESCS = {
 // GESTION DE LA VIDEO
 ///////////////////////////////////////////////////////////////////////////////////////
 export const VIDEODESCS = {
+	"ff-3-rendez-vous": { mp4: "ff-3-rendez-vous", vol: 1.2},
 	"ff-6-trailer": { mp4: "ff-6-trailer", vol: 1.5},
 	"ff14-innommable-trailer": { mp4: "ff14-innommable-trailer", vol: 1.0},
 	"ff-7-teaser1": {mp4: "ff-7/ff-7-teaser1", vol: 1.0},
@@ -111,12 +112,14 @@ export const VIDEODESCS = {
 	"ff-10/chevron": { mp4: "ff-10/chevron", vol: 3.0},
 	"ff-10/chevron-8": { mp4: "ff-10/chevron-8", vol: 3.0},
 	"ff-10/ff-10-metropolis-c": { mp4: "ff-10/ff-10-metropolis-c", vol: 1.5},
+	"ff-10/ff-10-metropolis-3d": { mp4: "ff-10/ff-10-metropolis-3d", vol: 1.2},
 	"ff-10/ff-10-tunnelmetropolis": { mp4: "ff-10/ff-10-tunnelmetropolis", vol: 1.5},
 	"ff-10/ff-10-ortho-ring": { mp4: "ff-10/ff-10-ortho-ring", vol: 2},
 	"ff-10/ff-10-metro-trailer": { mp4: "ff-10/ff-10-metro-trailer", vol: 2},
 	"ff-10/IPA-BNF": { mp4: "ff-10/IPA-BNF", vol: 4},
 	"ff-10/ff-10-sans-video": { mp4: "ff-10/ff-10-sans-video", vol: 4},
-	"pharao/Pharao": { mp4: "pharao/Pharao", vol: 2},
+	"pharao/pharao1": { mp4: "pharao/pharao1", vol: 3.5},
+	"pharao/pharao2": { mp4: "pharao/pharao2", vol: 2.5},
 	"lesbases/lesbases-1": { mp4: "lesbases/lesbases-1", vol: 1},
 }
 

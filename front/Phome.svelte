@@ -2,7 +2,9 @@
 	import { onMount, onDestroy  } from 'svelte';
 	import { urlCdn, scrollPageToTop,
 					 jjmmhhmmss, countDownTo, displayInfo, playMusic,
-					 capitalizeFirstLetter, isPseudoValid, crypoCreateKeyPair } from './common.js'
+					 capitalizeFirstLetter, isPseudoValid, crypoCreateKeyPair,
+					 isAdmin
+				 } from './common.js'
 	import { G }  from './privacy.js'
 
 	import Credits from './Credits.svelte'
@@ -15,7 +17,7 @@
 	// click dans la liste
 	function listClic(pageDesc,cls) {
 		if (cls.h) displayInfo({body:cls.h})
-		if (cls.a || (pseudo.startsWith("Kikiadoc") && confirm('Acces Admin?')))
+		if (cls.a || (isAdmin(pseudo)) && confirm('Acces Admin?'))
 			page=pageDesc.n // basculement de la page
 		playMusic(pageDesc.music)
 	}

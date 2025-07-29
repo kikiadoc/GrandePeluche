@@ -1,18 +1,24 @@
 <script>
 	import { onMount, onDestroy  } from 'svelte';
 	import { loadIt, storeIt, scrollPageToTop, displayInfo,
-					 markClick, playMusic, tts,
-					 generateSecurityAlert, isEquipementPC,
+					 markClick, playMusic, tts, playDing,
+					 generateSecurityAlert, isEquipementPC, isPC,
 					 getEpsilon, getLatence,
 					 addNotification, apiCall,
 					 urlCdn, jjmmhhmmss,
-					 isPWA, isAndroid, isAdmin
+					 isPWA, isAndroid, isAdmin,
+					 enterFullScreen, exitFullScreen
 				 } from './common.js'
+	import { babylonSetOption, babylonGetOptions,
+					 babylonStart, babylonStop, babylonToggleIHM,
+					 babylonSetSceneActive, sceneLoadingCreate, babylonHome,
+					 babylonGetMetrologie
+				 } from './3Droot.js'
 	import { G }  from './privacy.js'
 	import { GBLCONST,GBLSTATE }  from './ground.svelte.js'
 
 	import Btn from './Btn.svelte'
-	import Upload from './Upload.svelte'
+	import Info from './Info.svelte'
 	
 	let {
 		GBLCTX,
@@ -146,7 +152,7 @@
 			body:	[
 							"Clique sur ton pseudo en haut de ton écran et augmente le volume d'AudioBlaster",
 							"Si, même à 100%, c'est toujours trop faible, augmente le volume du navigateur dans le mixer global de ton appareil",
-							"Si tu as encore un soucis, contacte Kikiadoc sur Discord"
+							"Si tu as encore un souci, contacte Kikiadoc sur Discord"
 						]
 		})
 	}
@@ -159,14 +165,102 @@
 			body: [
 							"Clique sur ton pseudo en haut de ton écran et baisse le volume d'AudioBlaster jusque 10%",
 							"Si tu entends trop fort, même à 10%, baisse le volume du navigateur dans le mixer global de ton appareil",
-							"Si tu as encore un soucis, contacte Kikiadoc sur Discord"
+							"Si tu as encore un souci, contacte Kikiadoc sur Discord"
 						]
 		})
+	}
+	/////////////////////////////////////////////////////////////////////////////////////
+	// chargement de la scene 3D pour test 
+	/////////////////////////////////////////////////////////////////////////////////////
+	let babIHM = $state({})
+	let babOptions = $state(babylonGetOptions())
+	let babMessage = $state(null)
+	let babParam = $state(false)
+	async function start3D() {
+		console.log("****************** TEST3D")
+		babylonSetOption('perf',true)
+		await babylonStart(pseudo,babIHM)
+		babylonSetSceneActive(await sceneLoadingCreate())
+	}
+	async function stop3D() {
+		console.log("****************** RESET TEST3D")
+		babylonStop()
+	}
+	function test3D() {
+		start3D()
+		return stop3D
+	}
+	function helpCoord() {
+		return { titre: "Tes Ortho-Coordonnées",
+						 body: ["Elles ne respectent pas le même référentiel Euclidien que celui d'Eorzéa:",
+										"Y et Z sont inversées"] }
+	}
+	function babHome() {
+		babylonHome()
+		playDing('Ding')
+	} 
+	function babToggleIHM() {
+		babylonToggleIHM()
+		playDing('Ding')
+	} 
+	function babSetSensibilite(s) {
+		babOptions.sensibilite=s
+		babylonSetOption("sensibilite",s)
+		addNotification( "Vitesse de déplacement:"+s)
+		playDing('Ding')
+	}
+	function babSwitchMolette() {
+		babOptions.wheelDir=!babOptions.wheelDir
+		babylonSetOption("wheelDir",babOptions.wheelDir )
+		addNotification(  (babOptions.wheelDir)? "Molette: Tirer pour avancer":"Molette: Pousser pour avancer" )
+		playDing('Ding')
+	}
+	function babSwitchDebug() {
+		babOptions.debug=!babOptions.debug
+		babylonSetOption("debug",babOptions.debug )
+		addNotification(  (babOptions.debug)? "Mode debug activé":"Mode debug désactivé" )
+		playDing('Ding')
+	}
+	function babSwitchPerf() {
+		babOptions.perf=!babOptions.perf
+		babylonSetOption("perf",babOptions.perf )
+		addNotification(  (babOptions.perf)? "Affichage performances activé":"Affichage performances désactivé" )
+		playDing('Ding')
+	}
+	function babFullscreen(t) {
+		if (t) enterFullScreen()
+		else exitFullScreen()
+	}
+	function event3d(e) {
+		let o = e?.srcElement?.Event3D // recupere les complements de l'event
+		if (babOptions.debug) console.log('descEvent:',o)
+		if (!o) return
+		if(o.objet=="btnGo") {
+			let babMetro = babylonGetMetrologie()
+			console.log("event3d - babMetro",babMetro)
+			if ( (Date.now() - babMetro.perfStartDth) < 20000) {
+				displayInfo("Je n'ai pas eu le temps de stabiliser mes mesures, déplace toi et patiente un peu avant de sortir");
+			}
+			else {
+				displayInfo("En cliquant sur le bouton 'Ortho-temps', tu as quitté la Porte de l'Ortho-Temps");
+				epiqStep=70
+			}
+		}
+		if(o.objet=="cannette#1") { babMessage="Il est interdit de boire la cannette de droite" }
+		if(o.objet=="cannette#2") { babMessage="Il est interdit de boire la cannette de gauche" }
+		if(o.objet=="OrthoStargate") { babMessage="C'est le Chronogyre. Il te permettra d'accéder à l'Ortho-Temps, mais pour l'instant le voyage est impossible. Clique sur le bouton au centre du chronogyre pour sortir de la Porte de l'Ortho-Temps" }
 	}
 </script>
 
 <style>
-	
+	.babylon {
+	  margin: 0;
+	  padding: 0;
+	  width: 100%;
+	  /* height: 800px; /* 100%; */
+	  /* font-size: 0; */
+	  color: rgba(204, 204, 204, 1);
+	}
 </style>
 
 <!-- svelte-ignore element_invalid_self_closing_tag -->
@@ -244,7 +338,7 @@
 							PWA
 						</a> et transformer le site en une application.
 						<br/>
-						<a href="{urlCdn}Installation Grande Peluche comme PWA sur smartphone (portait).pdf" target="_blank">
+						<a href="{urlCdn}commons/Installation Grande Peluche comme PWA sur smartphone (portait).pdf" target="_blank">
 						Suis ces instructions pour installer l'application.
 						</a>.
 						<br/>
@@ -253,7 +347,12 @@
 				{/if}
 			{/if}
 			<div class="br"></div>
-			
+			A tout moment, tu peux cliquer sur "Grande Peluche" en haut à gauche de ton écran,
+			tu retourneras alors à ta <i>liste des Possibles</i>.
+			Tu pourras revenir ici en cliquant sur <i>{pageDesc.texte}</i>
+			ou un autre Possible selon ton choix.
+			<div class="br"></div>
+			<div class="br"></div>
 			N'hésite pas à cliquer sur des éléments identifiés par une
 			<a href="https://fr.wikipedia.org/wiki/Hyperlien" target="_blank">loupe</a>
 			d'un <span class="imgLink" gpImg="ff-7/kiki-1.png" gpImgClass="img100">appareil photo</span>
@@ -310,16 +409,16 @@
 			<div class="info">
 				Pour éviter de passer sous les fourches caudines de la
 				<a href="https://www.cnil.fr/fr" target="_blank">CNIL</a>
-				et respecter au mieux
+				et respecter totalement
 				<a href="https://www.cnil.fr/fr/reglement-europeen-protection-donnees" target="_blank">
 					le règlement RGPD
 				</a>,
 				tes données personnelles sensibles (ex: ton genre...) sont uniquement
-				stockées sur ton appareil dans un stockage privé de ton navigateur (le 
+				stockées sur ton appareil dans un stockage privé, le 
 				<a href="https://developer.mozilla.org/fr/docs/Web/API/Window/localStorage" target="_blank">
 					Local Storage
 				</a>
-				accessible quand tu es en communication sécurisée avec le site https://ff14.adhoc.click).
+				accessible uniquement quand tu es en communication sécurisée avec le site https://ff14.adhoc.click.
 				Elles ne sont jamais stockées sur le serveur.
 				Les traitements les utilisant sont des post-traitements réalisés uniquement sur ton appareil.
 			</div>
@@ -391,7 +490,7 @@
 			</div>
 			<Btn val="Je n'entend pas bien ta voix"
 				msg="Monte le volume de ma voix à 100% et baisse celui de l'ambiance sonore."	/>
-			<Btn val="J'ai un soucis"
+			<Btn val="J'ai un souci"
 				msg="Si même avec un volume à 100%, tu n'entends pas ma voix, contacte Kikiadoc sur Discord, Il t'aidera a compléter tes reglages en paramétrant aussi le mixer de ton appareil"	/>
 			<Btn bind:refStep={epiqStep} step=20 val="J'entend parfaitement ta Voix" />
 			<div style="clear:both" class="br"></div>
@@ -435,14 +534,14 @@
 			<div class="info">
 				La charge de Game Master Numérique ne peut se maîtriser seule.
 				Mon équipe est composée de multiples Peluches (développements par Kikiadoc) et
-				deux "Engines" réputés en "open-source".
+				deux "Engines" réputés, gratuits et "open-source".
 				Tu verras parfois leurs noms.
 				<br/>
-				➥La Grande Peluche est en charge de l'apparence et la dynamique du site.
+				➥Moi, la Grande Peluche, je suis en charge de l'apparence et la dynamique du site.
 				<br/>
 				➥Hildiscord est en charge de nos échanges sur Discord
 				<br/>
-				➥AudioBlaster gère les médias (mixage son, vidéos, synthèse vocale...)
+				➥AudioBlaster gère les médias (mixage son, bruitages, vidéos, synthèse vocale...)
 				<br/>
 				➥LogicServer gère la logique des challenges.
 				<br/>
@@ -487,7 +586,7 @@
 			<br/>
 			➥Son marteau est de grande taille: à chaque frappe,
 			il bannit entre 256 et 17 millions d'adresses IP.
-			Environ 3 milliards d'adresses IP sont actuellement bannies du site.
+			Environ 4 milliards d'adresses IP sont actuellement bannies du site.
 			<div class="br"></div>
 			⚠️Si vous êtes plusieurs à partager ta connexion Internet, indique le à Kikiadoc.
 			Normalement à 2, ca doit passer, mais à 3 ça bloque.
@@ -584,7 +683,7 @@
 				<br/>
 				AUCUN antivirus ou VPN ne garantit l'absence de collecte de données personnelles,
 				quoiqu'ils en disent.
-				Les VPN gratuits ne vivent que par ça.
+				Les VPN gratuits ne vivent que par ça et pour ça.
 				<u>Il ne faut JAMAIS utiliser un VPN gratuit</u>.
 				<br/>
 
@@ -641,7 +740,12 @@
 			<div style="font-size:0.8em">
 				(*) la correction temporelle est l'écart entre l'horloge du serveur et celle de ton équipement.
 				Cet écart est compensé par les algorithmes utilisés dans la limite du raisonnable,
-				mais un écart de plus d'un seconde indique un soucis avec ton équipement.
+				mais un écart de plus d'un seconde indique un souci sur ton équipement
+				(l'horloge server est synchronisée sur le 
+				<a href="https://fr.wikipedia.org/wiki/Temps_universel_coordonn%C3%A9" target="_blank">
+					temps UTC
+				</a>
+				à ±10µs).
 				Tu peux vérifier à tout moment la correction temporelle en cliquant sur ton pseudo
 				en haut à droite de ton écran
 				et en scollant vers le bas du popup.
@@ -742,31 +846,148 @@
 		<div class="reveal" use:scrollPageToTop>
 			<img class="parchemin" src={urlCdn+"hof-lalalex.png"} style="width:30%; float:right" alt="" />
 			<div>
-				Blablabla... 
-				Il te faut un équipement compatible
-				permettant l'exploration de l'Ortho-temps.
+				Lors de cet événement, tu devras te rendre dans l'Ortho-Temps.
+				Je te propose visiter la Porte de l'Ortho-Temps
+				afin de vérifier les capacités de ton équipement.
 			</div>
 			<div>
-				Vérifie que la scene 3D ci-dessous s'affiche corectement.
-			</div>
-			<div>
-				{#if isEquipementPC()}
-					Sur PC, utilise ta souris (appuyer puis glisser) pour changer l'axe de vision.
+				Les éléménts importants, dans l'Ortho-Temps, sont:
+				<br/>
+				{#if isPC()}
+					➥Clique et drag avec ta souris pour t'orienter.
+					<br/>
+					➥Pour te déplacer, 
+					utilise ton clavier, la molette de ta souris,
+					ou clique sur les boutons verts.
+					<br/>
+					➥Pour intéragir avec un objet, clique dessus.
+					<br/>
 				{:else}
-					Sur smartphone, tu peux changer l'axe de vision en glissant avec ton doigt.
-					Le passage du mode Portait au mode "paysage" doit ajuster la scene à ton écran.
+					➥Appuie sur les boutons verts pour te déplacer,
+					<br/>
+					➥Glisse ton doigt pour t'orienter.
+					<br/>
+					➥Pour intéragir avec un objet, appuie dessus.
+					<br/>
+					➥Le passage entre mode "Portait" et le mode "Paysage" doit ajuster la scene
+					à ton écran.
+					<br/>
 				{/if}
 			</div>
-			<div class="blinkMsg">En cas de souci, MP Kikiadoc sur Discord</div>
-			<Btn bind:refStep={epiqStep} step=70 val="Je sais visiter les Dimensions!!!" />
+			<div class="info">
+				Je vais instrumenter ton équipement pendant ton passage à la Porte de l'Ortho-temps.
+				{#if "getBattery" in navigator}
+					{#await navigator.getBattery() }
+						<div>Je récupère les informations de ta batterie...</div>
+					{:then battery}
+						{@const batLvl=Math.floor((battery.level*100))}
+						{#if batLvl<50 && !battery.charging}
+							<div class="blinkMsg">
+								Tu devrais recharger ton équipement (batterie à {batLvl}%).
+							</div>
+						{:else}
+							<div>Ton équipement est sur secteur ou suffisamment chargé.</div>
+						{/if}
+					{:catch}
+						<div class="blinkMsg">
+							Tu n'as pas autorisé l'accès aux informations de batterie.
+						</div>
+					{/await}
+				{:else}
+					<div class="blinkMsg">
+						Je n'ai pas accès à l'état de la batterie de ton équipement.
+					</div>
+				{/if}
+				<div>
+				</div>
+			</div>
+			<Btn bind:refStep={epiqStep} step=65 val="Visiter la porte de l'Ortho-Temps" />
+			<div style="clear:both" class="br"></div>
+		</div>
+	{/if}
+	{#if epiqStep==65}
+		<div class="reveal" use:scrollPageToTop>
+			<div {@attach test3D} id="kikiFullArea">
+				{#if babParam}
+					<div style="position: absolute" class="popupCadre papier">
+							<div class="close" onclick={()=>babParam=null} role="button">X</div>
+							<div class="popupZone">
+								Paramètres/actions:
+								<div class="popupContent" style="font-size:0.8em">
+									<input type="button" value="Retour à l'entrée" onclick={()=>babHome()} />
+									<hr/>
+									<input type="button" value="Mode PC/SM" onclick={()=>babToggleIHM()} />
+									<input type="button" value="Molette▲▼" onclick={()=>babSwitchMolette()} />
+									<hr/>
+									<input type="button" value="Fullscreen" onclick={()=>babFullscreen(true)} />
+									<input type="button" value="Normal" onclick={()=>babFullscreen(false)} />
+									<hr/>
+									<input type="button" value="Debug" onclick={()=>babSwitchDebug()} />
+									<input type="button" value="Perf" onclick={()=>babSwitchPerf()} />
+								</div>
+							</div>
+					</div>
+				{/if}
+				{#if babMessage}
+					<Info bind:dspInfo={babMessage} />
+				{/if}
+				<div>
+					<span role="button" class="simpleLink" onclick={()=>babMessage=helpCoord()} >
+						🔮X:{babIHM.x?.toFixed(1)} Y:{babIHM.y?.toFixed(1)} Z:{babIHM.z?.toFixed(1)} 
+						{#if babOptions.debug}
+							🔮:	rX:{babIHM.rx?.toFixed(1)} rY:{babIHM.ry?.toFixed(1)} rZ:{babIHM.rz?.toFixed(1)} 
+						{/if}
+					</span>
+					<span role="button" class="simpleLink" onclick={()=>babMessage="Vitesse de déplacement dans l'Ortho-Temps"}>🏃</span>
+					<input type="range" min=1 max=5 step=1 style="width:20%"
+						onchange={(e)=>babSetSensibilite(e.srcElement.value)} />
+					<span role="button" style="cursor:pointer" onclick={()=>babParam=!babParam}>⚙️</span>
+				</div>
+				<div>
+					<canvas class="babylon" id="render-canvas-3D" onevent3d={event3d}></canvas>
+				</div>
+			</div>
 			<div style="clear:both" class="br"></div>
 		</div>
 	{/if}
 	
 	{#if epiqStep==70}
+		{@const babMetro=babylonGetMetrologie()}
+		{@const FPS= (1000*babMetro.perfNbFrames) / (babMetro.perfEndDth-babMetro.perfStartDth)}
 		<div class="reveal" use:scrollPageToTop>
 			<img class="parchemin" src={urlCdn+"deepAI/ref-cl.png"} style="width:30%; float:right" alt="" />
-			Oui, c'est même très inquiétant. Je pense que c'est le commencement de nouvelles aventures!
+			{#if babMetro?.perfStartDth && babMetro?.perfEndDth && babMetro?.perfNbFrames}
+				<div>Mon relevé indique un FPS moyen de {Number(FPS).toFixed(1)}.</div>
+				{#if FPS>55}
+					<div style="color:lightgreen">
+						Ton équipement semble parfaitement compatible aux voyage dans l'Ortho-Temps.
+					</div>
+				{:else if FPS>40}
+					<div style="color:orange">
+						Ton équipement semble suffisant pour voyager dans l'Ortho-Temps.
+					</div>
+				{:else if FPS>30}
+					<div style="color:red">
+						Ton équipement semble lent, contacte Kikiadoc car voyager dans l'ortho-temps peut poser quelques soucis.
+					</div>
+				{:else}
+					<div style="color:red">
+						Ton équipement semble TRES lent, contacte Kikiadoc pour analyse.
+					</div>
+				{/if}
+			{:else}
+				<div class="blinkMsg" style="color:red">
+					Je n'ai pas obtenu recemment des mesures valides de la performance de ton équipement,
+					tente de l'explorer à nouveau.
+					Si l'erreur persiste, contacte Kikiadoc sur Discord
+				</div>
+			{/if}
+			J'espère que tu as bien exploré la Porte de l'Ortho-Temps.
+			Si tu n'as pas découvert toutes les options de déplacement, d'intéraction
+			de personnalisation ou que le test de performance n'est pas satisfaisant,
+			tu peux
+			<Btn bind:refStep={epiqStep} step=65 val="l'explorer à nouveau" />
+			<div class="br"></div>
 			<div class="br"></div>
 			Il me reste à vérifier avec toi quelques points.
 			Le premier est que tu peux facilement te TP vers les maisons de Kikiadoc en étant
@@ -843,35 +1064,37 @@
 				le serveur n'accepte que des données "brutes".
 				<br/>
 				<br/>
-				Pour t'éviter un soucis au milieu d'un challenge, je préfère faire un
+				Pour t'éviter un souci au milieu d'un challenge, je préfère faire un
 				test dès maintenant en espérant que j'ai traité tous les cas rencontrés précédemment.
 				<td style="vertical-align: top; width: 50%">
 					<Upload cbImageRaw={(raw)=>saisies.imageDataRaw=raw} />
 				</td>
 	-->
 	{#if epiqStep==80}
+		{@const X=8.6}
+		{@const Y=11.7}
 		<div class="reveal" use:scrollPageToTop>
 			<img class="parchemin" src={urlCdn+"boussole.png"} style="width:50%; float:right" alt="" />
 			Maintenant que tu es dans le jardin de la maison de CL de Kikiadoc,
 			tu es à proximité du servant Kikiadoc Lebogosse. (voir l'image)
 			<div class="br" />
-			Positionne toi juste à côté d'un pnj (ici Kikiadoc Lebogosse).
+			Positionne toi juste à côté de lui.
 			<br/>
-			Quand tu es juste à côté, indique moi ses coordonnées (X:8.6 Y:11.7)
+			Lorsque ta boussole indique X:{X} Y:{Y}, tu es bien positionné{G(pseudoGenre,"","e")}.
+			<br/>
+			Recopie alors ci-dessous les coordonnées:
 			<div class="br" />
-			X:<input type="number" placeholder="*8.6*" size=6 step="0.1" bind:value={saisies.X} />
-			<br/>
-			Y:<input type="number" placeholder="*11.7*" size=6 step="0.1" bind:value={saisies.Y} />
-			<br/>
-			{#if saisies.X!='8.6' || saisies.Y!='11.7'}
-				<span style="color:red">Coordonnées?</span>
+			X:<input type="number" placeholder="*{X}*" min=0 max=20 step="0.1" bind:value={saisies.X} />
+			Y:<input type="number" placeholder="*{Y}*" min=0 max=20 step="0.1" bind:value={saisies.Y} />
+			{#if saisies.X!=X || saisies.Y!=Y}
+				<span style="color:red">??</span>
 			{:else}
-				<Btn style="color:green" bind:refStep={epiqStep} step=90 val="C'est OK ➤" />
+				<Btn style="color:green" bind:refStep={epiqStep} step=90 val="➤" />
 			{/if}
 			<div class="info">
 				Ce petit test permet de vérifier que tu n'as pas de pertubateur de saisies
 				(en particulier sur iPhone)
-				et que tu vois bien la distance minimum pour être "près" d'un pnj ou d'un lieu.
+				et que tu vois bien la distance minimum pour être "près" d'un pnj, d'un objet ou d'un lieu.
 			</div>
 			<div style="clear:both" class="br"></div>
 		</div>
@@ -900,11 +1123,13 @@
 			<div class="br"></div>
 			<u>Je t'ai envoyé un MP sur Discord car tu as maintenant accès au canal Discord de cet événement.</u>
 			<div class="br"></div>
-			En haut de page, tu auras souvent un bouton indiquant la progression
-			actuelle des Aventuriers et Aventurières dans le challenge en cours. Ici, tu peux cliquer sur 'Résultats'
+			En haut de page, tu auras souvent un bouton "résultats" indiquant la progression
+			actuelle des Aventuriers et Aventurières dans le challenge en cours.
+			En cliquant dessus immédiatement, tu verras la liste des Novices de {NOVICIAT_LBL}.
 			<div class="br"></div>
-			Tu peux revenir à cette quête initiatique depuis ta Liste des Possibles
-			en cliquant sur <i>{pageDesc.texte}</i> puis la rebalayer en cliquant sur "Revoir le Lore"
+			Tu pourras revenir à cette quête initiatique depuis ta Liste des Possibles
+			en cliquant sur <i>{pageDesc.texte}</i>.
+			Tu pourras alors la revoir en cliquant sur "Revoir le Lore" en haut de cette page.
 			<div class="br"></div>
 			<Btn bind:refPageDone={pageDone} pageDone={pageDesc.n} bind:refPage={page} page=0 val="Merci Grande Peluche"  />
 			<div style="clear:both" class="br"></div>
