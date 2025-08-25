@@ -12,6 +12,7 @@ const typeDevicePWA= window.matchMedia('(display-mode: standalone)').matches
 export const urlRaw = 'https://filedn.eu/lxYwBeV7fws8lvi48b3a3TH/'
 export const urlImg = 'https://cdn.adhoc.click/'+CDNVER+'/'
 export const urlCdn = 'https://cdn.adhoc.click/'+CDNVER+'/'
+export const urlCdnAI = 'https://cdn.adhoc.click/AI-Generated/'
 export const urlMp3 = 'https://cdn.adhoc.click/'+CDNVER+'/'
 const urlApi = 'https://api.adhoc.click/api'+APITYPE
 const wsUrl = 'wss://api.adhoc.click:443/ws'+APITYPE+'/'
@@ -138,6 +139,12 @@ export function nbSecTo(dth) {
 
 export function geUtcMsFrom(y,m,d,hh,mm,ss) {
 	return Date.UTC(y, m-1, d, hh, mm, ss)
+}
+
+// !! Attention, la fonction suivante doit être exactement la copie de celle du server
+const ESCAPETEXTREGEXP =  /[^A-Za-z0-9', ]/g
+export function escapeTexte(str) {
+  return str.replace( ESCAPETEXTREGEXP, "_" )
 }
 
 export function shuffle(array) {
@@ -773,14 +780,24 @@ async function requestWakeLock() {
 }
 export function visibilityChange() {
 	console.log('visibilityChange', document.visibilityState);
+	let tblElt = document.getElementsByTagName('audio')
+	let nb = tblElt.length
 	switch(document.visibilityState) {
 		case "visible":
 			audioResume()
 			requestWakeLock()
+			for (let i = 0; i<nb; i++) {
+				let elt = tblElt.item(i)
+				if (elt.getAttribute("gpMute")) mediaPlay(elt)
+			}
 			break;
 		case "hidden":
 			// myWakeLock?.release()
 			if (!document.getElementById("musique")?.gpBack) audioPause()
+			for (let i = 0; i<nb; i++) {
+				let elt = tblElt.item(i)
+				if (elt.getAttribute("gpMute")) elt.pause()
+			}
 			break;
 	}
 }
@@ -788,7 +805,7 @@ export function visibilityChange() {
 /////////////////////////////////////////////////////////////////////
 // Gestion du serviceWorke
 /////////////////////////////////////////////////////////////////////
-let swcReady = null
+let swcReady = false
 let swcCtx = { id:0, queue:[]}
 // Activation Reception des messages depuis le service worker
 export function swcSetup() {
@@ -898,7 +915,7 @@ function mediaError(e) {
 	})
 }
 // media play sur le dom, si pas resume, reset le pipeline de lecture
-function mediaPlay(dom,resume) {
+export function mediaPlay(dom,resume) {
 	const domSrc=dom.src
 	const domId=dom.id
 	console.log("mediaPlay",domId,domSrc)
@@ -964,7 +981,7 @@ export function firstClick() {
 export function audioInit(gState) {
 	console.log('audioInit')
 	gState.audioVolume= loadIt('audioVolume',30)
-	gState.audioBack= loadIt('audioBack', true)
+	gState.audioBack= loadIt('audioBack', false)
 	gState.audioAmbiance= loadIt('audioAmbiance', true)
 	gState.audioTTS= loadIt('audioTTS', 100)
 }
@@ -1191,6 +1208,7 @@ export function wsMedia(o) {
 // TTS
 /////////////////////////////////////////////////////////////////////
 let etatTTS = { dth:0, files: [] }
+// ajouote en TTS les infos recues du server (m)
 export function tts(m,force) {
 	console.log("tts:",m)
 	if (force) etatTTS.files = []
@@ -1199,6 +1217,12 @@ export function tts(m,force) {
 		m.o.forEach((e)=>etatTTS.files.push(e))
 	else
 		etatTTS.files.push(m.o)
+	tryTTS(force)
+}
+// ajoute en TTS un texte qui doit déjà être stocké sur le CDN
+// le nom du fichier utilisé sera le texte encode facon URI
+export function addTexteTTS(texte, force) {
+	etatTTS.files.push({ statique: true, file: escapeTexte(texte)+".mp3" })
 	tryTTS(force)
 }
 export function tryTTS(force) {

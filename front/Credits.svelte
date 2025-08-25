@@ -50,6 +50,9 @@
 			<div>➥Des samples de musiques et vidéos remixées depuis différentes sources Internet dont
 				<a class="active" href="https://youtube.com/" target="_blank">Youtube</a>
 			</div>
+			<div>➥Des images libres de droits. A titre d'exemple:
+				<a class="active" href="https://pixabay.com/" target="_blank">Pixabay.com</a>
+			</div>
 			<div>➥Des images de musées, bibliothèques et autres institutions. A titre d'exemple:
 				<br/>
 				<a class="active" href="https://collections.musee-rodin.fr/" target="_blank">le Musée Rodin</a>

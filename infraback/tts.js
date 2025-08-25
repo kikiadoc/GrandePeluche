@@ -4,6 +4,7 @@ const gbl = require('../infraback/gbl.js');
 const wsserver = require('../infraback/wsserver.js');
 const pseudos = require('../infraback/pseudos.js');
 const collections = require('../infraback/collections.js');
+const pCloud = require('../infraback/pCloudTools.js');
 const pFs = require('fs/promises');
 
 const { PollyClient, SynthesizeSpeechCommand} = require("@aws-sdk/client-polly"); // CommonJS import
@@ -205,7 +206,7 @@ function clearMP3() {
 	mp3s.byTexte = new Map() // { file: }
 	collections.save(mp3s)
 }
-// stocke le MP3 en asynchrone
+// stocke le MP3 en asynchrone sur le filesystem
 async function pubMP3(texte,data) {
 	const hrTime = process.hrtime()
 	const filename = "tts-"+hrTime[0]+"-"+hrTime[1]+".mp3"
@@ -216,16 +217,7 @@ async function pubMP3(texte,data) {
 
 // synthese vocale, stocke le mp3 et retourne le descriptif { file: ... }
 async function forceTTS(texte) {
-	let params = Object.create(paramsBase)
-	console.log('forceTTS:',texte)
-	params.Text = '<speak><prosody volume="x-loud"><amazon:effect name="drc">'
-	params.Text +=texte
-	params.Text += '</amazon:effect></prosody></speak>'
-	console.log("******************* ssml=",params.Text)
-	const response = await client.send(new SynthesizeSpeechCommand(params))
-	console.log("******************* cout/char=",response.RequestCharacters,texte)
-	const byteArray = await response.AudioStream.transformToByteArray()
-	return pubMP3(texte,byteArray)
+	return pubMP3(texte,aiTTS(texte))
 }
 
 // synthese volcale si non deja effectuée
@@ -233,10 +225,60 @@ async function getTTS(texte) {
 	return getMP3(texte) || await forceTTS(texte)
 }
 
+//////////////////////////////////////////////////////////////////////////
+// gestion  de l'IA polly
+//////////////////////////////////////////////////////////////////////////
+// aiTTS: appelle l'AI pour le texte et retourne un byteArray de la synthès
+async function aiTTS(texte) {
+	let params = Object.create(paramsBase)
+	console.log('aiTTS:',texte)
+	params.Text = '<speak><prosody volume="x-loud"><amazon:effect name="drc">'
+	params.Text +=texte
+	params.Text += '</amazon:effect></prosody></speak>'
+	console.log("******************* ssml=",params.Text)
+	const response = await client.send(new SynthesizeSpeechCommand(params))
+	console.log("******************* cout/char=",response.RequestCharacters,texte)
+	return await response.AudioStream.transformToByteArray()
+}
+
+//////////////////////////////////////////////////////////////////////////
+// publication d'un texte sur le CDN ou sur le serveur
+//////////////////////////////////////////////////////////////////////////
+// publie un texte sur le cdn
+async function pubCdnTTS(texte) {
+	let fn = gbl.escapeTexte(texte)+".mp3"
+	let mp3 = await aiTTS(texte)
+	await pCloud.putTtsBlob(mp3,fn)
+	return fn
+}
+// publie un texte sur le serveur
+async function pubSrvTTS(texte) {
+	let fn = gbl.escapeTexte(texte)+".mp3"
+	let mp3 = await aiTTS(texte)
+	await pFs.writeFile(URLMP3PREFIX+fn, mp3)
+	return fn
+}
+//////////////////////////////////////////////////////////////////////////
+// emission d'un TTS
+//////////////////////////////////////////////////////////////////////////
+// queue un TTS à un pseudo ou tout le monde
+// pseudo: target ou tout le monde si null
+// tblTTS est un tableau de { statique: true|false, file: filename }
+async function sendTTS(pseudo,tblTTS) {
+	if (pseudo)
+		wsserver.targetSimpleOp(pseudo,'tts',tblTTS)
+	else
+		wsserver.broadcastSimpleOp('tts',tblTTS)
+}
+
+
 exports.httpCallback = async (req, res, method, reqPaths, body, pseudo, pwd) => {
 	switch ( method ) {
 		case "GET":
 			switch ( reqPaths[2] ) {
+				case "genTexte":
+					pseudos.check(pseudo,pwd,true); // admin
+					gbl.exception( pubCdnTTS(decodeURI(reqPaths[3] || "Test Kiki" )) ,200);
 				case "test":
 					pseudos.check(pseudo,pwd,true); // admin
 					await getTTS(decodeURI(reqPaths[3]) || "Test Kiki")	
@@ -261,6 +303,9 @@ exports.httpCallback = async (req, res, method, reqPaths, body, pseudo, pwd) => 
 
 exports.getTTS = getTTS
 exports.getMP3 = getMP3
+exports.pubCdnTTS = pubCdnTTS
+exports.pubSrvTTS = pubSrvTTS
+exports.sendTTS = sendTTS
 
 console.log("tts loaded");
 

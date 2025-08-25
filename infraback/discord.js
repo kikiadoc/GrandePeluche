@@ -869,9 +869,9 @@ exports.httpCallback = async (req, res, method, reqPaths, body, pseudo, pwd) => 
 			}
 			gbl.exception("bad op",400);
 		case 'POST':
-			pseudos.check(pseudo,pwd,true); // req admin
 			switch(reqPaths[2]) {
 				case "admActions":
+					pseudos.check(pseudo,pwd,true); // req admin
 					let o = JSON.parse(body);
 					// verif du channel
 					if (! runCtx[o.chan+"ChanId"] ) gbl.exception("discord bad chan",400);

@@ -1,9 +1,12 @@
 import {
-					urlCdn, addNotification, isPC,
+					urlCdn, isPC,
 					addScriptTag, displayInfo, wsSend,
-					loadIt, storeIt
+					loadIt, storeIt, playDing, addNotification,
+					enterFullScreen, exitFullScreen
 			 } from "./common.js"
-const	WORLDSIZE = 100
+import { addReport
+			 } from "./privacy.js"
+
 const SYNCTIMERDELAI = 200
 const CAMERAMINY = 0.7
 const GP3DURL = urlCdn+"MetaCache/3D/"
@@ -27,28 +30,59 @@ let perfNbFrames=0
 ////////////////////////////////////////////////////////////////////////////
 // options
 ////////////////////////////////////////////////////////////////////////////
-let options=loadIt("3Droot.options",{sensibilite:3, wheelDir:true, debug: false, perf:true})
-export function babylonSetOption(o,v) {
-	options[o]=v
-	storeIt("3Droot.options",options)
+let options=loadIt("root3D.options",{sensibilite:3, wheelDir:true, debug: false, perf:true})
+export function babylonSetOption(o,v,quiet) {
+	let msg = null
+	switch(o) {
+		case "wheelDir":
+			options[o] = (v!==undefined)? v: !options[o]
+			msg = (options[o])? "Molette: Tirer pour avancer":"Molette: Pousser pour avancer"
+			break
+		case "perf":
+			options[o] = (v!==undefined)? v: !options[o]
+			msg = (options[o])? "Affichage performances activé":"Affichage performances désactivé"
+			break
+		case "debug":
+			options[o] = (v!==undefined)? v: !options[o]
+			if(syncIHM) syncIHM.debug = options[o] // permettre l'usage du mode debug 3D dans l'IHM
+			msg = (options[o])? "Mode debug activé":"Mode debug désactivé"
+			break
+		case "fullscreen":
+			options[o] = v
+			if (v) 
+				enterFullScreen()
+			else
+				exitFullScreen()
+			msg = (options[o])? "Mode fullscreen activé":"Mode fullscreen désactivé"
+			break
+		case "IHM":
+			modeIHMPC = !modeIHMPC
+			sceneUI?.dispose()
+			sceneUI = sceneUICreate()
+			msg = (modeIHMPC)? "IHM type PC":"IHM type smartphone"
+			break
+		case "sensibilite":
+			options[o] = v
+			msg= "Vitesse de déplacement:"+v
+			break
+		default:
+			throw new Error("Mauvaise option dans babylonSetOption")
+	}
+	if (msg && !quiet) {
+		addNotification(msg)
+		playDing('Ding')
+	}
+	storeIt("root3D.options",options)
 }
-export function babylonSetOptions(o) {
-	options=o
-	storeIt("3Droot.options",options)
-}
-export function babylonGetOptions() {
-	return options
-}
-export function babylonToggleIHM() {
-	modeIHMPC = !modeIHMPC
-	sceneUI?.dispose()
-	sceneUI = sceneUICreate()
+export function babylonGetOption(o) {
+	return options[o]
 }
 export function babylonHome() {
+	playDing('Ding')
 	padDoAction(padButtonsPC2[0]) // home
 }
 ////////////////////////////////////////////////////////////////////////////
-// lancement, arret, modif de la scene active, metrologie
+// lancement, arret, modif de la scene active, metrologie 
 ////////////////////////////////////////////////////////////////////////////
 // demarrage
 export async function babylonStart(pPseudo,pSyncIHM) {
@@ -60,7 +94,7 @@ export async function babylonStart(pPseudo,pSyncIHM) {
 		// addNotification("Chargement modèles 3D","green",2)
 		sceneUI = sceneUICreate()
 		scenePerf = scenePerfCreate()
-		addNotification("Scenes 3D construites","green",2)
+		addNotification("Peluche Babylon 3D ok","green",5)
 		serverEnter3D()
 	}
 	catch(e) {
@@ -70,25 +104,35 @@ export async function babylonStart(pPseudo,pSyncIHM) {
 }
 // arret
 export async function babylonStop() {
+	console.log("**babylonStop*")
 	engineStop()
 	serverLeave3D()
 }
 
 export async function babylonSetSceneActive(scene) {
+	console.log("**babylonSetSceneActive*",scene)
 	sceneActive?.dispose()
 	sceneActive = scene
 	addSceneObservable(scene)
 }
 
 export function babylonGetMetrologie() {
-	return {perfStartDth:perfStartDth, perfEndDth:perfEndDth||Date.now(), perfNbFrames:perfNbFrames }
+	let e= perfEndDth || Date.now()
+	let m = {
+		startDth:perfStartDth,
+		endDth:e,
+		nbFrames:perfNbFrames,
+		FPS: (perfStartDth) ? (1000*perfNbFrames) / (e-perfStartDth) : 0
+	}
+	addReport("perf","root3D",m)
+	return  m
 }
 	
 ////////////////////////////////////////////////////////////////////////////
 // chargement de l'engine return true/false
 ////////////////////////////////////////////////////////////////////////////
 async function engineLoad() {
-	addNotification("Chargement moteur 3D","green",2)
+	// addNotification("Chargement Babylon 3D","green",2)
 	// bug possible si chargemetn en async et que le babyonjs ne soit pas encore chargé
 	// d'ou le async en sériel
 	console.warn("Kiki: Trouver la cause du non dispose d'un WebGL context")
@@ -97,14 +141,14 @@ async function engineLoad() {
 	let p3= await addScriptTag("idBabylonjsLoader",BABYLONJSLOADERURL)
 	// vérificaztions
 	let asyncLoad = await Promise.all([p1,p2,p3])
-	console.log("loadEnginePromisesEnErreur:",asyncLoad)
+	console.log("loadEnginePromises:",asyncLoad)
 	let loadError = asyncLoad.some((e)=>e)
 	if (loadError) {
 		console.log("**** Erreur de chargement engine 3D")
 		addNotification("Erreur de chargement du Moteur 3D","red",30)
 		throw new Error("Erreur de chargement du Moteur 3D")
 	}
-	console.log("chargement engine 3D ok")
+	console.log("chargement Babylon 3D ok")
 	return true
 }
 ////////////////////////////////////////////////////////////////////////////
@@ -132,8 +176,8 @@ function engineStart() {
 				// console.log('renderloop')
 				perfNbFrames++
 				if (padButtonDown) padDoAction(padButtonDown)
-				renderExeCmds()
-				renderCamera()
+				renderExeCmds(sceneActive)
+				renderCamera(sceneActive)
 				sceneActive?.render()
 				sceneUI?.render()
 				if (options.perf) scenePerf?.render()
@@ -147,16 +191,16 @@ function engineStart() {
 		perfEndDth=0
 		perfNbFrames = 0
 		engine.runRenderLoop(renderLoop)
-		// addNotification("Moteur 3D Up and running","green",2)
+		// addNotification("Babylon 3D Up and running","green",2)
 	}
 	else
-		addNotification("Moteur 3D déjà opérationnel","green",2)
+		addNotification("Babylon 3D déjà opérationnel","green",2)
 }
 // arret de l'engine 3D
 function engineStop() {
-	console.log('Arret du 3D engine')
 	window.removeEventListener("resize",canvasResize)
 	if (engine) {
+		console.log('Arret du 3D engine')
 		perfEndDth = Date.now()
 		engine.stopRenderLoop()
 		scenePerf=null
@@ -166,7 +210,7 @@ function engineStop() {
 		engine.dispose()
 		console.log("#scenes après engine.dispose():",engine.scenes.length,engine.scenes)
 		engine=null
-		addNotification('Arret du moteur 3D',"green",2)
+		// addNotification('Arret de Babylon 3D',"green",5)
 	}	
 	else
 		console.log('Moteur 3D pas démarré')
@@ -177,11 +221,13 @@ function canvasResize() {
 	console.log('APREScanvasResize')
 }
 ////////////////////////////////////////////////////////////////////////////
-// skybox et ground
+// skybox et ground 
 ////////////////////////////////////////////////////////////////////////////
 // construction du skybox (scene, "space" || "nuages ...)
 function skyboxBuild(scene,nomPrefix) {
-	const skybox = BABYLON.MeshBuilder.CreateBox("skyBox", {size:WORLDSIZE*2+10}, scene);
+	if (!scene || !nomPrefix)
+		return console.log("********** skyboxBuild - bad param",scene,nomPrefix)
+	const skybox = BABYLON.MeshBuilder.CreateBox("skyBox", {size:scene.metadata.WORLDSIZE*2+10}, scene);
 	const skyboxMaterial = new BABYLON.StandardMaterial("skyBox", scene);
 	skyboxMaterial.backFaceCulling = false;
 	skyboxMaterial.disableLighting = true;
@@ -221,10 +267,11 @@ function groundBuild(scene) {
 /////////////////////////////////////////////////
 // Tranmission des events 3D
 /////////////////////////////////////////////////
-function event3D(nomScene,objet,action,extra) {
-	if (options.debug) addNotification("Event3D: "+nomScene+', '+objet+', '+action+', '+extra,"blue")
-	let e = document.getElementById(DOMID)
-	e.Event3D = { scene:nomScene, objet:objet, action:action,extra:extra},
+function event3D(action,quoi,pNom,extra) {
+	const nom = (pNom?.startsWith("gp="))? parseInt(pNom.substring(3),10) : pNom
+	const e = document.getElementById(DOMID)
+	if (options.debug) addNotification("Event3D: t="+action+' o='+quoi+' nom/id='+nom+" ("+extra+")","blue")
+	e.Event3D = { action:action, quoi:quoi, nom:nom, extra:extra},
 	e.dispatchEvent(new Event("event3d",{bubbles: true} ))
 }
 /////////////////////////////////////////////////
@@ -360,8 +407,7 @@ function padDoAction(padButton) {
 		if (padButton.camRota)
 			camera.cameraRotation.addInPlace(padButton.camRota.scale(0.1))
 		if (padButton.camHome) {
-			// console.log("sceneActive.gpHome",sceneActive.gpHome)
-			camera.position= sceneActive.gpHome?.clone() || BABYLON.Vector3.Zero()
+			camera.position= sceneActive.metadata?.HOME.clone() || BABYLON.Vector3.Zero()
 			camera.rotation= BABYLON.Vector3.Zero()
 		}
 		// si pas de repetition, annule le buttonDown
@@ -486,19 +532,18 @@ function addSceneObservable(scene) {
 				break
 			case BABYLON.PointerEventTypes.POINTERUP:
 				startDrag=false
-				// console.log("POINTERUP",eventData)
+				if (options.debug) console.log("POINTERUP",eventData)
 				break
 			case BABYLON.PointerEventTypes.POINTERDOWN:
 				startDrag=true
-				// console.log("POINTERDOWN",eventData)
+				if (options.debug) console.log("POINTERDOWN",eventData)
 				break
 			case BABYLON.PointerEventTypes.POINTERTAP:
-				let mesh = eventData.pickInfo.pickedMesh
-				// console.log("POINTERTAP",eventData)
-				if (options.debug && eventData.pickInfo.pickedPoint) {
-					let pick = eventData.pickInfo.pickedPoint
-					console.log("pickInfo:",pick,"mesh",mesh)
-					addNotification("Mesh:"+mesh?.name+" x:"+pick?.x.toFixed(2)+" y:"+pick?.y.toFixed(2)+" z:"+pick?.z.toFixed(2),"blue",14)
+				let mesh = eventData.pickInfo?.pickedMesh
+				let pick = eventData.pickInfo?.pickedPoint
+				if (options.debug) {
+					console.log("POINTERTAP",eventData)
+					addNotification("Mesh:"+mesh?.name+" x:"+pick?.x.toFixed(2)+" y:"+pick?.y.toFixed(2)+" z:"+pick?.z.toFixed(2),"blue",5)
 					/*
 					let pick = eventData.pickInfo.pickedPoint
 					sphereClick.position.x = pick.x
@@ -506,7 +551,7 @@ function addSceneObservable(scene) {
 					sphereClick.position.z = pick.z
 					*/
 				}
-				event3D("Mesh",mesh?.name,"click",null)
+				event3D("click","mesh",mesh?.name,null)
 				break;
 			case BABYLON.PointerEventTypes.POINTERWHEEL:
 				// console.log(eventData)
@@ -521,7 +566,7 @@ function addSceneObservable(scene) {
 // execution des commades/actions a faire lors du render
 //////////////////////////////////////////////////////
 let renderCommands=[] // file des commands à destination du renderloop
-function renderExeCmds() {
+function renderExeCmds(scene) {
 	let cmd=null
 	while (cmd=renderCommands.shift()) {
 		console.log("renderCmd=",cmd)
@@ -529,17 +574,22 @@ function renderExeCmds() {
 }
 let lastCamCoord = null
 let lastCamRota = null
-function renderCamera() {
+function renderCamera(sceneActive) {
 	// noramlize la camera
 	if (!sceneActive) return
 	lastCamCoord ??= BABYLON.Vector3.Zero()
 	lastCamRota ??= BABYLON.Vector3.Zero()
 	let camera = sceneActive.getCameraByName("camera")
-	if (camera.position.y< CAMERAMINY) camera.position.y = CAMERAMINY
-	if (camera.position.x< -WORLDSIZE) camera.position.x = -WORLDSIZE
-	if (camera.position.x>  WORLDSIZE) camera.position.x = WORLDSIZE
-	if (camera.position.z< -WORLDSIZE) camera.position.z = -WORLDSIZE
-	if (camera.position.z>  WORLDSIZE) camera.position.z = WORLDSIZE
+	if (camera.position.y< sceneActive.metadata.CAM?.minY)
+		camera.position.y = sceneActive.metadata.CAM?.minY
+	if (camera.position.x< -sceneActive.metadata.WORLDSIZE)
+		camera.position.x = -sceneActive.metadata.WORLDSIZE
+	if (camera.position.x>  sceneActive.metadata.WORLDSIZE)
+		camera.position.x = sceneActive.metadata.WORLDSIZE
+	if (camera.position.z< -sceneActive.metadata.WORLDSIZE)
+		camera.position.z = -sceneActive.metadata.WORLDSIZE
+	if (camera.position.z>  sceneActive.metadata.WORLDSIZE)
+		camera.position.z = sceneActive.metadata.WORLDSIZE
 	// si la camera a bougé, notify server on test les coord de rota pour éviter le quaternion issue
 	if ( (! camera.position.equals(lastCamCoord)) ||
 			 (camera.rotation.x != lastCamRota.x) ||
@@ -556,18 +606,22 @@ function renderCamera() {
 	}
 }
 ///////////////////////////
-// loading scene défnie dans 3Droot pur reutilisation
+// loading scene défnie dans root3D pur reutilisation
 ///////////////////////////
 export async function sceneLoadingCreate() {
 	let dthStart=performance.now()
 	const scene = new BABYLON.Scene(engine)
 	scene.autoClear = false
-	scene.gpHome = new BABYLON.Vector3(0, 10, -50)
-	scene.gpLight = new BABYLON.Vector3(-15, 0, -10)
+	scene.metadata = { 
+		WORLDSIZE:100,
+		CAMMINY: 0,
+		HOME: new BABYLON.Vector3(0, 10, -50),
+		LIGHT: new BABYLON.Vector3(-15, 0, -10)
+	}
 	// const camera = new BABYLON.ArcRotateCamera("camera", -Math.PI/2, Math.PI/3, 10, new BABYLON.Vector3(0, 0, 0), scene);
-	const camera = new BABYLON.UniversalCamera("camera", scene.gpHome.clone(),scene);
-	const light = new BABYLON.HemisphericLight("light", scene.gpLight.clone(),scene)
-	let skyBox = skyboxBuild(scene,"skybox")
+	const camera = new BABYLON.UniversalCamera("camera", scene.metadata.HOME.clone(),scene);
+	const light = new BABYLON.HemisphericLight("light", scene.metadata.LIGHT.clone(),scene)
+	skyboxBuild(scene,"skybox")
 
 	// cannette
 	const canMaterial = new BABYLON.StandardMaterial("material", scene);
@@ -614,7 +668,7 @@ export async function sceneLoadingCreate() {
 	button.scaling = new BABYLON.Vector3(2,2,3)
 	button.text = "l'Ortho-temps"
 	button.imageUrl = GP3DURL+"common/GrandePeluche-lion.png"
-	button.onPointerUpObservable.add(()=>event3D("bouton","btnGo","click") )
+	button.onPointerUpObservable.add(()=>event3D("click","bouton","btnGo",null) )
 	// OK scene de chargement disponible
 	let dthEnd=performance.now()
 	console.log("sceneLoadingCreate ms:",dthEnd-dthStart)
@@ -623,10 +677,14 @@ export async function sceneLoadingCreate() {
 //////////////////////////////////////////////
 // communication bidir avec le serveur et sync IHM
 //////////////////////////////////////////////
-let pushCtx = {} 	// contexte à remonter au serveur, max 5 par seconde
+let pushCtx = {} 	// contexte à remonter au serveur, sur interval
 let pushTimerId = null //timer de sync server
+
+// envoi du pushCtx si besoin puis l'objet o si defini
+// appelé sur timer ou directement
 function serverSync(o) {
 	if (pushCtx.loc) {
+		// sync IHM avec les coordonnées
 		syncIHM.x  = pushCtx.loc.cx
 		syncIHM.y  = pushCtx.loc.cy // pas en usage FF14
 		syncIHM.z  = pushCtx.loc.cz // pas en usgae FF14
@@ -634,35 +692,137 @@ function serverSync(o) {
 		syncIHM.ry  = pushCtx.loc.ry // pas en usage FF14
 		syncIHM.rz  = pushCtx.loc.rz // pas en usgae FF14
 	}
-	/*
-	// si instace d'emission en cours
-	if (pushCtx.op) wssend(pushCtx)
-	// si ordre direct
-	if (o) wssend(o)
-	*/
+	// push contexte si besoin
+	if (pushCtx.op) wsSend(pushCtx)
+	// push objet si besoin
+	if (o) wsSend(o)
 	// resetpush
 	pushCtx = {}
 }
 function serverLeave3D() {
-	serverSync({op: "3Droot.leave"})
 	clearInterval(pushTimerId)
 	pushTimerId=null
+	serverSync({op: "root3D.leave"})
 }
 function serverEnter3D() {
 	pushTimerId = setInterval(serverSync,SYNCTIMERDELAI)
-	serverSync({op: "3Droot.enter"})
+	serverSync({op: "root3D.enter"})
 }
-// envoi la position vers le serveur 
-// op="loc" -> o={cx,cy,cz,rs,ry,rz})
+// envoi un truc au server
+// op="loc" -> o={cx,cy,cz,rs,ry,rz}) --> vers timer
 function serverPush(op,o) {
 	// console.log('push',op,o) 
 	switch(op) {
 		case 'loc':
 			pushCtx.loc = o
-			pushCtx.op = "3Droot.sync"
+			pushCtx.op = "root3D.sync"
 			break
 		default: console.error("serverPush bad op",op)
 	}
+}
+////////////////////////////////////////////////////////////////////////
+// chrgement de la scene principale
+////////////////////////////////////////////////////////////////////////
+export async function babylonMainSceneCreate(DESC3D) {
+	console.log("babylonMainSceneCreate")
+	let dlStart = performance.now()
+	
+	const scene = new BABYLON.Scene(engine)
+	scene.metadata = {
+		...DESC3D,
+		HOME: new BABYLON.Vector3(DESC3D.CAM.x, DESC3D.CAM.y, DESC3D.CAM.z),
+		LIGHT: new BABYLON.Vector3(DESC3D.LIGHT.x, DESC3D.LIGHT.y, DESC3D.LIGHT.z),
+		objetsActifs: []
+	}
+	console.log("metadata",scene.metadata)
+
+	const camera = new BABYLON.UniversalCamera("camera", scene.metadata.HOME.clone(),scene)
+	// scene.gravity = new BABYLON.Vector3(0, -0.15, 0); 
+	// camera.applyGravity = true;
+	camera.speed= DESC3D.CAM.speed
+	camera.minZ = DESC3D.CAM.minZ
+	camera.maxZ = DESC3D.CAM.maxZ
+	// camera.position = new BABYLON.Vector3(msc.positionPop.x,msc.positionPop.y,msc.positionPop.z)
+	camera.rotation = new BABYLON.Quaternion.Zero()
+	camera.ellipsoid = new BABYLON.Vector3(DESC3D.CAM.elipsX,DESC3D.CAM.elipsY,DESC3D.CAM.elipsZ)
+	camera.inputs.clear()
+	camera.inputs.addMouse()
+	camera.attachControl(false);
+	// Light
+	const l = new BABYLON.HemisphericLight("light", scene.metadata.LIGHT.clone())
+	l.diffuse = new BABYLON.Color3(DESC3D.LIGHT.colorR,DESC3D.LIGHT.colorG,DESC3D.LIGHT.colorB)
+	// light.specular = new BABYLON.Color3(0, 1, 0);
+	// light.groundColor = new BABYLON.Color3(0, 1, 0);
+	skyboxBuild(scene,DESC3D.SKYBOX)
+	let tblPromises = []
+	scene.metadata.assetsContainers = {}
+	tblPromises.push(
+		BABYLON.ImportMeshAsync(GP3DURL+DESC3D.PATH+DESC3D.ROOTDESC.glb, scene)
+		.then((r)=>scene.metadata.root=r))
+	Object.keys(DESC3D.OBJ3DDESC).forEach( (nom) => {
+		let mesh = DESC3D.OBJ3DDESC[nom]
+		tblPromises.push(
+			BABYLON.LoadAssetContainerAsync(GP3DURL+DESC3D.PATH+mesh.glb, scene)
+			.then((r)=>scene.metadata.assetsContainers[nom]=r)
+		)
+	})
+	await Promise.all(tblPromises)
+	console.log("**** mainScene DL MANQUE TEST promises:",tblPromises)
+	let dlEnd = performance.now()
+	addNotification("Téléchargements 3D ("+(Math.round(dlEnd-dlStart))+"ms)","green",7)
+	Object.keys(scene.metadata.assetsContainers).forEach( (n)=> {
+		console.log("asset:",n,scene.metadata.assetsContainers[n])
+	})
+
+	// initialise le tableau des objets avec leur coordonnées
+	
+	// retourn ela scene active
+	return scene
+}
+
+export function babylonObjetActifUpdate(i,type,cx,cy,cz,rx,ry,rz) {
+	if (!sceneActive) return console.log("** BUG objetActifUpdate sans sceneActive")
+	sceneActive.metadata.objetsActifs[i] ??= { i:i, type: null, cloned: null }
+	let o = sceneActive.metadata.objetsActifs[i]
+	// Si le type a changé positionne le mesh
+	if (o.type != type) {
+		// on supprime le précédent
+		if (o.cloned) {
+			// supprime le mesh
+			// o.posAnim?.stop() // stop anim position
+			// o.rotAnim?.stop() // stop anim rotation
+			o.cloned.dispose() // supprmer le mesh
+			o.cloned = null
+		}
+		// on instancie le nouveau
+		if (type) {
+			// creation du clone
+			let ac = sceneActive.metadata.assetsContainers[type]
+			let mdDesc= sceneActive.metadata.OBJ3DDESC[type]
+			console.log("mdDesc",mdDesc)
+			o.cloned = ac?.instantiateModelsToScene((n) => "gp="+i+"("+type+")@"+n, false, { doNotInstantiate: true });
+			let root = o.cloned?.rootNodes?.[0]
+			let anim = o.cloned?.animationGroups?.[0]
+			if (root) {
+				root.position=new BABYLON.Vector3(mdDesc.cx,mdDesc.cy,mdDesc.cz)
+				root.rotation=new BABYLON.Vector3(mdDesc.rx,mdDesc.ry,mdDesc.rz)
+				root.scaling=new BABYLON.Vector3(mdDesc.sx,mdDesc.sy,mdDesc.sz)
+			}
+			if (anim) {
+				anim.start()
+				anim.loopAnimation = true
+			}
+		}
+		o.type=type
+	}
+	// si position vide , retourne 
+	if (! o.type) return
+	let root = o.cloned?.rootNodes?.[0]
+	// Si pas de mesh etc... bug
+	if (! root) return console.log("** BUG sur objetActifUpdate - o.cloned?.rootNodes?.[0]") 
+	// si update position ou rotation...
+	if (! root.position.equalsToFloats(cx,cy,cz))	root.position=new BABYLON.Vector3(cx,cy,cz)
+	if (! root.rotation.equalsToFloats(rx,ry,rz))	root.rotation=new BABYLON.Vector3(rx,ry,rz)
 }
 ////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////
@@ -962,6 +1122,7 @@ function serverPush(op,o) {
 	///////////////////////////
 	// main scene
 	///////////////////////////
+/**
 	async function createSceneMain(engine) {
 		const scene = new BABYLON.Scene(engine);
 		// Camera
@@ -1267,6 +1428,7 @@ function serverPush(op,o) {
 					let cloned = container.instantiateModelsToScene((name) => srvPersoDesc.p+"."+name, false, { doNotInstantiate: true });
 					let newMesh = cloned.rootNodes[0]
 					// newMesh.checkCollisions = true;
+					!!!!!!!!!!!!!!!!!!!
 					newMesh.position=new BABYLON.Vector3(0,0,0)
 					newMesh.rotation=new BABYLON.Vector3(0,0,0)
 					newMesh.scaling=(isMoi)? new BABYLON.Vector3(0.005,0.005,0.01) : new BABYLON.Vector3(0.02,0.02,0.02)
@@ -1662,5 +1824,5 @@ function serverPush(op,o) {
 </div>
 
 */
-/* 3Droot.js */
+/* root3D.js */
 

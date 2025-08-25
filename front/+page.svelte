@@ -4,7 +4,8 @@
 	const GLOBALSTARTDTH=Date.now() // dth de démarrage des traitements 
 	console.log('******** CLIENT START id:',GLOBALSTARTDTH)
 
-	// divers caractères pour copier/coller : 🔊🔇⁜➤▲⏸◀▶▼⏬🔎📽❓✅🆘⚠️⬇️✅➥📷εΔ⛭👉😈ⓘ(ℹ)🛈႞⒤⇛⏳
+	// divers caractères pour copier/coller : ⚙️🔊🔇⁜➤▲⏸◀▶▼⏬🔎📽❓✅🆘⚠️⬇️✅➥📷εΔ⛭
+	// 👉😈ⓘ(ℹ)႞⒤⇛⏳ 😴😭🚫
 	// ne fonctionne pas sur android 🛈 utiliser (ℹ)
 
 	//////////////////////////////////////////
@@ -16,17 +17,24 @@
 		addNotification, displayInfo, displayError,
 		startCountDown, stopCountDown, scrollNodeToBottom, 
 		connectToServer, disconnectFromServer, apiCall,	getDynMetro, getEpsilon,
-		hhmmss, hhmmssms, geUtcMsFrom, mmssms,
+		hhmmss, hhmmssms, geUtcMsFrom,
 		orientationChange, visibilityChange, startBlinkGlobal, markClick, firstClick,
 		playMusic, playDing, playVideo, closeVideo, audioInit, audioSetup, wsMedia,
 		tts, tryTTS,
 		securitypolicyviolation, generateSecurityAlert,
 		metaCacheList, metaCacheClear, swcGetWaitingIds,
-		isAdmin
+		isAdmin, isSM
 	} from "./common.js";
 	
-	import { G, unPatchConsole } from "./privacy.js"
+	import { G, patchConsole, unpatchConsole, getConsole, 
+					 reportConsole, addReport
+				 } from "./privacy.js"
 	import { GBLCONST, GBLSTATE } from "./ground.svelte.js"
+
+	// metrologie
+	addReport("global","clientStartDth",GLOBALSTARTDTH)
+	addReport("global","clientVersion",CLIENTVERSION)
+	addReport("global","svelteVersion",SVELTEVERSION)
 
 	import Info from './Info.svelte'
 	import Radio from './Radio.svelte'
@@ -42,6 +50,7 @@
 	import P420 from './P420.svelte' // Kiki's Event X - Les bases
 	import P430 from './P430.svelte' // Kiki's Event X - Les Failles
 	import P440 from './P440.svelte' // Kiki's Event X - Les orth-composants
+	import P460 from './P460.svelte' // Kiki's Event X - Dissonances
 
 	//////////////////////////////////////////
 	// Gestion du cycle de vie
@@ -69,7 +78,7 @@
 		stopCountDown()
 		document.removeEventListener("click", firstClick, { once: true })
 		window.screen?.orientation?.removeEventListener("change", orientationChange)
-		unPatchConsole()
+		unpatchConsole()
 		console.log('** UnMount Ok ** id=',GLOBALSTARTDTH)
 	});
 
@@ -167,14 +176,14 @@
 		 delaiDebut: 20,
 		 component: P420
 		},
-		{n: 425, texte: "Les portes vers l'Ortho-Temps (sur Cerberus)", music: "dolmen",
+		{n: 425, texte: "Les Anomalies (TBD)", music: "dolmen",
 		 start: 0,
 		 end: 0,
 		 rootName: "??",
 		 delaiDebut: 20,
 		 component: null
 		},
-		{n: 430, texte: "Les Failles", music: "dolmen",
+		{n: 430, texte: "Les Failles (TBD)", music: "dolmen",
 		 start: 0,
 		 end: 0,
 		 rootName: "lesfailles",
@@ -189,24 +198,14 @@
 		 delaiDebut: 20,
 		 component: P440
 		},
-		{n: 480, texte: "Synchronisation multi-temporelle", music: "mercredi",
+		{n: 460, texte: "Les Dissonances", music: "mercredi",
 		 start: 0,
 		 end: 0,
-		 rootName: "TBD",
+		 rootName: "dissonances",
 		 delaiDebut: 20,
-		 component: null
-		 // component: Pxxx
-		 // explication du projet pharao sur terre
-		 // 
-		 // idée: trouver les lieux propices pour des horloges 
-		 // upgrade du chronogyre avec un pupitre de commande
-		 // idée: construire el cadmos dans l'hypertemps
-		 // idée: une horreur a modifie le poèms 
-		 // idée: des fantomes popent a différents endroits
-		 // idée: construire el cadmos dans l'hypertemps
-		 // il permettent de trouver l'album de la comtesse
+		 component: P460
 		},
-		{n: 999, texte: "Epilogue", music: "dolmen",
+		{n: 499, texte: "Epilogue", music: "dolmen",
 		 start: 0,
 		 end: 0,
 		 component: null
@@ -227,6 +226,34 @@
 		 // component: Psample
 		},
 		*/
+		 // component: Pxxx
+		 // explication du projet pharao sur terre
+		 // 
+		 // idée: trouver les lieux propices pour des horloges 
+		 // upgrade du chronogyre avec un pupitre de commande
+		 // idée: construire el cadmos dans l'hypertemps
+		 // idée: une horreur a modifie le poèms 
+		 // idée: des fantomes popent a différents endroits
+		 // idée: construire el cadmos dans l'hypertemps
+		 // il permettent de trouver l'album de la comtesse
+		 ///////////////////////////////////
+			// challenge n collaboration tempreel
+			// base sur les musique
+			// tout le monde se co 
+			// X musque à découvrir
+			 // un "élu" doit repondre dans les X minutes, les autres doient aider
+			 // les musiques sont partagées et diffusée (usage du # pour synchro??)
+	 		 ///////////////////////////////////
+			 // découvrir un monde grace a la descripiton du monde (monde ou descriptionou...)
+			 // lore: ce n'est pas un mog blanc
+			 // --> devinette pour éliminer les mondes un a un
+			 // --> annonce du chgt du server
+			 // --> devniette sur la zone de logement
+			 // --> secteurs
+			 // -->
+			 // dans le lore on pose un truc inbittable, mais si tu cliques sur le livre
+			 // de correspondnce, tu as la "traduction"
+			 // 
 	])
 	
 
@@ -336,7 +363,7 @@
 			body.push("Pas de stackTrace")
 	}
 	function globalHdlError(e) {
-		console.log(">>>>>>>> Erreur DEB e:", e)
+		console.warn(">>>>>>>> Erreur DEB e:", e)
 		let bld = {
 			titre:"FAIT UN SCREEN + MP KIKIADOC", trailer:"Fait un screen et contacte Kikiadoc",
 			back:"rouge",
@@ -352,10 +379,11 @@
 		// Ajoute le staktrace
 		addStackTrace(bld.body,e.error)
 		displayError(bld)
-		console.log(">>>>>>>> Erreur FIN e:", e)
+		addReport("global","lastError",bld.body)
+		// console.log(">>>>>>>> Erreur FIN e:", e)
 	}
 	function globalHdlRejection(e) {
-		console.log(">>>>>>>> Rejection DEB e:",e,e?.reason)
+		console.warn(">>>>>>>> Rejection DEB e:",e,e?.reason)
 		let bld = {
 			titre:"FAIT UN SCREEN + MP KIKIADOC", trailer:"Fait un screen et contacte Kikiadoc",
 			back:"rouge",
@@ -363,7 +391,7 @@
 		}
 		addStackTrace(bld.body,e.error)
 		displayError(bld)
-		console.log(">>>>>>>> Rejection FIN e:",e,e?.reason)
+		// console.log(">>>>>>>> Rejection FIN e:",e,e?.reason)
 	}
 
 	/* debug
@@ -454,7 +482,7 @@
 	audio { visibility: hidden }
 	
 	back {
-		background-image: url("https://cdn.adhoc.click/V10/Oracle.png");
+		background-image: url("https://cdn.adhoc.click/V10a/Oracle.png");
 		width: 100%; height: 100%; background-position: center; background-size: cover;
 		position: fixed; left: 0; top: 1.8em;	z-index: -1;
 		margin: 0; padding: 0; border:0; 
@@ -462,12 +490,13 @@
 
 	label { cursor: pointer; }
 
-	/* classes pour la listes des possibles */
-	.pseudo { top: 0px; right: 0%; height: 2em; background-size:cover;	position: fixed; z-index: 1000; 	cursor: pointer; }
-	.wsClass { top: 1.1em; right: 0px; height: 3%; position: fixed; z-index: 1000; 	cursor: pointer; }
-	.wsClass0 { color: red }
+	/* entete */
+	.pseudo { top: 0px; right: 2em; height: 2em; background-size:cover;	position: fixed; z-index: 1000; cursor: pointer; }
+	.wsClass { top: 1.1em; right: 2em; height: 3%; position: fixed; z-index: 1000; cursor: pointer; }
+	.wsClass0 { color: yellow }
 	.wsClass1 { color: lightgreen }
 	.wsClass2 { color: red }
+	.audioToggle { top: 0px; right: 0em; height: 2em; font-size:1.5em; position: fixed; z-index: 1000; cursor: pointer; }
 
 	/* popup de multi - envoi de messages */
 	.pseudosList { font-size: 0.8em; font-family: "Times New Roman" }
@@ -503,6 +532,12 @@
 		background-color: grey; background-position: center;
 		background-image: url("https://cdn.adhoc.click/V10a/stars.gif");
 	}
+	div :global(.alien)  {
+		background-color: grey; background-position: center;
+		background-size: cover;
+		background-image: url("https://cdn.adhoc.click/V10a/commons/alien.gif");
+		font-size:1.2em;
+	}
 	div :global(.popupCadre) {
 		position: fixed; top: 10%; left: 20%;
 		border: 2px outset red; border-radius: 10%; border-width: 5%;
@@ -525,7 +560,7 @@
 		border: 0.1em solid white; padding: 0.2em; margin-top: 0.5em; color: white;
 		background-position: center; background-repeat: no-repeat; 
 		background-size: cover; background-color: black;
-		background-image: url('https://cdn.adhoc.click/V10/texture-papier-noir.jpg');
+		background-image: url('https://cdn.adhoc.click/V10a/texture-papier-noir.jpg');
 		animation-duration: 10s; animation-name: revealFrames; animation-iteration-count: 1;
 	}
 	@keyframes revealFrames {
@@ -546,8 +581,8 @@
 	:global(.infoLink::after) {content: "(ℹ)"; font-size:0.8em; vertical-align: top; color: lightgreen}
 	:global(.simpleLink) {color: lightgreen; text-decoration: unset; cursor: pointer}
 	:global(.parchemin) {
-		margin: auto; border: 0.5em 1em; padding: 1em 1em; max-width: 80%;
-	  border-image-source: url("https://cdn.adhoc.click/V10/ff-7/parchemin.png");
+		margin: auto; border: 0.5em 1em; padding: 0.7em 0.7em; max-width: 95%;
+	  border-image-source: url("https://cdn.adhoc.click/V10a/ff-7/parchemin.png");
 		border-image-repeat: stretch;	border-image-slice: 2% 2% fill; text-align: center;
 	}
 	:global(.info) { font-style: italic; font-size: 0.8em }
@@ -595,17 +630,17 @@
 					{pseudo}
 				</span>
 			{:else}
-				<span style="color: red;" onclick={()=>dspPseudo=!dspPseudo}  role="button">
+				<span style="color: yellow;" onclick={()=>dspPseudo=!dspPseudo}  role="button">
 					{pseudo || "pseudo"} non validé
 				</span>
 			{/if}
-			<span onclick={()=>GBLSTATE.audioAmbiance= !GBLSTATE.audioAmbiance} role="button">
-				{#if GBLSTATE.audioAmbiance}🔊{:else}🔇{/if}
-			</span>
 		</div>
 		<div class="wsClass wsClass{wsStatus}" id="syncStatus" onclick={() => {dspMultiPopup = true}} role="button" >
 			{#if chatFlag}<span class="blinkFlag">💬</span>{/if}
 			multijoueurs
+		</div>
+		<div class="audioToggle" onclick={()=>GBLSTATE.audioAmbiance= !GBLSTATE.audioAmbiance} role="button">
+			{#if GBLSTATE.audioAmbiance}🔊{:else}🔇{/if}
 		</div>
 	</titre>
 	<blinkGlobal id="blinkGlobal" />
@@ -762,9 +797,8 @@
 						</label>
 						{#if !GBLSTATE.audioBack}
 							<div class="info">
-								AudioBlaster coupe le son si la fenêtre de ton navigateur est masquée.
-								Cela ne fonctionne pas automatiquement si tu utilises le site sur smartphone
-								ou avec plusieurs écrans.
+								AudioBlaster coupe le son si il détecte que la fenêtre de ton navigateur est masquée.
+								Cette détection automatique a des lacunes.
 								Pour couper l'ambiance, sur windows, minimise la fenêtre de ton navigateur, 
 								et sur smartphone, repasse sur l'écran d'accueil.
 							</div>
@@ -773,8 +807,8 @@
 						{/if}
 					</div>
 					<hr />
-					<div class="info">
-						<u>Les informations ci-dessous sont à utiliser selon les conseils de Kikiadoc</u>
+					<div class="info blinkMsg">
+						Les informations ci-dessous sont à utiliser selon les conseils de Kikiadoc
 					</div>
 					<div class="adminCadre">
 						{#if dynMetro?.srv} 
@@ -841,7 +875,11 @@
 									Ton navigateur ne dispose pas de l'introspection mémoire par
 									<a href="https://developer.mozilla.org/en-US/docs/Web/API/Performance/measureUserAgentSpecificMemory"
 										target="_blank">
-										measureUserAgentSpecificMemory
+										{#if isSM()}
+											measureUser...
+										{:else}
+											measureUserAgentSpecificMemory
+										{/if}
 									</a>
 									C'est une fonction récente qui n'est pas supportée par tous les navigateurs.
 								</div>
@@ -868,22 +906,24 @@
 								DeepCheckSec n'est pas active, contacte Kikiadoc
 							</div>
 						{/if}
-						<div style="font-size: 0.8em; color:red">
-							<div class="infoLink" role="button" onclick={markClick}
-								gpHelp="En cliquant sur un bouton 'Provoquer...',
-												je vais provoquer une vraie tentative de hack du site.
-												Cela doit déclencher DeepCheckSec.
-												Si il fonctionne correctement, tu verras un message d'alerte.
-												Evidemment, ces attaques sont réelles, mais sans risque.">
-								Tester le fonctionnement de DeepCheckSec
+						{#if pseudo && isAdmin(pseudo)}
+							<div style="font-size: 0.8em; color:red">
+								<div class="infoLink" role="button" onclick={markClick}
+									gpHelp="En cliquant sur un bouton 'Provoquer...',
+													je vais provoquer une vraie tentative de hack du site.
+													Cela doit déclencher DeepCheckSec.
+													Si il fonctionne correctement, tu verras un message d'alerte.
+													Evidemment, ces attaques sont réelles, mais sans risque.">
+									Tester le fonctionnement de DeepCheckSec
+								</div>
+								<input type="button" value="Provoquer script externe"
+									onclick={(e)=>generateSecurityAlert(1)} />
+								<input type="button" value="Provoquer script inline"
+									onclick={(e)=>generateSecurityAlert(2)} />
+								<input type="button" value="Provoquer media"
+									onclick={(e)=>generateSecurityAlert(3)} />
 							</div>
-							<input type="button" value="Provoquer script externe"
-								onclick={(e)=>generateSecurityAlert(1)} />
-							<input type="button" value="Provoquer script inline"
-								onclick={(e)=>generateSecurityAlert(2)} />
-							<input type="button" value="Provoquer media"
-								onclick={(e)=>generateSecurityAlert(3)} />
-						</div>
+						{/if}
 						<hr />
 						<div style="font-size: 0.8em">
 							{#if GBLSTATE.swcReady}
@@ -898,14 +938,29 @@
 							{:else}
 								<div style="color:red">
 									Métacache n'est pas active. C'est normal si tu es en navigation privée.
-									Recharge la page par F5 et si cela ne suffit pas, 
+									Recharge la page et si cela ne suffit pas, 
 									ferme TOUS les onglets sur le site, puis FERME TON NAVIGATEUR et
 									reviens visiter le site.
 									<br/>
 									Contacte Kikiadoc en cas de souci.
 								</div>
 							{/if}
-								
+						</div>
+						<div style="font-size: 0.8em">
+							<hr/>
+							<div>
+								Rapport technique de fonctionnement:
+							</div>
+							<div>
+								<input type="button" value="Capturer" onclick={()=>patchConsole()} />
+								<input type="button" value="Arreter" onclick={()=>unpatchConsole()} />
+								<input type="button" value="Afficher" onclick={()=>dspObject=getConsole()} />
+								<input type="button" value="Envoyer le rapport à Kikiadoc" onclick={()=>reportConsole()} />
+							</div>
+						</div>
+						<hr />
+						<div style="font-size: 0.8em">
+							<input type="button" value="Resynch config" onclick={async ()=>{dspObject={msg:"Attendre..."}; dspObject = await apiCall('/clientConfig/refresh')} } />
 						</div>
 						<hr />
 						<div style="font-size: 0.8em">
@@ -951,11 +1006,11 @@
 						Diagnostic technique, ne pas utiliser sans Kikiadoc
 					</div>
 					<div>
-						loc: {mmssms(Date.now())} srv: {mmssms(Date.now()-getEpsilon())} loc=srv+ε({getEpsilon()}ms)
+						loc: {hhmmssms(Date.now())} srv: {hhmmssms(Date.now()-getEpsilon())} loc=srv+ε({getEpsilon()}ms)
 					</div>
 					<div class="adminCadre">
 						<input bind:value={dspObject.dth2local} type="number" placeholder="dth" /> =
-						{mmssms(dspObject.dth2local)}
+						{hhmmssms(dspObject.dth2local)}
 						(<countdown dth={dspObject.dth2local || 0} txtTimeout="dépassé" />)
 					</div>
 					<div><pre style="white-space: pre-wrap; word-break: break-all;">{JSON.stringify(dspObject,null,2)}</pre></div>

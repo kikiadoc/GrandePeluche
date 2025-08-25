@@ -3,7 +3,7 @@ exports.staticFsPath="../inframain/datastore/";
 exports.grimoireFsPath="/var/www/static/grimoire/";
 exports.grimoireUrlPath= "https://ff14.adhoc.click/grimoire/"
 exports.pCloudUrl= "https://filedn.eu/lxYwBeV7fws8lvi48b3a3TH/"
-exports.cdnUrl= "https://cdn.adhoc.click/V10/"
+exports.cdnUrl= "https://cdn.adhoc.click/V10a/"
 exports.vaultPath="/home/ec2-user/.vault.donotdelete";
 exports.ipAdmin="91.164.33.248" // adrese PC perso Kikiadoc
 
@@ -99,6 +99,7 @@ exports.checkInt = (v,min,max) => {
 	if (isNaN(i) || i < min || i > max) exports.exception("bad int param",400)
 	return i;
 }
+// vérification du parametre, retourne la valeur ou gbl exception 400 sinon
 exports.checkFloat = (v,min,max) => {
 	let i = parseFloat(v);
 	if (isNaN(i) || i < min || i > max) exports.exception("bad float param",400)
@@ -110,6 +111,15 @@ exports.isDistance = (x,y,tX,tY,d) => {
 	return (x>=tX-d && x<=tX+d && y>=tY-d && y<=tY+d)
 }
 
+// return un texte "escapé" pouvant être utilise comme fileName
+// ce codage doit être strictement identique a ceui effectué coté client
+const ESCAPETEXTREGEXP =  /[^A-Za-z0-9', ]/g
+exports.escapeTexte = (str) => {
+	return str.replace( ESCAPETEXTREGEXP, "_" );
+	// return encodeURIComponent(str).replace( ESCAPETEXTREGEXP, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}` );
+}
+
+// appel api externe retornant un JSON avec un champ status
 exports.apiCall = async (fullUrl,method,body,headers) => {
 	try {
 		const res = await fetch(fullUrl, {
@@ -129,6 +139,8 @@ exports.apiCall = async (fullUrl,method,body,headers) => {
 	}
 }
 
+// appel api externe retornant un JSON avec un champ status
+// le pars de resultat est fait selon parseType
 exports.apiCallExtern = async (fullUrl,method,body,headers,parseType) => {
 	let res;
 	try {

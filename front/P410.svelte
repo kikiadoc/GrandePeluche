@@ -2,12 +2,13 @@
 	import { onMount, onDestroy  } from 'svelte';
 	import { loadIt, storeIt, scrollPageToTop, displayInfo,
 					 markClick, playMusic, tts,
-					 urlCdn, apiCall, isAdmin,
+					 urlCdn, urlCdnAI, apiCall, isAdmin,
 					 displayObject, addNotification, playVideo,
 					 isProd, countDownInit
 				 } from './common.js'
 	import { G }  from './privacy.js'
 	import { GBLCONST,GBLSTATE }  from './ground.svelte.js'
+	import Common from './Common.svelte'
 	import Btn from './Btn.svelte'
 	
 	let {
@@ -25,8 +26,8 @@
 	const PAGESAISIESLBL = "P"+pageDesc.n + "_saisies"
 	const APIROOT = '/'+pageDesc.rootName+'/'
 	
-	onMount(() => { if (wsCallComponents) wsCallComponents.add(myWsCallback); init() });
-	onDestroy(() => { if (wsCallComponents) wsCallComponents.delete(myWsCallback); reset() });
+	onMount(() => { wsCallComponents.add(myWsCallback); init() });
+	onDestroy(() => { wsCallComponents.delete(myWsCallback); reset() });
 
 	// Gestion de l'épique
 	let epiqStep = $state(loadIt(PAGEEPIQLBL, 0))
@@ -39,9 +40,9 @@
 
 	// afficahge des popups standards
 	let dspResultats=$state(false) 	// affichage des résltats
-
+	
 	// appelé apres mount du component
-	function init() { calcDebutChallengeDth(); getZones(); getEtat() }
+	function init() { getZones(); getEtat() }
 	
 	// appelé apres unmount du component
 	function reset() {	}
@@ -69,17 +70,10 @@
 		console.log("epiqStepChange="+newStep)
 	}
 
-	
-	// calcul de la date effective pour le challenge
-	let debutChallengeDth = $state(Date.now()+60000) // par defaut en attente de la synchro initt
-	function calcDebutChallengeDth() {
-		debutChallengeDth = (isProd)? pageDesc.start + pageDesc.delaiDebut*60000 : Date.now()+pageDesc.delaiDebut*1000
-	}
-	
 	// calcul des timers
 	function getTrouveEcheance(dthRef,nb,lastBad) {
 		console.log("getTrouveEcheance",dthRef,nb)
-		if (saisies.noTimer) return dthRef + 1
+		// if (saisies.noTimer) return dthRef + 1
 		if (lastBad) return lastBad+ 10*60000 // 10 minutes si mauvaise réponse
 		switch(nb) {
 			case 0 : return dthRef + 1
@@ -92,7 +86,7 @@
 	}
 	function getSwapEcheance(dthRef,nb) {
 		console.log("getSwapEcheance",dthRef,nb)
-		if (saisies.noTimer) return dthRef + 1
+		// if (saisies.noTimer) return dthRef + 1
 		switch(nb) {
 			case 0 : return dthRef + 1
 			case 1 :
@@ -146,7 +140,7 @@
 		etat = tEtat
 		// Si challenge termine, envoi la vidéo
 		if (tEtat.poseNbTotal==tEtat.elts.length)
-			playVideo("pharao/pharao2")
+			playVideo("X-pharao/pharao2")
 	}
 	// une proposition est faite pour une enigme
 	function proposition(i) {
@@ -169,7 +163,7 @@
 	let pharaoImagePromise = new Promise( (ok,ko) => {
 		pharaoImage.onload = function () { console.log("image chargée",pharaoImage.src); ok(true) }
 		pharaoImage.onerror = function () { console.log("image error",pharaoImage.src); ko(false) }
-		pharaoImage.src = urlCdn+"pharao/imagePharao600x600.png";
+		pharaoImage.src = urlCdn+"X-pharao/imagePharao600x600.png";
 	})
 	// constuit le canvas d'un node
 	async function buildCanvas(node) {
@@ -243,8 +237,8 @@
 </script>
 
 <style>
-	.table { /* background-image: url('https://cdn.adhoc.click/V10/ff-10/Pharao.png');
-					background-size: 100% 100%; background-position: center; */
+	.table {
+					background-size: 100% 100%; background-position: center;
 					width: 90%; margin: auto; padding: 0; border: 0;
 					border-spacing: 0; border-collapse: collapse;
 					border: 0;
@@ -279,62 +273,21 @@
 				<input type="button" value="goEpiq" onclick={() => epiqStep=saisies.admGoStep} />
 				<input type="button" value="ResetAll" onclick={() => confirm("Tout effacer?") && apiCall(APIROOT+'etat','DELETE') } />
 				<input type="button" value="SetAll-2" onclick={() => confirm("Tout valider?") && apiCall(APIROOT+'setAll','DELETE') } />
+				<input type="button" value="TimerEnigme" onclick={() => etat.trouveEcheance=Date.now()+5000 } />
+				<input type="button" value="TimerSwap" onclick={() => etat.swapEcheance=Date.now()+5000 } />
 				<label><input type="checkbox" bind:checked={saisies.debug} />DebugLocal</label>
-				<label><input type="checkbox" bind:checked={saisies.noTimer} />NoTimer</label>
+				<!-- <label><input type="checkbox" bind:checked={saisies.noTimer} />NoTimer</label> -->
 			</div>
 		</div>
 	{/if}
+	<Common t="popupDebutChallenge" pageDesc={pageDesc} />
 	<div>
 		<input type="button" value="Revoir le Lore" onclick={() => epiqStep=0} />
 		<input type="button" value="Resultats" onclick={calcResultats} />
-		<!--
-		<span role="button"	style="cursor: pointer" onclick={()=>{ dspObject={ template: "a modifier" }}}>
-		🆘
-		</span>
-		-->
 	</div>
-	{#if dspResultats}
-		{@const tblPseudos=Object.keys(dspResultats.byPseudo)}
-		<div class="popupCadre papier">
-			<div class="close" onclick={()=>dspResultats=null} role="button">X</div>
-			<div class="popupZone">
-				<div class="popupContent">
-					<div>Résultats:</div>
-					<table style="text-align: center; border-collapse: collapse">
-						<tbody >
-							<tr class="info">
-								<td>Pseudos</td>
-								<td>Trouvés</td>
-								<td>Swaps</td>
-								<td>Placés</td>
-							</tr>
-							{#each tblPseudos as p,i}
-								{@const bp=dspResultats.byPseudo[p]}
-								<tr>
-									<td style="border: 1px solid white">{p}</td>
-									<td style="border: 1px solid white">{bp.t}</td>
-									<td style="border: 1px solid white">{bp.p}</td>
-									<td style="border: 1px solid white">{bp.r}</td>
-								</tr>
-							{/each}
-						</tbody>
-					</table>
-				</div>
-			</div>
-		</div>
-	{/if}
-	
 	{#if epiqStep==0}
 		<div class="reveal" use:scrollPageToTop>
-			<img class="parchemin" src={urlCdn+"pharao/hilbert-espace.jpg"} style="width:30%; float:right" alt="" />
-			{#if debutChallengeDth > Date.now()}
-				<div class="info adminCadre" style="color:red">
-					Le challenge commencera dans
-					<countdown dth={debutChallengeDth} oncdTimeout={()=>debutChallengeDth=0} use:countDownInit />.
-					<br/>
-					Tu as le temps de bien lire le lore!
-				</div>
-			{/if}
+			<img class="parchemin" src={urlCdn+"X-pharao/hilbert-espace.jpg"} style="width:30%; float:right" alt="" />
 			Bienvenue {pseudo}.
 			<div class="br"/>
 			Depuis la venue de Thor, nous savons qu'une	sixième dimension existe.
@@ -358,15 +311,15 @@
 			les Humains de la Terre ont entrepris le projet Pharao pour vérifier que leur Temps
 			ne présente pas de fluctuation.
 			<br/>
-			<Btn bind:refStep={epiqStep} step=10 video="pharao/pharao1" val="Le projet Pharao?" />
+			<Btn bind:refStep={epiqStep} step=10 video="X-pharao/pharao1" val="Le projet Pharao?" />
 			<div style="clear:both" class="br"></div>
 		</div>
 	{/if}
 
 	{#if epiqStep==10}
 		<div class="reveal" use:scrollPageToTop>
-			<img class="parchemin" src={urlCdn+"pharao/hilbert-espace.jpg"} style="width:30%; float:right" alt="" />
-			<input type="button" value="Revoir la video" gpVideo="pharao/pharao1" onclick={markClick} />
+			<img class="parchemin" src={urlCdn+"X-pharao/hilbert-espace.jpg"} style="width:30%; float:right" alt="" />
+			<input type="button" value="Revoir la video" gpVideo="X-pharao/pharao1" onclick={markClick} />
 			<br/>
 			C'est ainsi que les Humains de la Terre ont présenté leur projet Pharao à Daniel.
 			<div class="br"/>
@@ -397,7 +350,7 @@
 
 	{#if epiqStep==20}
 		<div class="reveal" use:scrollPageToTop>
-			<img class="parchemin" src={urlCdn+"pharao/hilbert-espace.jpg"} style="width:30%; float:right" alt="" />
+			<img class="parchemin" src={urlCdn+"X-pharao/hilbert-espace.jpg"} style="width:30%; float:right" alt="" />
 			Oui {pseudo}, Daniel était troublé!
 			<br/>
 			Selon son hypothèse, les fluctuations du Temps des Humains de la Terre
@@ -435,7 +388,7 @@
 
 	{#if epiqStep==25}
 		<div class="reveal" use:scrollPageToTop>
-			<img class="parchemin" src={urlCdn+"pharao/hilbert-espace.jpg"} style="width:30%; float:right" alt="" />
+			<img class="parchemin" src={urlCdn+"X-pharao/hilbert-espace.jpg"} style="width:30%; float:right" alt="" />
 			Je m'en doutais, mais tu es un petit scarabée.
 			<div class="br"/>
 			La téléportation multidimensionnelle se base au contraire
@@ -447,7 +400,7 @@
 	{/if}
 	{#if epiqStep==26}
 		<div class="reveal" use:scrollPageToTop>
-			<img class="parchemin" src={urlCdn+"pharao/hilbert-espace.jpg"} style="width:30%; float:right" alt="" />
+			<img class="parchemin" src={urlCdn+"X-pharao/hilbert-espace.jpg"} style="width:30%; float:right" alt="" />
 			C'est vilain de mentir, je sais que tu y as pensé.
 			<div class="br"/>
 			Mais la téléportation multidimensionnelle se base au contraire
@@ -460,7 +413,7 @@
 	
 	{#if epiqStep==30}
 		<div class="reveal" use:scrollPageToTop>
-			<img class="parchemin" src={urlCdn+"pharao/hilbert-espace.jpg"} style="width:30%; float:right" alt="" />
+			<img class="parchemin" src={urlCdn+"X-pharao/hilbert-espace.jpg"} style="width:30%; float:right" alt="" />
 			Je pense que Thor, de façon invisible, va aider les Humains de la Terre à
 			analyser les fluctuations de leur Temps, notre Hyper-Temps.
 			<div class="br"/>
@@ -477,7 +430,7 @@
 
 	{#if epiqStep==40}
 		<div class="reveal" use:scrollPageToTop>
-			<img class="parchemin" src={urlCdn+"pharao/hilbert-espace.jpg"} style="width:30%; float:right" alt="" />
+			<img class="parchemin" src={urlCdn+"X-pharao/hilbert-espace.jpg"} style="width:30%; float:right" alt="" />
 			Tout à fait {pseudo}.
 			<div class="br"/>
 			Et nous avons un peu de chance: Si Méhistophélès s'est transporté facilement
@@ -506,7 +459,7 @@
 
 	{#if epiqStep==50}
 		<div class="reveal" use:scrollPageToTop>
-			<img class="parchemin" src={urlCdn+"pharao/hilbert-espace.jpg"} style="width:30%; float:right" alt="" />
+			<img class="parchemin" src={urlCdn+"X-pharao/hilbert-espace.jpg"} style="width:30%; float:right" alt="" />
 			Bien sûr que je compte sur toi, {pseudo}.
 			<div class="br" />
 			Je suis sûre que tu seras bientôt
@@ -520,18 +473,7 @@
 				<br/>
 				N'hésite pas à partager questionnement et stratégie sur Discord.
 			</div>
-			{#if debutChallengeDth < Date.now()}
-				<Btn bind:refStep={epiqStep} step=90 val="J'y vais tout de suite" />
-			{:else}
-				<div class="info adminCadre" style="color:red">
-					Le challenge commencera dans
-					<countdown dth={debutChallengeDth} oncdTimeout={()=>debutChallengeDth=0} use:countDownInit />.
-					<br/>
-					Prend le temps de bien lire le lore!
-					Si tu as envie de le revoir ou si tu as zappé des informations,
-					clique sur "Revoir le Lore".
-				</div>
-			{/if}
+			<Common t="waitDebutChallenge" pageDesc={pageDesc} bind:refStep={epiqStep} />
 			<div style="clear:both" class="br"></div>
 		</div>
 	{/if}
@@ -592,6 +534,41 @@
 			</table>
 		</div>
 	{/if}
+
+	{#if dspResultats}
+		{@const tblPseudos=Object.keys(dspResultats.byPseudo)}
+		<div class="popupCadre papier">
+			<div class="close" onclick={()=>dspResultats=null} role="button">X</div>
+			<div class="popupZone">
+				<div class="popupContent">
+					<div>Résultats:</div>
+					<table style="text-align: center; border-collapse: collapse">
+						<tbody >
+							<tr class="info">
+								<td>Pseudos</td>
+								<td>Trouvés</td>
+								<td>Swaps</td>
+								<td>Placés</td>
+							</tr>
+							{#each tblPseudos as p,i}
+								{@const bp=dspResultats.byPseudo[p]}
+								<tr>
+									<td style="border: 1px solid white">
+										<img style="width: 1em" alt="" src={urlCdnAI+"pseudo-"+p+".jpg"} />
+										{p}
+									</td>
+									<td style="border: 1px solid white">{bp.t}</td>
+									<td style="border: 1px solid white">{bp.p}</td>
+									<td style="border: 1px solid white">{bp.r}</td>
+								</tr>
+							{/each}
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+	{/if}
+	
 
 </div>
 <!-- P410.svelte -->

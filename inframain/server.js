@@ -14,6 +14,7 @@ const chat = require('../infraback/chat.js');
 const uploadFile = require('../inframain/uploadFile.js');
 const securityReport = require('../inframain/securityReport.js');
 const metrologie = require('../inframain/metrologie.js');
+const root3D = require('../inframain/root3D.js');
 // const innommable = require('../inframain/innommable.js');
 // const torches = require('../inframain/torches.js');
 // const asciens = require('../inframain/asciens.js');
@@ -26,6 +27,8 @@ const metrologie = require('../inframain/metrologie.js');
 const pharao = require('../inframain/pharao.js');
 const lesbases = require('../inframain/lesbases.js');
 const orthocomposants = require('../inframain/orthocomposants.js');
+const dissonances = require('../inframain/dissonances.js');
+const orthocerberus = require('../inframain/orthocerberus.js');
 // inutile const votation = require('../infraback/votation.js');
 // inutile const webAuth = require('../infraback/webAuth.js');
 // Elements pour des tests
@@ -55,6 +58,8 @@ async function httpCallback(req, res, method, reqPaths, body, pseudo, pwd) {
 		case "pharao": await pharao.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
 		case "lesbases": await lesbases.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
 		case "orthocomposants": await orthocomposants.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
+		case "dissonances": await dissonances.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
+		case "orthocerberus": await orthocerberus.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
 		// eleents liés aux activités anciennes
 		// case "metropolis": await metropolis.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
 		// case "innommable": innommable.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
@@ -68,7 +73,13 @@ async function httpCallback(req, res, method, reqPaths, body, pseudo, pwd) {
 	}
 	gbl.exception( { m: method, rp: reqPaths, body: body, pseudo: pseudo, pwd: pwd  } ,404);
 }
+
+
 function wsCallback(pseudo,m) {
+	if (m.op.startsWith('root3D.'))
+		root3D.wsMsg(pseudo,m)
+	else
+		gbl.exception("ERREUR FATALE: Bad ws op",400);
 	/*
 	switch (m.op) {
 		case "metro.sync":
@@ -79,7 +90,6 @@ function wsCallback(pseudo,m) {
 			return
 	}
 	*/
-	gbl.exception("ERREUR FATALE: Bad ws op",400);
 };
 
 
@@ -88,11 +98,17 @@ function wsCallback(pseudo,m) {
 /////////////
 async function checkBeforeStart() {
 	// vérification du parse du lodestone si maj de son contennu
-	const ff14Id = await lodestone.getFF14Id("Kikiadoc","Lepetiot","Moogle");
-	if (ff14Id != 12945273)
-		discord.mpKiki("serveur restart, lodetsone issue (idKiki=12945273) found ff14id="+ff14Id);
-	else
-		console.log('***** Pas de modif struture du lodestone, PARSEUR OK')
+	try {
+		const ff14Id = await lodestone.getFF14Id("Kikiadoc","Lepetiot","Moogle")
+		const ff14ImgId = await lodestone.publishFace("Kikiadoc",true)
+		if (ff14Id != 12945273 || ff14ImgId != 12945273)
+			discord.mpKiki("serveur restart, lodetsone issue (idKiki=12945273) found ff14id="+ff14Id+", ff14ImgId="+ff14ImgId)
+		else
+			console.log('***** Pas de modif struture du lodestone, PARSEUR OK')
+	}
+	catch(e) {
+		console.log('***** CHECKBEFORESTART ***',e)
+	}
 }
 
 /////////////

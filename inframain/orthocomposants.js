@@ -88,7 +88,11 @@ function globalReset() {
 	syncClients()
 }
 // Force persque termine
-function setAll() {
+function setAll(pseudo) {
+	for (let i=0; i < CONF.SIZE*CONF.SIZE; i++) {
+		etat.composants[i].elixirPseudo = pseudo
+		etat.composants[i].elixirDth = Date.now()
+	}
 	syncClients()
 }
 // recalc elixirsNb de l'etat e et ajoute ajout
@@ -176,11 +180,11 @@ exports.httpCallback = (req, res, method, reqPaths, body, pseudo, pwd) => {
 		case "DELETE": 
 			pseudos.check(pseudo,pwd,true); // adm
 			switch(reqPaths[2]) {
-				case "etat":
+				case "resetAll":
 					globalReset()
 					gbl.exception( getEtat() , 200) 
 				case "setAll":
-					setAll()
+					setAll(pseudo)
 					gbl.exception( getEtat() , 200) 
 			}
 			gbl.exception(COLNAME+" delete",400);

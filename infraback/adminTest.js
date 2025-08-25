@@ -97,6 +97,9 @@ exports.httpCallback = async (req, res, method, reqPaths, body, pseudo, pwd) => 
 					if (pseudo || pwd) gbl.exception( "Not local admin" ,400)
 					let url = await pCloud.getUrl("sauvegarde.tgz")
 					gbl.exception(url,200);
+				case "pCloudListFolder":
+					pseudos.check(pseudo,pwd,true); // adm only
+					gbl.exception(await pCloud.infoPublicDir(reqPaths[3] || null ),200);
 				case "stress":
 					pseudos.check(pseudo,pwd); // auth
 					// cs du stress 0 qui ne fait pas de load coté serveur

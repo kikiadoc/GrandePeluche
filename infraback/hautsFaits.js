@@ -18,7 +18,7 @@ const hautsFaitsDesc = {
 		hegemonieExplorateur:	{ broadcast: " a exploré Eorzéa", libelle: "Futur Indiana Jones" },
 		decouvreurDeLaSource:	{ broadcast: " a découvert la Station Alpha", libelle: "Découvreur de La Source" },
 		traducteurDesAnciens:	{ libelle: "Traducteur du Langage des Anciens" },
-		Kiki_X_initiatique:	{ libelle: "Novice de XXX", broadcast: " rejoint le noviciat de XXX" },
+		Kiki_X_initiatique:	{ libelle: "Novice de l'Expansion de l'Univers", broadcast: " rejoint le noviciat de l'Expansion de l'Univers" },
 		metropolisNovice:	{ libelle: "Novice de Métropolis", broadcast: " rejoint le noviciat de Métropolis" },
 		metropolisPadawan:	{ libelle: "Padawan de Métropolis", broadcast: " rejoint les Padawans de Métropolis" },
 		metropolisMaitre:	{ libelle: "Maître de Métropolis", broadcast: " rejoint les Maîtres de Métropolis" }

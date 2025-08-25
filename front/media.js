@@ -72,7 +72,7 @@ export const AUDIODESCS = {
 	"orthoTempsTableau":  { mp3: "ff-10/orthoTempsTableau.mp3", vol: 3.0 },
 	"AlarmeSecurite": { mp3: "AlarmeSecurite.mp3", vol: 50.0 },
 	"dolmen": { mp3: "ff-10/dolmen.mp3", vol: 0.5, repeat: 1 },
-	"mercredi": { mp3: "ff-10/mercredi.mp3", vol: 2.0, repeat: 1 },
+	"mercredi": { mp3: "ff-10/mercredi.mp3", vol: 1.0, repeat: 1 },
 	"derniere-seance": { mp3: "ff-10/derniere-seance.mp3", vol: 0.7, repeat: 1 },
 	"pharao-secrets": { mp3: "ff-10/pharao-secrets.mp3", vol: 0.7, repeat: 1 },
 	"Memoire-qui-flanche": { mp3: "Memoire-qui-flanche.mp3", vol: 1.2, repeat: 0 },

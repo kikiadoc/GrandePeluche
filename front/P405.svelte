@@ -2,15 +2,15 @@
 	import { onMount, onDestroy  } from 'svelte';
 	import { loadIt, storeIt, scrollPageToTop, displayInfo,
 					 markClick, playMusic, tts, playDing,
-					 generateSecurityAlert, isEquipementPC, isPC,
+					 generateSecurityAlert, isEquipementPC, isPC, isSM,
 					 getEpsilon, getLatence,
 					 addNotification, apiCall,
-					 urlCdn, jjmmhhmmss,
+					 urlCdn, urlCdnAI, jjmmhhmmss,
 					 isPWA, isAndroid, isAdmin,
-					 enterFullScreen, exitFullScreen
+					 enterFullScreen, exitFullScreen, addTexteTTS
 				 } from './common.js'
-	import { babylonSetOption, babylonGetOptions,
-					 babylonStart, babylonStop, babylonToggleIHM,
+	import { babylonSetOption, babylonGetOption,
+					 babylonStart, babylonStop,
 					 babylonSetSceneActive, sceneLoadingCreate, babylonHome,
 					 babylonGetMetrologie
 				 } from './3Droot.js'
@@ -19,6 +19,7 @@
 
 	import Btn from './Btn.svelte'
 	import Info from './Info.svelte'
+	import Common from './Common.svelte'
 	
 	let {
 		GBLCTX,
@@ -34,8 +35,8 @@
 	const PAGEEPIQLBL= "P"+pageDesc.n+"_epiqStep"
 	const PAGESAISIESLBL = "P"+pageDesc.n + "_saisies"
 	
-	onMount(() => { if (wsCallComponents) wsCallComponents.add(myWsCallback); init() });
-	onDestroy(() => { if (wsCallComponents) wsCallComponents.delete(myWsCallback); reset() });
+	onMount(() => { wsCallComponents.add(myWsCallback); init() });
+	onDestroy(() => { wsCallComponents.delete(myWsCallback); reset() });
 
 	// Gestion de l'épique
 	let epiqStep = $state(loadIt(PAGEEPIQLBL, 0))
@@ -49,14 +50,11 @@
 	// afficahge des popups standards
 	let dspResultats=$state(false) 	// affichage des résltats
 
-	////////////////////////////////////////////////
-	// A modifier dans un vrai composant
-	////////////////////////////////////////////////
-	// appelé apres mount du component
+	// appelé apres mount du component (en async)
 	function init() {	getMetadata(); getNovices() }
 	
 	// appelé apres unmount du component
-	function reset() {	}
+	function reset() { babylonStop()	}
 
 	// gestion des commandes via le WS
 	async function myWsCallback(m) {
@@ -68,14 +66,20 @@
 	function normalizedSaisies(s) {
 		// s.caracs ??= [] // exemple de normalized
 		// s.pipoVal ??= 0 // exemple de normalized
+		s.isInitDone ??= false // indique que les metaata on ete calculées
 		s.aleaReq ??= Math.floor(Math.random()*100) // Nombre demandé pour lecture popup
+		s.sensibilite3D ??= 3
 		return s
 	}
 
 	// appelé lors d'un changement de step de l'épique
+	let epiqStepChangeDth=$state(Date.now())
 	function epiqStepChange(newStep) {
 		console.log("epiqStepChange="+newStep)
+		epiqStepChangeDth=Date.now()
 	}
+
+	
 
 	//////////////////////////////////////////////////
 	// spécifique composant
@@ -88,19 +92,20 @@
 	//////////////////////////////////////////////////
 	let metadata = null
 	async function getMetadata() {
-		let ret = await apiCall('/clientConfig/metadata');
-		if (ret.status == 200) { metadata = ret.o }
+		if (!saisies.isInitDone) {
+			let ret = await apiCall('/clientConfig/refresh');
+			if (ret.status == 200) { metadata = ret.o; saisies.isInitDone=true }
+		}
 	}
 	
 	//////////////////////////////////////////////////
 	// gestion des novices
 	//////////////////////////////////////////////////
 	const NOVICIAT_HF="Kiki_X_initiatique" // haut fait
-	const NOVICIAT_LBL = "l'Expansion" // usage en texte
+	const NOVICIAT_LBL = "l'Expansion de l'univers" // usage en texte
 	const NOVICIAT_DISCORD = "expansion" // nom du channel discord
 	const NOVICIAT_NBMAX = 20 // nombre max d'inscription automatique
 	let novices = $state(null)
-	let dspNoviciat = $state(false);
 	async function getNovices(msgWs) {
 		let ret = msgWs || await apiCall('/hautsFaits/'+NOVICIAT_HF);
 		if (ret.status == 200) {
@@ -173,82 +178,40 @@
 	// chargement de la scene 3D pour test 
 	/////////////////////////////////////////////////////////////////////////////////////
 	let babIHM = $state({})
-	let babOptions = $state(babylonGetOptions())
 	let babMessage = $state(null)
-	let babParam = $state(false)
+	let dspBabParam = $state(false)
 	async function start3D() {
-		console.log("****************** TEST3D")
-		babylonSetOption('perf',true)
+		console.log("****************** START3D")
+		babylonSetOption('perf',true,true)
 		await babylonStart(pseudo,babIHM)
 		babylonSetSceneActive(await sceneLoadingCreate())
-	}
-	async function stop3D() {
-		console.log("****************** RESET TEST3D")
-		babylonStop()
-	}
-	function test3D() {
-		start3D()
-		return stop3D
 	}
 	function helpCoord() {
 		return { titre: "Tes Ortho-Coordonnées",
 						 body: ["Elles ne respectent pas le même référentiel Euclidien que celui d'Eorzéa:",
 										"Y et Z sont inversées"] }
 	}
-	function babHome() {
-		babylonHome()
-		playDing('Ding')
-	} 
-	function babToggleIHM() {
-		babylonToggleIHM()
-		playDing('Ding')
-	} 
-	function babSetSensibilite(s) {
-		babOptions.sensibilite=s
-		babylonSetOption("sensibilite",s)
-		addNotification( "Vitesse de déplacement:"+s)
-		playDing('Ding')
-	}
-	function babSwitchMolette() {
-		babOptions.wheelDir=!babOptions.wheelDir
-		babylonSetOption("wheelDir",babOptions.wheelDir )
-		addNotification(  (babOptions.wheelDir)? "Molette: Tirer pour avancer":"Molette: Pousser pour avancer" )
-		playDing('Ding')
-	}
-	function babSwitchDebug() {
-		babOptions.debug=!babOptions.debug
-		babylonSetOption("debug",babOptions.debug )
-		addNotification(  (babOptions.debug)? "Mode debug activé":"Mode debug désactivé" )
-		playDing('Ding')
-	}
-	function babSwitchPerf() {
-		babOptions.perf=!babOptions.perf
-		babylonSetOption("perf",babOptions.perf )
-		addNotification(  (babOptions.perf)? "Affichage performances activé":"Affichage performances désactivé" )
-		playDing('Ding')
-	}
-	function babFullscreen(t) {
-		if (t) enterFullScreen()
-		else exitFullScreen()
-	}
 	function event3d(e) {
 		let o = e?.srcElement?.Event3D // recupere les complements de l'event
-		if (babOptions.debug) console.log('descEvent:',o)
+		if (babylonGetOption("debug")) console.log('descEvent:',o)
 		if (!o) return
-		if(o.objet=="btnGo") {
+		if(o.nom=="btnGo") {
 			let babMetro = babylonGetMetrologie()
 			console.log("event3d - babMetro",babMetro)
 			if ( (Date.now() - babMetro.perfStartDth) < 20000) {
 				displayInfo("Je n'ai pas eu le temps de stabiliser mes mesures, déplace toi et patiente un peu avant de sortir");
 			}
 			else {
-				displayInfo("En cliquant sur le bouton 'Ortho-temps', tu as quitté la Porte de l'Ortho-Temps");
+				displayInfo({titre:"Tu as cliqué sur le bouton 'Ortho-temps'",
+										 body: ["Dans le cadre de ta quête initiatique,",
+														"Tu ne peux te rendre dans l'Ortho-Temps.",
+														"tu as donc quitté la Porte de l'Ortho-Temps"] })
 				epiqStep=70
 			}
 		}
-		if(o.objet=="cannette#1") { babMessage="Il est interdit de boire la cannette de droite" }
-		if(o.objet=="cannette#2") { babMessage="Il est interdit de boire la cannette de gauche" }
-		if(o.objet=="OrthoStargate") { babMessage="C'est le Chronogyre. Il te permettra d'accéder à l'Ortho-Temps, mais pour l'instant le voyage est impossible. Clique sur le bouton au centre du chronogyre pour sortir de la Porte de l'Ortho-Temps" }
+		if(o.nom=="cannette#1") { babMessage="Il est interdit de boire la cannette de droite" }
+		if(o.nom=="cannette#2") { babMessage="Il est interdit de boire la cannette de gauche" }
+		if(o.nom=="OrthoStargate") { babMessage="C'est le Chronogyre. Il te permettra d'accéder à l'Ortho-Temps, mais pour l'instant le voyage est impossible. Clique sur le bouton au centre du chronogyre pour sortir de la Porte de l'Ortho-Temps" }
 	}
 </script>
 
@@ -275,7 +238,6 @@
 				{epiqStep}
 				<input type="number" min=0 max=99 placeholder="epiqStep" bind:value={saisies.admGoStep} />
 				<input type="button" value="goEpiq" onclick={() => epiqStep=saisies.admGoStep} />
-				<input type="button" value="test" onclick={() => dspResultats=true} />
 				<input type="button" value="resetNoviciat" onclick={()=>apiCall('/hautsFaits/'+NOVICIAT_HF,'DELETE')} />
 				<input type="button" value="ReEnd" onclick={()=>{epiqStep=90}} />
 			</div>
@@ -284,31 +246,7 @@
 	<div>
 		<input type="button" value="Revoir le Lore" onclick={() => epiqStep=0} />
 		<input type="button" value="Resultats" onclick={() => dspResultats=true} />
-		<!--
-		<span role="button"	style="cursor: pointer" onclick={()=>{ dspObject={ template: "a modifier" }}}>
-		🆘
-		</span>
-		-->
 	</div>
-	{#if dspResultats && novices}
-		<div class="popupCadre papier">
-			<div class="close" onclick={()=>dspResultats=null} role="button">X</div>
-			<div class="popupZone">
-				<div class="popupContent">
-					<div>
-						<div>Novices de {NOVICIAT_LBL}:</div>
-						<hr/>
-						{#each Object.keys(novices.pseudos) as p,i}
-							<div style="font-size:0.9em">{p}: {jjmmhhmmss(novices.pseudos[p].dth)}</div>
-						{/each}
-						<hr/>
-						<div>{novices.nb} participants</div>
-					</div>
-				</div>
-			</div>
-		</div>
-	{/if}
-	
 	{#if epiqStep==0 && novices}
 		<div class="reveal" use:scrollPageToTop>
 			<img class="parchemin" src={urlCdn+"gamemaster.jpg"} style="width:20%; float:right" alt="" />
@@ -366,28 +304,56 @@
 				<div class="br"></div>
 			{/if}
 			Prends le temps de lire le texte du Lore, regarder les vidéos en intégralité,
-			et même les vidéos qui peuvent poper au milieu d'un challenge, 
-			<u>celà n'impacte jamais tes résultats</u>, au contraire, 
-			c'est parfois une source d'info pour aller plus vite!
+			et même les vidéos qui peuvent poper au milieu d'un challenge: 
+			<u>celà n'impacte jamais tes résultats</u>
+			et c'est même parfois une source d'info pour aller plus vite.
+			C'est aussi un temps où je fais des opérations invisibles: En ce moment,
+			je synchronise ton profil avec le jeu.
 			<div class="br"></div>
 			A tout moment, tu peux cliquer sur le bouton "Revoir le lore" en haut de page
 			pour relire le lore depuis le début,
 			ou cliquer sur "Résultats" pour voir le classement actuel des participants.
 			<br/>
-			<Btn bind:refStep={epiqStep} step=5 val="J'ai compris" />
-			<div style="clear:both" class="br"></div>
+			<Common t="delayStep" p={{nbMs:45000, step:5}} bind:refStep={epiqStep} bind:epiqStepChangeDth={epiqStepChangeDth} />
+			<div style="clear:both" class="br" />
 		</div>
 	{/if}
 
 	{#if epiqStep==5}
 		{@const genreLbl = GBLCONST.GENRES.find((e)=> e.val==pseudoGenre).lbl}
 		<div class="reveal" use:scrollPageToTop>
-			<img class="parchemin" src={urlCdn+"gamemaster.jpg"} style="width:20%; float:right" alt="" />
+			<img class="parchemin" src={urlCdnAI+"pseudo-"+pseudo+".jpg"} style="width:30%; float:right" alt="" />
 			<div>
-				J'adapte nos intéractions en fonction de ton genre:
+				{pseudo}, voici quelques informations.
+				<br/>
+				J'utilise l'image de ton personnage du Lodestone ci-contre comme étant ton portrait.
+				<input type="button" value="Mais ce n'est pas mon portait!!"
+					onclick={()=>displayInfo({body:[
+																	 "J'ai extrait cette image du Lodestone de FF14.",
+																	 "Modifier cette image nécessite un rafraîchissement du lodestone du jeu (quelques heures).",
+																	 "Pour cela, connecte toi au jeu, choisi la tenue de ton personnage et déconnecte toi du jeu,",
+																	 "Attend alors que le lodestone se mettre à jour,",
+																	 "Quand il sera à jour, contacte Kikiadoc.",
+																	 "Tu peux toutefois continuer ton Initiatique."]})}
+				/>
 			</div>
-			<div class="infoLink" gpHelp="Ton genre est important, mais est une information sensible. Cette information reste uniquement sur ton appareil. Tu peux la modifier en cliquant sur ton pseudo en haut à droite du site. Je l'utilise pour adapter nos intéractions en post-traitement sur ton équipement. Ni Kikiadoc, ni moi en avons connaissance. Elle n'est jamais stockée par le server">
-				Ton genre actuel est {genreLbl}
+			<div>
+				Je me permettrai aussi de t'interpeler si besoin.
+				<input type="button" value="Et tu feras comment?"
+					onclick={()=>{ 
+							addTexteTTS("J'utiliserai ma jolie voix")
+							addTexteTTS(pseudo)
+							displayInfo({body:["J'utiliserai ma jolie voix, "+pseudo]})
+						}
+					}
+				/>
+
+			</div>
+			<div>
+				J'adapte nos dialogues en fonction de ton genre:
+				<span class="infoLink" gpHelp="Ton genre est important, mais est une information sensible. Cette information reste uniquement sur ton appareil. Tu peux la modifier en cliquant sur ton pseudo en haut à droite du site. Je l'utilise pour adapter nos intéractions en post-traitement sur ton équipement. Ni Kikiadoc, ni moi en avons connaissance. Elle n'est jamais stockée par le server">
+					{genreLbl}
+				</span>
 			</div>
 			<div>
 				J'utiliserai donc
@@ -402,7 +368,7 @@
 				A titre d'exemple, "tu es heureu..." se décline, à cet instant, selon ton genre en
 				"tu es heureu{G(pseudoGenre,"x","se")}".
 			</div>
-			<div onclick={markClick} gpHelp="N'oublie pas, tu peux modifier ton genre à tout moment. Pour celà clique sur ton pseudo en haut à droite de ton écran et modifie-le. Tu en verras les effets immédiats sur la page affichée">
+			<div onclick={markClick} gpHelp="Tu peux modifier ton genre à tout moment. Pour celà clique sur ton pseudo en haut à droite de ton écran et modifie-le. Tu en verras les effets immédiats sur la page affichée">
 				<Btn val="Je veux changer mon genre" />
 				<Btn bind:refStep={epiqStep} step=10 val="Pour mon genre, {genreLbl}, c'est OK" />
 			</div>
@@ -440,26 +406,29 @@
 				Je vais t'aider à bien le paramétrer.
 			</div>
 			<div class="br"></div>
-			A tout moment, en <u>cliquant sur 🔊 ou 🔇, en haut à droite de ton écran</u>,
-			tu peux activer ou désactiver l'ambiance sonore
-			tout en laissant les autres flux actifs
-			car ils sont sources d'informations importantes.
-			<div class="br"></div>
 			{#if GBLSTATE.audioAmbiance}
-				A tout moment, tu peux aussi modifier les réglages d'AudioBlaster
+				A tout moment, tu peux modifier les réglages d'AudioBlaster
 				<u>en cliquant sur ton pseudo en haut à droite de ton écran</u>.
 			{:else}
-				<span style="color:red" class="blinkMsg">Active l'ambiance sonore en cliquant sur 🔇 afin de parametrer AudioBlaster</span>.
+				<span style="color:red" class="blinkMsg">Active l'ambiance sonore en cliquant sur 🔇 en haut à droite de ton écran afin de parametrer AudioBlaster</span>.
 			{/if}
 			<div class="br"></div>
 			{#if GBLSTATE.audioAmbiance}
+				{#if GBLSTATE.audioBack}
+					<div style="color:yellow">
+						Selon tes paramètres, le son du site continue même si
+						{#if isPC()}tu minimises ou masque ta fenêtre{:else}tu repasses à ton écran d'accueil{/if}.
+						Ce n'est pas le paramétrage recommandé.
+						<input type="button" value="modifier" onclick={()=>GBLSTATE.audioBack=false} />
+					</div>
+				{/if}
 				<div>Comment est l'audio d'ambiance du site actuellement?</div>
 				<div>
 					<input type="button" onclick={audioRien} value="Je n'entend rien" />
 					<input type="button" onclick={audioFaible} value="Le son est trop faible" />
 					<input type="button" onclick={audioFort} value="Le son est trop fort" />
 					<Btn bind:refStep={epiqStep} step=15 val="C'est parfait" 
-							msg="Tu peux toujours activer/désactiver l'ambiance sonore avec les boutons 🔊 ou 🔇, alors ne mute pas le site par d'autres moyens afin de toujours recevoir les éléments sonores importants"	/>
+							msg="Tu peux toujours activer/désactiver l'ambiance sonore avec les boutons 🔊 ou 🔇 en haut à droite de ton écran, alors ne mute pas le site par d'autres moyens afin de toujours recevoir les éléments sonores importants"	/>
 				</div>
 				<div class="br"></div>
 			{/if}
@@ -533,8 +502,8 @@
 			<Btn bind:refStep={epiqStep} step=25 val="J'ai compris" />
 			<div class="info">
 				La charge de Game Master Numérique ne peut se maîtriser seule.
-				Mon équipe est composée de multiples Peluches (développements par Kikiadoc) et
-				deux "Engines" réputés, gratuits et "open-source".
+				Mon équipe est composée de multiples Peluches (développements par Kikiadoc), 
+				deux "Engines" réputés (gratuits et "open-source") et d'autres solutions techniques.
 				Tu verras parfois leurs noms.
 				<br/>
 				➥Moi, la Grande Peluche, je suis en charge de l'apparence et la dynamique du site.
@@ -558,6 +527,15 @@
 				<br/>
 				➥<a href="https://fr.wikipedia.org/wiki/Babylon.js" target="_blank">Babylon</a>
 				assure le rendu des scènes en 3D.
+				<br/>
+				➥<a href="https://www.pcloud.com/fr/eu" target="_blank">pCloud</a>
+				est mon stockage sécurisé de référence pour les données (sauvegardes, médias...)
+				<br/>
+				➥<a href="https://aws.amazon.com/fr/polly/" target="_blank">Polly</a>
+				est mon AI de synthèse vocale.
+				<br/>
+				➥<a href="https://aws.amazon.com/fr/cloudfront/" target="_blank">Cloudfront</a>
+				est mon CDN assurant la diffusion des médias
 			</div>
 			<div style="clear:both" class="br"></div>
 		</div>
@@ -586,7 +564,7 @@
 			<br/>
 			➥Son marteau est de grande taille: à chaque frappe,
 			il bannit entre 256 et 17 millions d'adresses IP.
-			Environ 4 milliards d'adresses IP sont actuellement bannies du site.
+			Actuellement, des dizaines de millions d'adresses IP sont actuellement bannies du site.
 			<div class="br"></div>
 			⚠️Si vous êtes plusieurs à partager ta connexion Internet, indique le à Kikiadoc.
 			Normalement à 2, ca doit passer, mais à 3 ça bloque.
@@ -631,7 +609,7 @@
 			⚠️Il FAUT utiliser un antivirus (même gratuit) fiable, à jour et bien conçu.
 			<br/>
 			⚠️Il FAUT activer une fonction firewall sur ton équipement
-			(via ton antivirus ou par une autre solution).
+			(via ta box au minimum).
 			<br/>
 			⚠️N'oublie jamais que la meilleure cyberprotection n'est pas l'IA.
 			C'est l'IN, l'Intelligence Naturelle. Le moteur d'inférence de cet IN est 
@@ -688,8 +666,12 @@
 				<br/>
 
 				Le sigle VPN est, aujourd'hui, totalement galvaudé.
-				Je considère les VPN "payant grand public" comme un danger plus qu'une solution
-				(ce n'est pas vrai pour un usage professionnel
+				Je considère les VPN "payant grand public" comme un danger plus qu'une solution même
+				s'ils implémentent le protocole
+				<a href="https://fr.wikipedia.org/wiki/IPsec" target="gpHelp">
+					IPSEC
+				</a>
+				(ce n'est pas vrai pour un usage professionnel,
 				mais ce ne sont pas les mêmes solutions techniques).
 				<br/>
 				J'utilise de préférence Firefox sinon Chrome.
@@ -709,7 +691,7 @@
 		{@const epsilon=Math.abs(getEpsilon())}
 		{@const latence=getLatence()}
 		<div class="reveal" use:scrollPageToTop>
-			<img class="parchemin" src={urlCdn+"lore.jpg"} style="width:20%; float:right" alt="" />
+			<img class="parchemin" src={urlCdn+"commons/course.gif"} style="width:20%; float:right" alt="" />
 			Tu vas participer à des challenges où le timing est important.
 			<br/>
 			➥Ta correction temporelle instantannée actuelle est de
@@ -749,6 +731,10 @@
 				Tu peux vérifier à tout moment la correction temporelle en cliquant sur ton pseudo
 				en haut à droite de ton écran
 				et en scollant vers le bas du popup.
+				Tu peux aussi vérifier le rapport technique quotidien du server en consultat le
+				<a href="https://filedn.eu/lxYwBeV7fws8lvi48b3a3TH/AI-Generated/yumUpdate.txt" target="gpHelp">
+					rapport quotidien de patch de sécurité et synchronisation de l'horloge
+				</a>
 				<br/>
 				(**) Il est facile de purger les "données de site" par inadvertance, souvent en purgeant les cookies ou en
 				utilisant des utilitaires de "ménage". Si c'est possible, paramètre le ménage en indiquant de ne pas purger
@@ -793,6 +779,12 @@
 				Si tu as déjà participé, ces liens
 				te rapelleront tes Haut-faits passés.
 			</div>
+			{#if isSM()}
+				<div>
+					N'oublie pas que tu peux placer ton smartphone en mode paysage lors
+					de vidéos pour mieux les voir. (c'est aussi valable pour les scènes en 3D).
+				</div>
+			{/if}
 			<div>
 				Voici le résumé des derniers épisodes:
 			</div>
@@ -825,9 +817,9 @@
 				<Btn val="Non, je n'y ai pas participé"
 					msg="Alors clique sur les liens videos de cette page pour voir ce que tu as manqué" />
 				<Btn bind:refStep={epiqStep} step=55 val="Oui. J'y étais"
-					msg="Si tu souhaites revoir les vidéos de ces aventures plus tard, tu pourras te rendre à l'IPA, l'Institut Peluchique de l'Audiovisuel (dans la liste de tes Possibles)"/>
+					msg="Si tu souhaites revoir les vidéos d'autres aventures plus tard, tu pourras te rendre à l'IPA, l'Institut Peluchique de l'Audiovisuel (dans la liste de tes Possibles)"/>
 				<Btn bind:refStep={epiqStep} step=55 val="Je viens de regarder les vidéos"
-					msg="Si tu souhaites revoir les vidéos de ces aventures plus tard, tu pourras te rendre à l'IPA, l'Institut Peluchique de l'Audiovisuel (dans la liste de tes Possibles)"/>
+					msg="Si tu souhaites revoir les vidéos d'autres aventures plus tard, tu pourras te rendre à l'IPA, l'Institut Peluchique de l'Audiovisuel (dans la liste de tes Possibles)"/>
 			</div>
 			<div style="clear:both" class="br"></div>
 		</div>
@@ -836,7 +828,36 @@
 		<div class="reveal" use:scrollPageToTop>
 			<img class="parchemin" src={urlCdn+"hof-lalalex.png"} style="width:30%; float:right" alt="" />
 			<div>
-				Début Epique Kiki's X: Blablabla, vecteurs temporels, synchro Phareo...
+				Avec la capture de Méthistophéles, 
+				une nouvelle ère de tranquillité semble se profiler en Eorzéa.
+				<br/>
+				Les Peluches Scientifiques vont de découvertes en découvertes.
+				<br/>
+				Les Aventuriers et Aventurières découvrent des lieux encore inexplorés,
+				cultivent leurs jardins,
+				craftent de merveilleux objets, et améliorent leur Housing,
+				transformant une simple chambre ou une maisonnette en un véritable
+				écrin digne du
+				<span onclick={null} class="videoLink" gpVideo="X-initiatique/Hameau">
+				hameau de la reine.
+				</span>
+			</div>
+			<div class="br" />
+			<div>
+				Mais cette tranquilité apparente pourrait cacher un
+				danger inimaginable.
+			</div>
+			<div class="br" />
+			<div>
+				La Peluche 
+				<a href="https://fr.wikipedia.org/wiki/Nostradamus" target="gpHelpTab">
+					Nostradamus
+				</a>
+				a prédit que lorsque Eorzéa sera apaisée,
+				<a href="https://fr.wikipedia.org/wiki/Expansion_de_l%27Univers" target="gpHelpTab">
+					l'Expansion de l'Univers Connu
+				</a>
+				sera menacée.
 			</div>
 			<Btn bind:refStep={epiqStep} step=60 val="C'est inquiétant" />
 			<div style="clear:both" class="br"></div>
@@ -847,7 +868,7 @@
 			<img class="parchemin" src={urlCdn+"hof-lalalex.png"} style="width:30%; float:right" alt="" />
 			<div>
 				Lors de cet événement, tu devras te rendre dans l'Ortho-Temps.
-				Je te propose visiter la Porte de l'Ortho-Temps
+				Je te propose visiter la Porte de l'Ortho-Temps,
 				afin de vérifier les capacités de ton équipement.
 			</div>
 			<div>
@@ -875,27 +896,29 @@
 				{/if}
 			</div>
 			<div class="info">
-				Je vais instrumenter ton équipement pendant ton passage à la Porte de l'Ortho-temps.
+				Je vais mesurer les performances de ton équipement pendant ton passage à la Porte de l'Ortho-temps.
 				{#if "getBattery" in navigator}
 					{#await navigator.getBattery() }
 						<div>Je récupère les informations de ta batterie...</div>
 					{:then battery}
 						{@const batLvl=Math.floor((battery.level*100))}
-						{#if batLvl<50 && !battery.charging}
-							<div class="blinkMsg">
-								Tu devrais recharger ton équipement (batterie à {batLvl}%).
+						{#if batLvl<70 || !battery.charging}
+							<div class="blinkMsg" style="color: red">
+								🛑Tu devrais recharger ton équipement (batterie à {batLvl}%).
 							</div>
 						{:else}
-							<div>Ton équipement est sur secteur ou suffisamment chargé.</div>
+							<div style="color: lightgreen">
+								✅Ton équipement est sur secteur, suffisamment chargé ou en charge.
+							</div>
 						{/if}
 					{:catch}
 						<div class="blinkMsg">
-							Tu n'as pas autorisé l'accès aux informations de batterie.
+							⚠️Tu n'as pas autorisé l'accès aux informations de batterie.
 						</div>
 					{/await}
 				{:else}
 					<div class="blinkMsg">
-						Je n'ai pas accès à l'état de la batterie de ton équipement.
+						⚠️Je n'ai pas accès à l'état de la batterie de ton équipement.
 					</div>
 				{/if}
 				<div>
@@ -907,23 +930,23 @@
 	{/if}
 	{#if epiqStep==65}
 		<div class="reveal" use:scrollPageToTop>
-			<div {@attach test3D} id="kikiFullArea">
-				{#if babParam}
+			<div {@attach start3D} id="kikiFullArea">
+				{#if dspBabParam}
 					<div style="position: absolute" class="popupCadre papier">
-							<div class="close" onclick={()=>babParam=null} role="button">X</div>
+							<div class="close" onclick={()=>dspBabParam=null} role="button">X</div>
 							<div class="popupZone">
 								Paramètres/actions:
 								<div class="popupContent" style="font-size:0.8em">
-									<input type="button" value="Retour à l'entrée" onclick={()=>babHome()} />
+									<input type="button" value="Retour à l'entrée" onclick={()=>babylonHome()} />
 									<hr/>
-									<input type="button" value="Mode PC/SM" onclick={()=>babToggleIHM()} />
-									<input type="button" value="Molette▲▼" onclick={()=>babSwitchMolette()} />
+									<input type="button" value="Mode PC/SM" onclick={()=>babylonSetOption("IHM")} />
+									<input type="button" value="Molette▲▼" onclick={()=>babylonSetOption("wheelDir")} />
 									<hr/>
-									<input type="button" value="Fullscreen" onclick={()=>babFullscreen(true)} />
-									<input type="button" value="Normal" onclick={()=>babFullscreen(false)} />
+									<input type="button" value="Fullscreen" onclick={()=>babylonSetOption("fullscreen",true)} />
+									<input type="button" value="Normal" onclick={()=>babylonSetOption("fullscreen",false)} />
 									<hr/>
-									<input type="button" value="Debug" onclick={()=>babSwitchDebug()} />
-									<input type="button" value="Perf" onclick={()=>babSwitchPerf()} />
+									<input type="button" value="Debug" onclick={()=>babylonSetOption("debug")} />
+									<input type="button" value="Perf" onclick={()=>babylonSetOption("perf")} />
 								</div>
 							</div>
 					</div>
@@ -934,14 +957,15 @@
 				<div>
 					<span role="button" class="simpleLink" onclick={()=>babMessage=helpCoord()} >
 						🔮X:{babIHM.x?.toFixed(1)} Y:{babIHM.y?.toFixed(1)} Z:{babIHM.z?.toFixed(1)} 
-						{#if babOptions.debug}
+						{#if babIHM.debug}
 							🔮:	rX:{babIHM.rx?.toFixed(1)} rY:{babIHM.ry?.toFixed(1)} rZ:{babIHM.rz?.toFixed(1)} 
 						{/if}
 					</span>
 					<span role="button" class="simpleLink" onclick={()=>babMessage="Vitesse de déplacement dans l'Ortho-Temps"}>🏃</span>
 					<input type="range" min=1 max=5 step=1 style="width:20%"
-						onchange={(e)=>babSetSensibilite(e.srcElement.value)} />
-					<span role="button" style="cursor:pointer" onclick={()=>babParam=!babParam}>⚙️</span>
+						bind:value={saisies.sensibilite3D}
+						onchange={(e)=>babylonSetOption("sensibilite",e.srcElement.value)} />
+					<span role="button" style="cursor:pointer" onclick={()=>dspBabParam=!dspBabParam}>⚙️</span>
 				</div>
 				<div>
 					<canvas class="babylon" id="render-canvas-3D" onevent3d={event3d}></canvas>
@@ -953,22 +977,21 @@
 	
 	{#if epiqStep==70}
 		{@const babMetro=babylonGetMetrologie()}
-		{@const FPS= (1000*babMetro.perfNbFrames) / (babMetro.perfEndDth-babMetro.perfStartDth)}
 		<div class="reveal" use:scrollPageToTop>
 			<img class="parchemin" src={urlCdn+"deepAI/ref-cl.png"} style="width:30%; float:right" alt="" />
-			{#if babMetro?.perfStartDth && babMetro?.perfEndDth && babMetro?.perfNbFrames}
-				<div>Mon relevé indique un FPS moyen de {Number(FPS).toFixed(1)}.</div>
-				{#if FPS>55}
+			{#if babMetro.FPS}
+				<div>Mon relevé indique un FPS moyen de {babMetro.FPS.toFixed(1)}.</div>
+				{#if babMetro.FPS>55}
 					<div style="color:lightgreen">
-						Ton équipement semble suffisant pour voyager dans l'Ortho-Temps.
+						Ton équipement permet les voyages dans l'Ortho-Temps.
 					</div>
-				{:else if FPS>40}
+				{:else if babMetro.FPS>40}
+					<div style="color:yellow">
+						Ton équipement permet les voyages dans l'Ortho-Temps.
+					</div>
+				{:else if babMetro.FPS>30}
 					<div style="color:orange">
-						Ton équipement semble permettre pour voyager dans l'Ortho-Temps.
-					</div>
-				{:else if FPS>30}
-					<div style="color:red">
-						Ton équipement semble lent, contacte Kikiadoc car voyager dans l'ortho-temps peut poser quelques soucis.
+						Ton équipement est plutot lent, tu risques de lagger lors des voyages dans l'ortho-temps.
 					</div>
 				{:else}
 					<div style="color:red">
@@ -1018,13 +1041,11 @@
 			<img class="parchemin" src={urlCdn+"deepAI/ref-cl.png"} style="width:30%; float:right" alt="" />
 			Fais maintenant un TP vers la maison de CL de Kikiadoc
 			(Moogle, Brumée, secteur 19, slot 5). 
-			Si ton perso n'est pas sur Moogle, tu peux utiliser
-			l'éthérite d'une capitale pour changer de monde.
+			Si ton perso n'est pas sur Moogle ou si tu dois te rendre sur d'autres monde, tu peux utiliser
+			l'éthérite d'une capitale pour changer gratuitement de monde (mode baroud{G(pseudoGenre,"eur","euse")}).
 			<a href="https://fr.finalfantasyxiv.com/lodestone/playguide/contentsguide/worldvisit/" alt="" target="_blank">
-				(Tutorial)
+				Voir le tuto du jeu pour de tels voyages.
 			</a>
-			<br/>
-			<u>Ces TPs sont gratuits! Surtout, n'utilise pas les options payantes de transfert de monde</u>
 			<div class="br"></div>
 			Quand tu es devant la maison de CL de Kikiadoc, va dans le jardin et dirige toi vers le servant Kikiadoc Lebogosse
 			<br/>
@@ -1071,18 +1092,20 @@
 				</td>
 	-->
 	{#if epiqStep==80}
-		{@const X=8.6}
-		{@const Y=11.7}
+		{@const X=8.7}
+		{@const Y=11.8}
 		<div class="reveal" use:scrollPageToTop>
-			<img class="parchemin" src={urlCdn+"boussole.png"} style="width:50%; float:right" alt="" />
+			<img class="parchemin" src={urlCdn+"X-initiatique/testJardin.png"} style="width:50%; float:right" alt="" />
 			Maintenant que tu es dans le jardin de la maison de CL de Kikiadoc,
 			tu es à proximité du servant Kikiadoc Lebogosse. (voir l'image)
 			<div class="br" />
 			Positionne toi juste à côté de lui.
+			Tu auras de multiples cas où ta position est importante pour réussir,
+			alors rapproches-toi toujours au maximum.
 			<br/>
 			Lorsque ta boussole indique X:{X} Y:{Y}, tu es bien positionné{G(pseudoGenre,"","e")}.
 			<br/>
-			Recopie alors ci-dessous les coordonnées:
+			Indique alors ci-dessous les coordonnées:
 			<div class="br" />
 			X:<input type="number" placeholder="*{X}*" min=0 max=20 step="0.1" bind:value={saisies.X} />
 			Y:<input type="number" placeholder="*{Y}*" min=0 max=20 step="0.1" bind:value={saisies.Y} />
@@ -1137,4 +1160,33 @@
 	{/if}
 </div>
 
+<!-- svelte-ignore element_invalid_self_closing_tag  -->
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<!-- svelte-ignore a11y_interactive_supports_focus -->
+<!-- svelte-ignore a11y_click_events_have_key_events -->
+{#if dspResultats && novices}
+	<div class="popupCadre papier">
+		<div class="close" onclick={()=>dspResultats=null} role="button">X</div>
+		<div class="popupZone">
+			<div class="popupContent">
+				<div>
+					<div>Novices de {NOVICIAT_LBL}:</div>
+					<hr/>
+					{#each Object.keys(novices.pseudos) as p,i}
+						<div style="font-size:0.9em">
+							<img style="width: 1em" alt="" src={urlCdnAI+"pseudo-"+p+".jpg"} />
+							{p}:
+							{jjmmhhmmss(novices.pseudos[p].dth)}
+						</div>
+					{/each}
+					<hr/>
+					<div>{novices.nb} participants</div>
+				</div>
+			</div>
+		</div>
+	</div>
+{/if}
+	
+
 <!-- P405.svelte -->
+

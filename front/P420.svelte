@@ -2,7 +2,7 @@
 	import { onMount, onDestroy  } from 'svelte';
 	import { loadIt, storeIt, scrollPageToTop, displayInfo,
 					 markClick, playMusic, tts,
-					 urlCdn, apiCall, isAdmin,
+					 urlCdn, urlCdnAI, apiCall, isAdmin,
 					 displayObject, addNotification, playVideo,
 					 isProd, countDownTo, hhmmssms, isDistance, countDownInit, nbSecTo,
 					 getEpsilon, isSM
@@ -10,6 +10,7 @@
 	import { G }  from './privacy.js'
 	import { GBLCONST,GBLSTATE }  from './ground.svelte.js'
 	import Btn from './Btn.svelte'
+	import Common from './Common.svelte'
 	
 	let {
 		GBLCTX,
@@ -32,8 +33,8 @@
 	const SONDENB = 3
 
 	
-	onMount(() => { if (wsCallComponents) wsCallComponents.add(myWsCallback); init() });
-	onDestroy(() => { if (wsCallComponents) wsCallComponents.delete(myWsCallback); reset() });
+	onMount(() => { wsCallComponents.add(myWsCallback); init() });
+	onDestroy(() => { wsCallComponents.delete(myWsCallback); reset() });
 
 	// Gestion de l'épique
 	let epiqStep = $state(loadIt(PAGEEPIQLBL, 0))
@@ -48,7 +49,7 @@
 	let dspResultats=$state(false) 	// affichage des résltats
 
 	// appelé apres mount du component
-	async function init() { calcDebutChallengeDth(); await getZones(); await getEtat() }
+	async function init() { await getZones(); await getEtat() }
 	
 	// appelé apres unmount du component
 	function reset() {	}
@@ -76,11 +77,6 @@
 		console.log("epiqStepChange="+newStep)
 	}
 
-	// calcul de la date effective pour le challenge
-	let debutChallengeDth = $state(Date.now()+60000) // par defaut en attente de la synchro initt
-	function calcDebutChallengeDth() {
-		debutChallengeDth = (isProd)? pageDesc.start + pageDesc.delaiDebut*60000 : Date.now()+pageDesc.delaiDebut*1000
-	}
 	// calcul echeance pour decouverte selon le nbTrouve et le tryEcheance
 	function getEcheanceTrouve(tryEcheance,trouveDth,nbTrouve,lockTimer) {
 		console.log("getEcheanceTrouve",tryEcheance,trouveDth,nbTrouve,lockTimer)
@@ -98,6 +94,7 @@
 		zones.forEach( (z) => { if (z.c) zonesCiblesNb++ } )
 	}
 	let etat = $state(null)
+	let etatVideoFinale=false
 	async function getEtat(msgWs) {
 		let ret = msgWs || await apiCall(APIROOT+'etat');
 		if (ret.status != 200) return console.error("erreur sur",APIROOT,"etat", ret.status)
@@ -147,7 +144,6 @@
 				"tdFree"
 		})
 		// test si le challenge est terminé
-		addNotification("calcul challenge termine non fait")
 		// si toutes les cases sont trouvées et le bien placés
 		tEtat.challengeTermine = 
 			(tEtat.trouveTotalNb==tEtat.elts.length) &&
@@ -160,7 +156,10 @@
 		console.log("tEtat.challengeTermine",tEtat.challengeTermine)
 		// commit
 		saisies.trouveEcheance = getEcheanceTrouve(tEtat.tryEcheance,tEtat.trouveDth,tEtat.trouveNb,tEtat.LOCKTIMER)
-		if (tEtat.challengeTermine) playVideo("lesbases/lesbases-4")
+		if (tEtat.challengeTermine && !etatVideoFinale) {
+			etatVideoFinale=true
+			playVideo("lesbases/lesbases-4")
+		}
 		etat=tEtat
 	}
 	// calcul des résultsts
@@ -183,8 +182,6 @@
 	let dspTry = $state(null) // tentative d'identification d'une zone
 	let dspSonde = $state(null) // possibilité de sondes
 	function clickZoneDecouverte(e) {
-		addNotification("ClickDecouverte:"+e.i)
-		let now = Date.now() + getEpsilon()
 		dspSonde = e
 	}
 	function clickZoneNonDecouverte(e) {
@@ -229,7 +226,7 @@
 		if (etat.challengeTermine) {
 			displayInfo({
 				titre:"Le challenge est terminé",
-				body:["Le challenge est terminé" ]})
+				body:[{txt:"Revoir la vidéo", cb: ()=>playVideo('lesbases/lesbases-4')} ]})
 			return
 		}
 		let e = etat.elts[idx]
@@ -294,7 +291,6 @@
 
 <style>
 	.table { 
-		/* background-image: url('https://cdn.adhoc.click/V10/ff-10/Pharao.png'); */
 		background-size: 100% 100%; background-position: center; 
 		width: 95%; margin: auto; padding: 0; border: 0;
 		border-spacing: 0; border-collapse: collapse;
@@ -327,33 +323,23 @@
 				<input type="number" min=0 max=99 placeholder="epiqStep" bind:value={saisies.admGoStep} />
 				<input type="button" value="goEpiq" onclick={() => epiqStep=saisies.admGoStep} />
 				<input type="button" value="ResetAll" onclick={() => confirm("Tout effacer?") && apiCall(APIROOT+'etat','DELETE') } />
-				<input type="button" value="SetAll-2" onclick={() => confirm("Tout valider?") && apiCall(APIROOT+'setAll','DELETE') } />
+				<input type="button" value="SetAll" onclick={() => confirm("Tout valider?") && apiCall(APIROOT+'setAll','DELETE') } />
+				<input type="button" value="dspZones" onclick={() => displayObject(zones) } />
+				<input type="button" value="dspEtat" onclick={() => displayObject(etat) } />
 				<label><input type="checkbox" bind:checked={saisies.debug} />DebugLocal</label>
 				<label><input type="checkbox" bind:checked={saisies.noTimer} />NoTimer</label>
 			</div>
 		</div>
 	{/if}
+	<Common t="popupDebutChallenge" pageDesc={pageDesc} />
 	<div>
 		<input type="button" value="Revoir le Lore" onclick={() => epiqStep=0} />
 		<input type="button" value="Resultats" onclick={calcResultats} />
-		<!--
-		<span role="button"	style="cursor: pointer" onclick={()=>{ dspObject={ template: "a modifier" }}}>
-		🆘
-		</span>
-		-->
 	</div>
 
 	{#if epiqStep==0}
 		<div class="reveal" use:scrollPageToTop>
 			<img class="parchemin" src={urlCdn+"pharao/hilbert-espace.jpg"} style="width:30%; float:right" alt="" />
-			{#if debutChallengeDth > Date.now()}
-				<div class="info adminCadre" style="color:red">
-					Le challenge commencera dans
-					<countdown dth={debutChallengeDth} oncdTimeout={()=>debutChallengeDth=0} />.
-					<br/>
-					Tu as le temps de bien lire le lore et regarder les vidéos!
-				</div>
-			{/if}
 			Depuis que j'ai vu les Humains de la Terre expliquer le projet Pharao,
 			une petite musique me trotte dans la tête.
 			<br/>
@@ -409,18 +395,7 @@
 				<u>N'oublie pas que tu peux partager questionnement et stratégie sur Discord.</u>
 				<br/>
 			</div>
-			{#if debutChallengeDth < Date.now()}
-				<Btn bind:refStep={epiqStep} step=90 val="J'y vais tout de suite" />
-			{:else}
-				<div class="info adminCadre" style="color:red">
-					Le challenge commencera dans
-					<countdown dth={debutChallengeDth} oncdTimeout={()=>debutChallengeDth=0} />.
-					<br/>
-					Prend le temps de bien lire le lore!
-					Si tu as envie de le revoir ou si tu as zappé des informations,
-					clique sur "Revoir le Lore".
-				</div>
-			{/if}
+			<Common t="waitDebutChallenge" pageDesc={pageDesc} bind:refStep={epiqStep} />
 			<div style="clear:both" class="br"></div>
 		</div>
 	{/if}
@@ -485,34 +460,6 @@
 		</div>
 	{/if}
 
-	{#if dspResultats}
-		{@const pseudos= Object.keys(dspResultats.pseudos)}
-		<div class="popupCadre papier">
-			<div class="close" onclick={()=>dspResultats=null} role="button">X</div>
-			<div class="popupZone">
-				<div class="popupContent">
-					<div>Résultats:</div>
-					<table>
-						<tbody>
-							<tr>
-								<td></td>
-								<td class="tdRes">#trouvés</td>
-								<td class="tdRes">#confirmés</td>
-							</tr>
-							{#each pseudos as p,i}
-								<tr>
-									<td class="tdRes">{p}</td>
-									<td class="tdRes">{dspResultats.pseudos[p].nTrouve}</td>
-									<td class="tdRes">{dspResultats.pseudos[p].nConfirm}</td>
-								</tr>
-							{/each}
-						</tbody>
-					</table>
-				</div>
-			</div>
-		</div>
-	{/if}
-	
 	{#if dspTry}
 		<div class="popupCadre papier">
 			<div class="close" onclick={()=>dspTry=null} role="button">X</div>
@@ -633,6 +580,11 @@
 							<input type="button" value="je ne sais pas encore" onclick={()=>dspSonde=null}/>
 						</div>
 					{/if}
+					{#if isAdmin(pseudo)}
+						<div class="adminCadre">
+							Admin: <input type="button" onclick={()=>infirmeLieu(dspSonde.i)} value="Reset Validation" />
+						</div>
+					{/if}
 					<div>
 						<img style="width: 100%" src={CDNROOT+"screens/screen-"+dspSonde.i+".png"} alt={"screen-"+dspSonde.i} />
 					</div>
@@ -641,6 +593,36 @@
 		</div>
 	{/if}
 	
+	{#if dspResultats}
+		{@const pseudos= Object.keys(dspResultats.pseudos)}
+		<div class="popupCadre papier">
+			<div class="close" onclick={()=>dspResultats=null} role="button">X</div>
+			<div class="popupZone">
+				<div class="popupContent">
+					<div>Résultats:</div>
+					<table>
+						<tbody>
+							<tr>
+								<td></td>
+								<td class="tdRes">#trouvés</td>
+								<td class="tdRes">#confirmés</td>
+							</tr>
+							{#each pseudos as p,i}
+								<tr>
+									<td class="tdRes">
+										<img style="width: 1em" alt="" src={urlCdnAI+"pseudo-"+p+".jpg"} />
+										{p}
+									</td>
+									<td class="tdRes">{dspResultats.pseudos[p].nTrouve}</td>
+									<td class="tdRes">{dspResultats.pseudos[p].nConfirm}</td>
+								</tr>
+							{/each}
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+	{/if}
 
 </div>
 <!-- P420.svelte -->

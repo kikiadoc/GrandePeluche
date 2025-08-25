@@ -10,6 +10,7 @@
 	import { G }  from './privacy.js'
 	import { GBLCONST,GBLSTATE }  from './ground.svelte.js'
 	import Btn from './Btn.svelte'
+	import Common from './Common.svelte'
 	
 	let {
 		GBLCTX,
@@ -26,9 +27,9 @@
 	const PAGESAISIESLBL = "P"+pageDesc.n + "_saisies"
 	const APIROOT = '/'+pageDesc.rootName+'/'
 	const FAILTIMER = 1* 60000
-	
-	onMount(() => { if (wsCallComponents) wsCallComponents.add(myWsCallback); init() });
-	onDestroy(() => { if (wsCallComponents) wsCallComponents.delete(myWsCallback); reset() });
+	const VIDEOFINALE = "commons/videoafaire"	
+	onMount(() => { wsCallComponents.add(myWsCallback); init() });
+	onDestroy(() => { wsCallComponents.delete(myWsCallback); reset() });
 
 	// Gestion de l'épique
 	let epiqStep = $state(loadIt(PAGEEPIQLBL, 0))
@@ -41,9 +42,9 @@
 
 	// afficahge des popups standards
 	let dspResultats=$state(false) 	// affichage des résltats
-
+	
 	// appelé apres mount du component
-	function init() { console.log('**init 440**'); calcDebutChallengeDth(); getConfig(); getEtat() }
+	function init() { console.log('**init 440**'); getConfig(); getEtat() }
 	
 	// appelé apres unmount du component
 	function reset() { console.log('**reset 440**')	}
@@ -61,10 +62,9 @@
 		// s.pipoVal ??= 0 // exemple de normalized
 		s.admGoStep??=0
 		s.debug??=false
-		s.noTimer??=false
+		// s.noTimer??=false
 		s.failEcheance??=0 // dth du dernier fail
 		s.elixirEcheance??=0 
-		s.questionEcheance??=0
 		// retur saisies normalized
 		return s
 	}
@@ -74,26 +74,22 @@
 		console.log("epiqStepChange="+newStep)
 	}
 
-	// calcul de la date effective pour le challenge
-	let debutChallengeDth = $state(Date.now()+60000) // par defaut en attente de la synchro initt
-	function calcDebutChallengeDth() {
-		debutChallengeDth = (isProd)? pageDesc.start + pageDesc.delaiDebut*60000 : Date.now()+pageDesc.delaiDebut*1000
-	}
 	// calcul d'échance pour question selon les premiers découverts
+	let questionEcheance = $state(Date.now()+24*3600*1000)
 	function calcQuestionEcheance(premierNb,premierDthMax) {
 		let delai
 		switch(premierNb) {
 			case  0: delai = 1; break
 			case  1: delai = 15*60000; break
-			case  2: delai = 40*60000; break
-			case  3: delai = 90*60000; break
+			case  2: delai = 30*60000; break
+			case  3: delai = 60*60000; break
 			case  4: delai = 120*60000; break
-			case  5: delai = 240*60000; break
-			default: delai = 480*60000; break
+			case  5: delai = 180*60000; break
+			default: delai = 240*60000; break
 		}
 		// notimer ?
-		if (saisies.noTimer) delai = 1
-		return Math.max(premierDthMax+delai,saisies.failEcheance)
+		// if (saisies.noTimer) delai = 1
+		return questionEcheance=Math.max(premierDthMax+delai,saisies.failEcheance)
 	}
 	// chargement config du challenge
 	let CONFIG = $state(null)
@@ -104,6 +100,7 @@
 	}
 	// chargement etat du challenge
 	let etat = $state(null)
+	let etatVideo=false // si video finale affichée
 	let dspQuestion=$state(null) // option d'action sur un element
 	async function getEtat(msgWs) {
 		let ret = msgWs || await apiCall(APIROOT+'etat');
@@ -125,31 +122,33 @@
 			}	
 		})
 		// calcul du dth du possible pour question
-		saisies.questionEcheance = calcQuestionEcheance(tEtat.premierNb,tEtat.premierDthMax)
+		calcQuestionEcheance(tEtat.premierNb,tEtat.premierDthMax)
 
 		tEtat.composantsNb = 0
 		tEtat.composants.forEach( (c)=> {
 			if (c.vernisPseudo) {c.cls="vernis"; c.txt=c.pseudoVernis}
-			else if (c.elixirPseudo) {c.cls="stars elixir"; c.txt=c.elixirPseudo}
+			else if (c.elixirPseudo) {c.cls="stars elixir"; c.txt=c.elixirPseudo; tEtat.composantsNb++}
 			else if (tEtat.elixirsNb) {c.cls="usage"; c.txt=" "}
 			else { c.cls="vierge"; c.txt=" "}
 		})
 
 		// calcul challenge termine
-		tEtat.challengeTermine = false
-		if (tEtat.challengeTermine)	playVideo("commons/videoafaire")
+		tEtat.challengeTermine = CONFIG && tEtat.composantsNb==CONFIG.SIZE*CONFIG.SIZE
+		
 		etat=tEtat
+
 		// dspQuestion=null // pour eviter les conflits ???
-		// debug 
-		if (saisies.debug) {
-			console.log("etat.premierNb",etat.premierNb)
-			console.log("etat.premierDthMax",etat.premierDthMax)
-			console.log("saisies.failEcheance",saisies.failEcheance)
-			console.log("saisies.questionEcheance",saisies.questionEcheance)
-		}
+		if (etat.challengeTermine && !etatVideo) {
+			etatVideo=true
+			playVideo(VIDEOFINALE)
+		}	
 	}
 
 	function displayQuestion(i) {
+		if (etat.challengeTermine) {
+			displayInfo({titre: "Challenge terminé",body:[{txt:"Revoir la vidéo", cb: ()=>playVideo(VIDEOFINALE)}]})
+			return
+		}
 		dspQuestion=etat.questions[i]
 		if (saisies.debug) displayObject(dspQuestion)
 	}
@@ -170,7 +169,7 @@
 		}
 		else {
 			saisies.failEcheance = Date.now()+ FAILTIMER
-			saisies.questionEcheance=calcQuestionEcheance(etat.premierNb,etat.premierDthMax)
+			calcQuestionEcheance(etat.premierNb,etat.premierDthMax)
 			displayInfo({
 				titre:"Mauvaise identification",
 				img: "commons/fail.gif",
@@ -185,6 +184,10 @@
 
 	let dspComposant=$state(null)
 	function displayComposant(i) {
+		if (etat.challengeTermine) {
+			displayInfo({titre: "Challenge terminé",body:[{txt:"Revoir la vidéo", cb: ()=>playVideo(VIDEOFINALE)}]})
+			return
+		}
 		dspComposant=etat.composants[i]
 		if (saisies.debug) displayObject({composant: dspComposant, map: CONFIG.MAP[i] })
 	}
@@ -222,26 +225,27 @@
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Bungee+Tint&display=swap');
   .runeT {
-    padding: 0; border: 5px inset green;
+    padding: 0; border: 5px inset green; height: 1.9em;
 		background-color: yellow;
 		cursor: pointer;
-    font-family: "Bungee Tint"; color: green; font-size:1.5em; font-weight: bold;
+    font-family: "Bungee Tint"; color: green; font-size:1.1em; font-weight: bold;
   }
   .runeNT {
     padding: 0; border: 5px outset green;
 		background-color: green;
 		cursor: pointer;
-    font-family: "Bungee Tint"; color: green; font-size:1.5em; font-weight: bold;
+    font-family: "Bungee Tint"; color: green; font-size:1.1em; font-weight: bold;
   }
 	.resultats {
 		border: 2px solid white;
 	}
-	.table { background-image: url('https://cdn.adhoc.click/V10/ff-10/Pharao.png');
-					background-size: 100% 100%; background-position: center; 
-					width: 90%; margin: auto; padding: 0; border: 0;
-					border-spacing: 0; border-collapse: collapse;
-					border: 0; text-align: center; cursor: pointer;
-				}
+	.table {
+		background-image: url('https://cdn.adhoc.click/V10a/ff-10/Pharao.png');
+		background-size: 100% 100%; background-position: center; 
+		width: 100%; margin: auto; padding: 0; border: 0;
+		border-spacing: 0; border-collapse: collapse;
+		border: 0; text-align: center; cursor: pointer;
+	}
 	.tbody { }
 	.tr { }
 	td { height: 2em;font-size:0.7em; text-align:top; border: 1px solid white }
@@ -263,47 +267,38 @@
 				{epiqStep}
 				<input type="number" min=0 max=99 placeholder="epiqStep" bind:value={saisies.admGoStep} />
 				<input type="button" value="goEpiq" onclick={() => epiqStep=saisies.admGoStep} />
-				<input type="button" value="ResetAll" onclick={() => confirm("Tout effacer?") && apiCall(APIROOT+'etat','DELETE') } />
-				<input type="button" value="ReserTimerQuestion" onclick={() => saisies.questionEcheance=1 } />
+				<input type="button" value="resetAll" onclick={() => confirm("Tout effacer?") && apiCall(APIROOT+'resetAll','DELETE') } />
+				<input type="button" value="setAll" onclick={() => confirm("Tout valider?") && apiCall(APIROOT+'setAll','DELETE') } />
+				<input type="button" value="ReserTimerQuestion" onclick={() => questionEcheance=1 } />
 				<input type="button" value="ReserTimerCompo" onclick={() => saisies.elixirEcheance=1 } />
+				<input type="button" value="dspConfig" onclick={() => displayObject(CONFIG) } />
+				<input type="button" value="dspEtat" onclick={() => displayObject(etat) } />
 				<label><input type="checkbox" bind:checked={saisies.debug} />DebugLocal</label>
-				<label><input type="checkbox" bind:checked={saisies.noTimer} />NoTimer</label>
+				<!-- <label><input type="checkbox" bind:checked={saisies.noTimer} />NoTimer</label> -->
 			</div>
 		</div>
 	{/if}
+	<Common t="popupDebutChallenge" pageDesc={pageDesc} />
 	<div>
 		<input type="button" value="Revoir le Lore" onclick={() => epiqStep=0} />
 		<input type="button" value="Resultats" onclick={calcResultats} />
-		<!--
-		<span role="button"	style="cursor: pointer" onclick={()=>{ dspObject={ template: "a modifier" }}}>
-		🆘
-		</span>
-		-->
 	</div>
 
 	{#if epiqStep==0}
 		<div class="reveal" use:scrollPageToTop>
 			<img class="parchemin" src={urlCdn+"pharao/hilbert-espace.jpg"} style="width:30%; float:right" alt="" />
-			{#if debutChallengeDth > Date.now()}
-				<div class="info" style="color:red">
-					Le challenge commencera dans
-					<countdown dth={debutChallengeDth} oncdTimeout={()=>debutChallengeDth=0} />.
-					<br/>
-					Tu as le temps de bien lire le lore et regarder les vidéos!
-				</div>
-			{/if}
 			Le Pharao d'Eorzéa poursuit son voyage vers le Point de Lagrange.
 			<br/>
 			Nous construisons les Bases sur Eorzéa et des Pharao à la chaîne.
 			<div class="br"/>
 			Il nous faut maintenant construire un Pharao pour l'Ortho-Temps: l'Ortho-Pharao.
 			<br/>
-			<Btn bind:refStep={epiqStep} step=80 val="Explique-moi!" />
+			<Btn bind:refStep={epiqStep} step=20 val="Explique-moi!" />
 			<div style="clear:both" class="br"></div>
 		</div>
 	{/if}
 	
-	{#if epiqStep==80}
+	{#if epiqStep==20}
 		<div class="reveal" use:scrollPageToTop>
 			<img class="parchemin" src={urlCdn+"pharao/hilbert-espace.jpg"} style="width:30%; float:right" alt="" />
 			Le Pharao qui sera envoyé dans l'Ortho-Temps
@@ -334,24 +329,7 @@
 			Hélas, les molécules d'élixir sont instables:
 			elles se décomposent au fil du temps.
 			<br/>
-			<div class="info">
-				Je te laisse découvrir les autres mécanismes de ce challenge.
-				<br/>
-				N'hésite pas à partager questionnement et stratégie sur Discord.
-			</div>
-			<div>
-			{#if debutChallengeDth < Date.now()}
-				<Btn bind:refStep={epiqStep} step=90 val="J'y vais tout de suite" />
-			{:else}
-				<div class="info" style="color:red">
-					Le challenge commencera dans
-					<countdown dth={debutChallengeDth} oncdTimeout={()=>debutChallengeDth=0} />.
-					<br/>
-					Si tu as envie de revoir le lore ou si tu as zappé des informations,
-					clique sur "Revoir le Lore".
-				</div>
-			{/if}
-			</div>
+			<Btn bind:refStep={epiqStep} step=80 val="J'ai compris" />
 			<div class="info">
 				<hr/>
 				(ℹ) rmol est une unité de mesure du
@@ -373,11 +351,36 @@
 		</div>
 	{/if}
 
+	{#if epiqStep==80}
+		<div class="reveal" use:scrollPageToTop>
+			<img class="parchemin" src={urlCdn+"pharao/hilbert-espace.jpg"} style="width:30%; float:right" alt="" />
+			<div>
+				Extraire de l'Elixir de Conversion ou phaser un composant
+				peut sembler relativement simple.
+				<br/>
+				Détrompe toi {pseudo}.
+				<br/>
+				Obtenir la quantité d'Elixir nécessaire au phasage de certains composants
+				peut nécessiter de le faire en coopération.
+			</div>
+			<div class="info">
+				Pour faciliter votre coopération, les questions et les composants
+				sont numérotées pour faciliter la communication entre vous.
+				<br/>
+				N'hésite pas à partager questionnement et stratégie sur Discord.
+				<br/>
+				Je te laisse découvrir les autres mécanismes de ce challenge.
+			</div>
+			<Common t="waitDebutChallenge" pageDesc={pageDesc} bind:refStep={epiqStep} />
+			<div style="clear:both" class="br"></div>
+		</div>
+	{/if}
+
 	{#if epiqStep==90 && etat && CONFIG}
 		<div use:scrollPageToTop>
 			<div>
 				<span class="gpHelp" onclick={markClick} gpHelp="Délai avant de pouvoir chercher un objet contenant des molécules d'élixir">
-					🔎<countdown dth={saisies.questionEcheance} txtTimeout="Possible" use:countDownInit />
+					🔎<countdown dth={questionEcheance} txtTimeout="Possible" use:countDownInit />
 				</span>
 				<span class="gpHelp" onclick={markClick} gpHelp="Quantité restante de molécules d'élixir dans la réserve. Les molécules sont instables.">
 						🧪{#key etat}<countdown id="idElixirCpt" cnt={etat.elixirsNb} step=1000 />{/key}
@@ -386,15 +389,20 @@
 					🪄<countdown dth={saisies.elixirEcheance} txtTimeout="Possible" use:countDownInit />
 				</span>
 			</div>
-			<div>
-				{#each etat.questions as q,idx}
-					{#if q.pseudo}
-						<span class="runeT" onclick={()=>displayQuestion(idx)}>✓</span>
-					{:else}
-						<span class="runeNT" onclick={()=>displayQuestion(idx)}>?</span>
-					{/if}
-					<span />
-				{/each}
+			<div class="parchemin">
+				<div style="overflow-wrap: anywhere">
+					{#each etat.questions as q,idx}
+						{@const cls= (q.pseudo) ? "runeT":"runeNT"}
+						{@const txt= (q.pseudo) ? "✓":"?"}
+						<span style="position: relative;" class={cls} onclick={()=>displayQuestion(idx)}>
+							{txt}
+							<span style="position: absolute; top:0px; left: 0px; color: yellow; font-size: 0.4em; overflow: hidden; overflow-wrap: normal;">
+								{idx+1}
+							</span>
+						</span>
+					{/each}
+				</div>
+				<div class="br"/>
 				<table class="table">
 					<tbody class="tbody">
 						{#each Array(CONFIG.SIZE) as _,l}
@@ -402,14 +410,13 @@
 								{#each Array(CONFIG.SIZE) as _,c}
 									{@const idx=l*CONFIG.SIZE+c}
 									{@const cmp=etat.composants[idx]}
-									<td class={cmp.cls} onclick={()=>displayComposant(idx)}>
+									<td style="overflow-wrap: anywhere" class={cmp.cls} onclick={()=>displayComposant(idx)}>
 										<div style="position: relative; aspect-ratio: 2">
 											<div style="position: absolute; top:0px; left: 0px; color: yellow">
 												{idx+1}
 											</div>
-											<div style="">{cmp.txt||"-"}</div>
+											<div style="overflow: hidden">{cmp.txt||"-"}</div>
 										</div>
-											
 									</td>
 								{/each}
 							</tr>
@@ -441,13 +448,13 @@
 						Il ne peut pas encore être reutilisé avant
 						<countdown dth={dspQuestion.pseudoEcheance} use:countDownInit />
 						</div>
-					{:else if saisies.questionEcheance > now}
+					{:else if questionEcheance > now}
 						<img class="parchemin" src={urlCdn+"commons/hamac-sommeil.gif"} style="width:20%; float:right" alt="" />
 						<div >
 							Ta dernière extraction t'as fatigué.
 							<br />
 							Repose-toi encore
-							<countdown dth={saisies.questionEcheance} oncdTimeout={()=>reloadDspQuestion()} use:countDownInit />
+							<countdown dth={questionEcheance} oncdTimeout={()=>reloadDspQuestion()} use:countDownInit />
 						</div>
 					{:else}	
 						<img class="parchemin" src={urlCdn+"commons/Human_brainstem2.gif"} style="width:20%; float:right" alt="" />
@@ -472,9 +479,9 @@
 								Pour information, {dspQuestion.premierPseudo} a déjà identifié cet objet.
 							</div>
 						{/if}
-						{#if saisies.debug}
+						{#if isAdmin(pseudo)}
 							<div class="adminCadre">
-							Soluce: l={objet.l} x={objet.x} y={objet.y} ({CONFIG.lieux[objet.l].lbl})
+								Soluce: l={objet.l} x={objet.x} y={objet.y} ({CONFIG.lieux[objet.l].lbl})
 							</div>
 						{/if}
 					{/if}
@@ -512,7 +519,7 @@
 								{/if}
 								<br/>
 								<input type="button" value="Tenter la conversion" onclick={()=>propositionComposant(dspComposant.i)} />
-								{#if saisies.debug}
+								{#if isAdmin(pseudo)}
 									<div class="adminCadre">
 										reserve:{cpt}, besoin:{bes}, ratio:{(1.0*cpt/bes).toFixed(1)}
 									</div>

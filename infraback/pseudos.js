@@ -179,7 +179,7 @@ function checkPseudo(pseudo,password, reqAdmin) {
 	const pseudoDesc = pseudos[pseudo];
 	if ( !pseudoDesc ) gbl.exception("Pseudo introuvable, contacte Kikiadoc", 403);
 	if ( pseudoDesc.pwd != password ) gbl.exception("Mauvaise clef furtive, contacte Kikiadoc", 403);
-	if ( reqAdmin && (pseudo != "Kikiadoc") ) gbl.exception("Not admin", 403);
+	if ( reqAdmin && pseudo!="Kikiadoc" && pseudo!="Althea" ) gbl.exception("Not admin", 403);
 	return pseudoDesc;
 }
 

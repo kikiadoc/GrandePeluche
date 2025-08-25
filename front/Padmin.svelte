@@ -16,7 +16,7 @@
 		enumMusiques= await apiCallExtern(urlCdn+"musiques/index.json","GET")
 	}
 
-	let saisies = {} // generique non sauvegardées
+	let saisies = {} // generique non sauvegardées 
 	let showAdmin=$state(false)
 	let showMusiques=$state(false)
 	let enumMusiques=$state(false)
@@ -89,6 +89,7 @@
 <div class="adminCadre" style="font-size: 0.4em">
 	<input type="button" value="show/hide Admin" onclick={() => showAdmin=!showAdmin} />
 	<input type="button" value="show/hide Musiques" onclick={() => showMusiques=!showMusiques} />
+	<input type="button" value="test handler d'erreur" onclick={() => ceciEstUnTestDuHandlerErreur()} />
 </div>
 {#if showAdmin}
 	<div style="font-size: 0.7em">
@@ -106,21 +107,26 @@
 			<!-- svelte-ignore binding_property_non_reactive -->
 			<input bind:value={saisies.admNumPage} type="number" min=0 max=999 placeholder="numPage">
 			<input type="button" value="GoToPage/pseudo"
-				onclick={async ()=>displayObject(await apiCall("/adminTest/gotoPage/"+saisies.admPseudo+"/"+saisies.admNumPage,'PATCH'))}
+				onclick={async ()=> confirm('gotoPage pseudo?'+saisies.admPseudo) && displayObject(await apiCall("/adminTest/gotoPage/"+saisies.admPseudo+"/"+saisies.admNumPage,'PATCH'))}
 			/>
 		</div>
-	
 		<div class="adminCadre">
 			<input type="text" placeholder="ff14Id" id="admClearDiscord">
 			<input type="button" value="ClearDiscord/ff14Id" onclick={clearFf14IdDiscord}>
 		</div>
-	
+		<div class="adminCadre">
+			<input type="text" placeholder="pCloudFolderId" id="pCloudFolderId" />
+			<input type="button" value="ListFolder" onclick={async ()=> {let r= await apiCall("/adminTest/pCloudListFolder/"+document.getElementById("pCloudFolderId").value); displayObject(r.o) }}>
+		</div>
 		<div class="adminCadre">
 			<input type="text" id="admTxtTTS" />
+			<input type="button" value="generateTTS" onclick={async ()=> {let r= await apiCall("/tts/genTexte/"+document.getElementById("admTxtTTS").value); displayObject(r.o) }}>
+			<!--
 			<input type="button" value="generateTTS" onclick={async ()=> {let r= await apiCall("/tts/test/"+document.getElementById("admTxtTTS").value); displayObject(r.o) }}>
 			<input type="button" value="dumpTTS" onclick={async ()=> {let r= await apiCall("/tts/dump"); displayObject(r.o)}}>
 			<input type="button" value="clearTTS" onclick={async ()=> {let r= await apiCall("/tts/clear"); displayObject(r.o)}}>
 			<input type="button" value="testSeq" onclick={async ()=> {let r= await apiCall("/tts/testSeq"); displayObject(r.o)}}>
+			-->
 		</div>
 	
 		<div class="adminCadre">
@@ -221,8 +227,11 @@
 {#if showMusiques && enumMusiques}
 	<div class="adminCadre">
 		<audio id="debugMusiqueOgg" src="" autoplay controls loop style="position: fixed"></audio>
-		<br/>
-		<br/>
+		<div style="height:4em"> </div>
+		<div class="blinkMsg">
+			Utiliser uniquement la colonne m.itemId. C'est le seul élément qui semble stable
+			entre les versions.
+		</div>
 		<table>
 			<tbody>
 				<tr>
@@ -240,8 +249,8 @@
 							<input type="button" value="🔊" onclick={()=>document.getElementById("debugMusiqueOgg").src=urlOgg} />
 							<input type="button" value="🔎" onclick={()=>displayMusiqueDetail(i)}/>
 						</td>
-						<td style="border: 1px solid white">{i}</td>
-						<td>{m.itemId}</td>
+						<td>{i}</td>
+						<td style="border: 1px solid white">{m.itemId}</td>
 						<td>{m.oggId}</td>
 						<td>{m.ad.fields.Name}</td>
 						<td>{m.ad.fields.Description}</td>

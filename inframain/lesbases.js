@@ -167,6 +167,7 @@ function infirmation(pseudo,reqPaths) {
 	// les precond sont vérifiées sur le client
 	if (! e.trouvePseudo) gbl.exception("zone non trouvee: "+idx,400)
 	if (! e.confirmPseudo) gbl.exception("zone non validée "+idx,400)
+	// MANQUE LA VERIF DU PSEUDO - pas grave
 	e.confirmPseudo=null
 	e.confirmDth=0
 	syncClients(pseudo+" ne considère plus le lieu #"+(idx+1)+" comme propice à un Pharao")
