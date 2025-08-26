@@ -47,7 +47,7 @@
 	// appelé apres unmount du component
 	function reset() {	}
 
-	// gestion des commandes via le WS
+	// gestion des commandes via le WS 
 	async function myWsCallback(m) {
 		// if (m.op=="????" && m.o) .... return true
 		if (m.op=='pharao.etat' && m.o) { getEtat(m); return true }
@@ -76,10 +76,10 @@
 		// if (saisies.noTimer) return dthRef + 1
 		if (lastBad) return lastBad+ 10*60000 // 10 minutes si mauvaise réponse
 		switch(nb) {
-			case 0 : return dthRef + 1
-			case 1 : return dthRef+ 20*60000
-			case 2 : return dthRef+ 40*60000 
-			case 3 : return dthRef+ 80*60000
+			case 0 : return dthRef + 1 // 1 pour toggle le countdown
+			case 1 : return dthRef+ 15*60000
+			case 2 : return dthRef+ 45*60000 
+			case 3 : return dthRef+ 90*60000
 			default: return dthRef+ 180*60000
 		}
 		return dthRef+ 4*3600000 
@@ -244,19 +244,15 @@
 					border: 0;
 				}
 	.tbody { }
-	.tr { padding: 0; margin: 0px; border: 0;
-			 background-color:white;
-		 }
+	.tr { padding: 0; margin: 0px; border: 0 }
 	.canvas { padding: 0; margin: 0px;
 			 /* border: 1px solid white; border-collapse: collapse; */
 			 /* height: 3em; width: 3em; aspect-ratio: 1 / 1; */
 			 cursor: pointer;
-			 background-color: black;
+			 /* background-color: black; */
 			 text-align: top; font-size: 0px;
 		 }
-	canvas { background-color: red; border: 0; 
-					 width: 100%; height:100%;
-				 }
+	canvas { border: 0; width: 100%; height:100%; }
 </style>
 
 <!-- svelte-ignore element_invalid_self_closing_tag -->
@@ -277,6 +273,7 @@
 				<input type="button" value="TimerSwap" onclick={() => etat.swapEcheance=Date.now()+5000 } />
 				<label><input type="checkbox" bind:checked={saisies.debug} />DebugLocal</label>
 				<!-- <label><input type="checkbox" bind:checked={saisies.noTimer} />NoTimer</label> -->
+				<span>Enigme:#{saisies.nuEnigme}</span>
 			</div>
 		</div>
 	{/if}
@@ -478,7 +475,7 @@
 		</div>
 	{/if}
 
-	{#if epiqStep==90 && etat}
+	{#if epiqStep==90 && etat && ENIGMES}
 		<div>
 			{#if etat.isTrouvePossible}
 				<span onclick={markClick} style="cursor:pointer" gpHelp="Pour tenter de découvrir un composant de Pharao, réponds à l'énigme quand elle est affichée">
@@ -501,10 +498,9 @@
 				</span>
 			{/if}
 		</div>
-		<div class="adminCadre papier scrollbar" style="height: 4em">
+		<div class="adminCadre papier scrollbar">
 			{#if etat.isTrouvePossible && saisies.nuEnigme >= 0}
 				{@const enigme=ENIGMES[saisies.nuEnigme]}
-				Question #{saisies.nuEnigme}
 				{enigme.l}
 				<br />
 				{#each enigme.o as o,i}

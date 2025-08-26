@@ -61,7 +61,7 @@ const MAP= [
 	{ nb: 3000000 }, { nb: 3000000 }, { nb: 3000000 }, { nb: 3000000 }, { nb: 3000000 }, { nb: 3000000 },
 	{ nb: 3000000 }, { nb: 3000000 }, { nb: 3000000 }, { nb: 3000000 }, { nb: 3000000 }, { nb: 3000000 }
 ]
-const CONF = { lieux: LIEUX, objets: OBJETS, MAP: MAP, SIZE: 6, TIMERPSEUDO: 8*3600000, TIMERELIXIR: 3600000 }
+const CONF = { lieux: LIEUX, objets: OBJETS, MAP: MAP, SIZE: 6, TIMERPSEUDO: 8*3600000, TIMERELIXIR: 3600000, QUANTITE: 4500000 }
 const CONFJSON = JSON.stringify(CONF)
 
 // Avancement du mini jeu
@@ -121,7 +121,7 @@ function propositionQuestion(pseudo,reqPaths,body) {
 	etat.questions[idx].elixirEcheance=Date.now() + CONF.TIMERELIXIR
 	etat.questions[idx].premierPseudo??=pseudo
 	etat.questions[idx].premierDth??=Date.now()
-	let nb = Math.floor(3200000 * (0.9+0.2*Math.random() )) // +/- 10%
+	let nb = Math.floor(CONF.QUANTITE * (0.9+0.2*Math.random() )) // +/- 10%
 	recalcElixirsNb(etat,nb) // ajout d'elixir
   syncClients(pseudo+" a extrait "+nb+" rmol d'élixir")
 	/*

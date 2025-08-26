@@ -4,7 +4,8 @@ const collections = require('../infraback/collections.js');
 const wsserver = require('../infraback/wsserver.js');
 const tts = require('../infraback/tts.js');
 
-const COLNAME="dissonances"
+// le COLNAME doit être celui dans le client "ROOTAPI" pour la synchro WS
+const COLNAME="X-dissonances"
 
 
 // contexte:  

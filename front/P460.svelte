@@ -110,7 +110,7 @@
 
 	async function recalcEtat(tEtat) {
 		console.log("recalcEtat")
-		// Si pas d'état précédent
+		// Si pas d'état précédent 
 		if (!etat)
 			etat=tEtat
 		else { 

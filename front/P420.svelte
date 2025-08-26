@@ -158,7 +158,7 @@
 		saisies.trouveEcheance = getEcheanceTrouve(tEtat.tryEcheance,tEtat.trouveDth,tEtat.trouveNb,tEtat.LOCKTIMER)
 		if (tEtat.challengeTermine && !etatVideoFinale) {
 			etatVideoFinale=true
-			playVideo("lesbases/lesbases-4")
+			playVideo("X-lesbases/lesbases-4")
 		}
 		etat=tEtat
 	}
@@ -226,7 +226,7 @@
 		if (etat.challengeTermine) {
 			displayInfo({
 				titre:"Le challenge est terminé",
-				body:[{txt:"Revoir la vidéo", cb: ()=>playVideo('lesbases/lesbases-4')} ]})
+				body:[{txt:"Revoir la vidéo", cb: ()=>playVideo('X-lesbases/lesbases-4')} ]})
 			return
 		}
 		let e = etat.elts[idx]
@@ -255,13 +255,13 @@
 		saisies.pX=null
 		saisies.pY=null
 		dspTry=null
-		playVideo("lesbases/lesbases-3")
+		playVideo("X-lesbases/lesbases-3")
 	}
 	function envoiSonde(i) {
 		dspSonde=null
 		saisies.sondeEcheance=Date.now()+ TIMERSONDE
 		apiCall(APIROOT+'sonde/'+i,'POST')
-		playVideo("lesbases/lesbases-2")
+		playVideo("X-lesbases/lesbases-2")
 	}
 	function confirmeLieu(i) {
 		dspSonde=null
@@ -339,24 +339,27 @@
 
 	{#if epiqStep==0}
 		<div class="reveal" use:scrollPageToTop>
-			<img class="parchemin" src={urlCdn+"pharao/hilbert-espace.jpg"} style="width:30%; float:right" alt="" />
+			<img class="parchemin" src={urlCdn+"X-pharao/hilbert-espace.jpg"} style="width:30%; float:right" alt="" />
 			Depuis que j'ai vu les Humains de la Terre expliquer le projet Pharao,
 			une petite musique me trotte dans la tête.
 			<br/>
-			<Btn bind:refStep={epiqStep} step=10 video="lesbases/lesbases-1" val="Explique-moi!" />
+			<Btn bind:refStep={epiqStep} step=10 video="X-lesbases/lesbases-1" val="Explique-moi!" />
 			<div style="clear:both" class="br"></div>
 		</div>
 	{/if}
 	
 	{#if epiqStep==10}
 		<div class="reveal" use:scrollPageToTop>
-			<img class="parchemin" src={urlCdn+"pharao/hilbert-espace.jpg"} style="width:30%; float:right" alt="" />
-			<input type="button" value="Revoir la video" gpVideo="lesbases/lesbases-1" onclick={markClick} />
+			<img class="parchemin" src={urlCdn+"X-pharao/hilbert-espace.jpg"} style="width:30%; float:right" alt="" />
+			<input type="button" value="Revoir la video" gpVideo="X-lesbases/lesbases-1" onclick={markClick} />
 			<br/>
 			Un système d'horloges permettant de vérifier notre Temps,
 			c'est évidemment un Pharao en orbite autour d'Eorzéa, mais pas seulement.
 			<br/>
-			C'est aussi 12 lieux à la surface d'Eorzéa sur lequels nous installerons un Pharao.
+			C'est aussi 12 lieux à la surface d'Eorzéa sur lequels nous installerons une
+			<a href="https://www.insu.cnrs.fr/fr/cnrsinfo/vers-des-horloges-atomiques-plus-precises-avec-lintrication-quantique" target="gpHelp">
+				horloge à intrication
+			</a>.
 			<br/>
 			La chronosismicité de ces lieux doit être parmi les plus basses d'Eorzéa.
 			<br/>
@@ -366,7 +369,7 @@
 	{/if}
 	{#if epiqStep==30}
 		<div class="reveal" use:scrollPageToTop>
-			<img class="parchemin" src={urlCdn+"pharao/hilbert-espace.jpg"} style="width:30%; float:right" alt="" />
+			<img class="parchemin" src={urlCdn+"X-pharao/hilbert-espace.jpg"} style="width:30%; float:right" alt="" />
 			J'ai envoyé 40 mascottes explorer Eorzéa,
 			mais je les ai perdues de vue.
 			<br/>
@@ -382,7 +385,7 @@
 	{/if}
 	{#if epiqStep==80}
 		<div class="reveal" use:scrollPageToTop>
-			<img class="parchemin" src={urlCdn+"pharao/hilbert-espace.jpg"} style="width:30%; float:right" alt="" />
+			<img class="parchemin" src={urlCdn+"X-pharao/hilbert-espace.jpg"} style="width:30%; float:right" alt="" />
 			<div class="info">
 				Ce challenge comporte plusieurs phases
 				mais il n'est pas nécessaire d'avoir fini totalement une phase pour

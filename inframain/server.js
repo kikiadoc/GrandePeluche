@@ -55,11 +55,11 @@ async function httpCallback(req, res, method, reqPaths, body, pseudo, pwd) {
 		case "rubans": await rubans.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
 		case "shared": await shared.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
 		// eleents liés aux activités présentes
-		case "pharao": await pharao.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
-		case "lesbases": await lesbases.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
-		case "orthocomposants": await orthocomposants.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
-		case "dissonances": await dissonances.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
-		case "orthocerberus": await orthocerberus.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
+		case "X-pharao": await pharao.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
+		case "X-lesbases": await lesbases.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
+		case "X-orthocomposants": await orthocomposants.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
+		case "X-dissonances": await dissonances.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
+		case "X-orthocerberus": await orthocerberus.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
 		// eleents liés aux activités anciennes
 		// case "metropolis": await metropolis.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
 		// case "innommable": innommable.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;

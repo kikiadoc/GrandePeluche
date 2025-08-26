@@ -48,6 +48,7 @@
 	import P405 from './P405.svelte' // Kiki's Event X - initiatique
 	import P410 from './P410.svelte' // Kiki's Event X - Pharao
 	import P420 from './P420.svelte' // Kiki's Event X - Les bases
+	import P425 from './P425.svelte' // Kiki's Event X - Orthocerberus
 	import P430 from './P430.svelte' // Kiki's Event X - Les Failles
 	import P440 from './P440.svelte' // Kiki's Event X - Les orth-composants
 	import P460 from './P460.svelte' // Kiki's Event X - Dissonances
@@ -144,7 +145,7 @@
 		 component: Pipa
 		},
 		/*
-		{n: 400, texte: "Métropolis", music: "le-jeu",
+		{n: 400, texte: "Métropolis", music: "le-jeu", 
 		 start: geUtcMsFrom(2025,3,21,19,0,0),
 		 end: geUtcMsFrom(2025,3,25,8,0,0),
 		 after: true,
@@ -165,43 +166,42 @@
 		{n: 410, texte: "Pharao", music: "plus-pres-des-etoiles",
 		 start: 0,
 		 end: 0,
-		 rootName: "pharao",
+		 rootName: "X-pharao",
 		 delaiDebut: 20,
 		 component: P410
 		},
 		{n: 420, texte: "Les Bases", music: "dolmen",
 		 start: 0,
 		 end: 0,
-		 rootName: "lesbases",
+		 rootName: "X-lesbases",
 		 delaiDebut: 20,
 		 component: P420
 		},
 		{n: 425, texte: "Les Anomalies (TBD)", music: "dolmen",
 		 start: 0,
 		 end: 0,
-		 rootName: "??",
+		 rootName: "X-orthocerberus",
 		 delaiDebut: 20,
-		 component: null
+		 component: P425
 		},
 		{n: 430, texte: "Les Failles (TBD)", music: "dolmen",
 		 start: 0,
 		 end: 0,
-		 rootName: "lesfailles",
+		 rootName: "X-lesfailles",
 		 delaiDebut: 20,
 		 component: P430
-		 // Dans l'ortho temp
 		},
 		{n: 440, texte: "Les Ortho-Composants", music: "mercredi",
 		 start: 0,
 		 end: 0,
-		 rootName: "orthocomposants",
+		 rootName: "X-orthocomposants",
 		 delaiDebut: 20,
 		 component: P440
 		},
 		{n: 460, texte: "Les Dissonances", music: "mercredi",
 		 start: 0,
 		 end: 0,
-		 rootName: "dissonances",
+		 rootName: "X-dissonances",
 		 delaiDebut: 20,
 		 component: P460
 		},
@@ -958,9 +958,14 @@
 								<input type="button" value="Envoyer le rapport à Kikiadoc" onclick={()=>reportConsole()} />
 							</div>
 						</div>
-						<hr />
 						<div style="font-size: 0.8em">
-							<input type="button" value="Resynch config" onclick={async ()=>{dspObject={msg:"Attendre..."}; dspObject = await apiCall('/clientConfig/refresh')} } />
+							<hr />
+							<div>
+								Resynchro lodestone, IA vocale etc...
+							</div>
+							<div>
+								<input type="button" value="Resynch config" onclick={async ()=>{dspObject={msg:"Attendre..."}; dspObject = await apiCall('/clientConfig/refresh')} } />
+							</div>
 						</div>
 						<hr />
 						<div style="font-size: 0.8em">

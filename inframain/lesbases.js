@@ -158,7 +158,7 @@ function confirmation(pseudo,reqPaths) {
 	if (e.confirmPseudo) gbl.exception("zone deja validée "+idx,400)
 	e.confirmPseudo=pseudo
 	e.confirmDth=Date.now()
-	syncClients(pseudo+" a indiqué le lieu #"+(idx+1)+" comme propice à un Pharao")
+	syncClients(pseudo+" a indiqué le lieu #"+(idx+1)+" comme propice à une base Pharao")
 }
 // une demande d'infirmation
 function infirmation(pseudo,reqPaths) {
@@ -170,7 +170,7 @@ function infirmation(pseudo,reqPaths) {
 	// MANQUE LA VERIF DU PSEUDO - pas grave
 	e.confirmPseudo=null
 	e.confirmDth=0
-	syncClients(pseudo+" ne considère plus le lieu #"+(idx+1)+" comme propice à un Pharao")
+	syncClients(pseudo+" ne considère plus le lieu #"+(idx+1)+" comme propice à une base Pharao")
 }
 // pas d'accord sur ce lieu
 function pasdaccord(pseudo,reqPaths) {

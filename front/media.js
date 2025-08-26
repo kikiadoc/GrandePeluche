@@ -118,9 +118,12 @@ export const VIDEODESCS = {
 	"ff-10/ff-10-metro-trailer": { mp4: "ff-10/ff-10-metro-trailer", vol: 2},
 	"ff-10/IPA-BNF": { mp4: "ff-10/IPA-BNF", vol: 4},
 	"ff-10/ff-10-sans-video": { mp4: "ff-10/ff-10-sans-video", vol: 4},
-	"pharao/pharao1": { mp4: "pharao/pharao1", vol: 3.5},
-	"pharao/pharao2": { mp4: "pharao/pharao2", vol: 2.5},
-	"lesbases/lesbases-1": { mp4: "lesbases/lesbases-1", vol: 1},
+	"X-pharao/pharao1": { mp4: "X-pharao/pharao1", vol: 3.5},
+	"X-pharao/pharao2": { mp4: "X-pharao/pharao2", vol: 2.5},
+	"X-lesbases/lesbases-1": { mp4: "X-lesbases/lesbases-1", vol: 1},
+	"X-lesbases/lesbases-2": { mp4: "X-lesbases/lesbases-2", vol: 1},
+	"X-lesbases/lesbases-3": { mp4: "X-lesbases/lesbases-3", vol: 1},
+	"X-lesbases/lesbases-4": { mp4: "X-lesbases/lesbases-4", vol: 1},
 }
 
 

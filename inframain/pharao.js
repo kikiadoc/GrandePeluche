@@ -8,12 +8,40 @@ const COLNAME="pharao"
 const SIZE=6 // 6x6 lieux et objets
 const ZONES = {
 	ENIGMES: [
-		{ l:"enigme0",
-			x:0.0, y: 0.0, r:0, o:["pipo1","pipo2"] },
-		{ l:"enigme1",
-			x:0.0, y: 0.0, r:0, o:["pipo1","pipo2"] },
-		{ l:"enigme2",
-			x:0.0, y: 0.0, r:0, o:["pipo1","pipo2"] },
+		// vente de materiaux dans les villes de bases
+		{ l:"Un fragment de Pharao est tombé dans l'échoppe de vente de matériaux de Limsa Lominsa, quel le nom du propriétaire de l'échoppe?",
+			x:0.0, y: 0.0, r:2, o:["Vral","Domitien","Engerrand","Walter"] }, // "Engerrand" lvl 50
+		{ l:"Un fragment de Pharao est tombé dans l'échoppe de vente de matériaux de Vieille Gridania, quel le nom du propriétaire de l'échoppe?",
+			x:0.0, y: 0.0, r:3, o:["Bango Zango","Domitien","Vral","O'rhoyod","Walter"] }, // "O'rhoyod" 
+		{ l:"Un fragment de Pharao est tombé dans l'échoppe de vente de matériaux du Crystarium, quel le nom du propriétaire de l'échoppe?",
+			x:0.0, y: 0.0, r:1, o:["Maisenta","Vral","Walter","Roarich"] }, // "Vral"
+		// vente d'armures dans les villes de bases
+		{ l:"Un fragment de Pharao est tombé dans l'échoppe de vente d'armures de Limsa Lomisa, quel le nom du propriétaire de l'échoppe?",
+			x:0.0, y: 0.0, r:3, o:["Vral","Domitien","Engerrand","Iron Thunder","Maisenta"] }, // "Iron Thunder" lvl 50
+		{ l:"Un fragment de Pharao est tombé dans l'échoppe de vente d'armures de Vieille Gridanie, quel le nom du propriétaire de l'échoppe?",
+			x:0.0, y: 0.0, r:4, o:["Maisenta","Vral","Walter","Roarich","Domitien"] }, // "Domitien"
+		{ l:"Un fragment de Pharao est tombé dans l'échoppe de vente d'armures d'Ul'dah, quel le nom du propriétaire de l'échoppe?",
+			x:0.0, y: 0.0, r:0, o:["Gwalter","Bango Zango","Domitien","Vral","O'rhoyod"] }, // "Gwalter" - lvl50
+		// consortium dans les villes de bases
+		{ l:"Un fragment de Pharao est tombé du coté du Consortium de Brugaire, quel est le nom du vendeur de Légumes de Gysahl?",
+			x:0.0, y: 0.0, r:3, o:["Maisenta","Vral","Walter","Bango Zango","Maisenta","Roarich"] }, // "Bango Zango" lvl 50
+		{ l:"Un fragment de Pharao est tombé dans une échoppe des Lièvres Noirs, quel est le nom de la tenancière vendant des Légumes de Gysahl?",
+			x:0.0, y: 0.0, r:3, o:["Vral","Domitien","Engerrand","Maisenta","Walter","Roarich"] }, // "Maisenta" - lvl 100,50
+		{ l:"Un fragment de Pharao est tombé du coté du **independantimporter-ul'dah**, quel est le nom du vendeur de Légumes de Gysahl?",
+			x:0.0, y: 0.0, r:0, o:["Roarich","Vral","Domitien","Engerrand","Maisenta","Walter"] }, // "Roarich"
+		//
+		{ l:"Un Capitaine des tempêtes, garde du Maelstrom, a récemment entendu un 'plouf' dans la mer. Ce pourrait être un fragment de Pharao, quel est le nom de ce Capitaine?",
+			x:0.0, y: 0.0, r:1, o:["pipo1","Ghimthota"] }, // "Ghimthota"
+		{ l:"Tu peux lui demander de te rendre compte de tes Hauts Faits, mais il ignore que sous le banc de bois derrière lui se trouve un fragement de Pharao. Quel est son nom?",
+			x:0.0, y: 0.0, r:1, o:["pipo1","Jonathas"] }, // Jonathas - lvl 100,50
+		{ l:"Non loin des immortels, elle garde l'entrée des salles de jeu du Mirage de Platine, sans savoir qu'un fragment de Pharao est sous son comptoir. Quel est son nom?",
+			x:0.0, y: 0.0, r:1, o:["pipo1","Essylt"] }, // essylt - lvl50
+		{ l:"Il surveille les cuves de teinture du cuir, mais il ignore qu'au fond de l'une d'elle se trouve un fragment de Pharao. Quel est son nom?",
+			x:0.0, y: 0.0, r:1, o:["pipo1","Gratcant"] }, // Gratcant - lvl50
+		// liftier
+		{ l:"Elle est tellement focus sur son ascenseur permettant d'accéder au bastingage ou l'aérodrome qu'elle n'a pas remarqué le fragment de Pharao dans sa poche. Quel est son nom?",
+			x:0.0, y: 0.0, r:1, o:["pipo1","Skaenrael"] }, // skaenrael limsa - lvl50
+		//
 		{ l:"enigme3",
 			x:0.0, y: 0.0, r:0, o:["pipo1","pipo2"] }
 	]

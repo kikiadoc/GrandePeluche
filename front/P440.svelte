@@ -80,12 +80,12 @@
 		let delai
 		switch(premierNb) {
 			case  0: delai = 1; break
-			case  1: delai = 15*60000; break
-			case  2: delai = 30*60000; break
-			case  3: delai = 60*60000; break
-			case  4: delai = 120*60000; break
-			case  5: delai = 180*60000; break
-			default: delai = 240*60000; break
+			case  1: delai = 10*60000; break
+			case  2: delai = 20*60000; break
+			case  3: delai = 40*60000; break
+			case  4: delai = 60*60000; break
+			case  5: delai = 90*60000; break
+			default: delai = 120*60000; break
 		}
 		// notimer ?
 		// if (saisies.noTimer) delai = 1
@@ -165,7 +165,7 @@
 		let o = CONFIG.objets[i]
 		if (o.l==saisies.pL && isDistance(saisies.pX,saisies.pY,o.x,o.y,0.1) ) {
 			let ret= await apiCall(APIROOT+"propositionQuestion/"+i,"POST",{l:saisies.pL, x:saisies.pX, y:saisies.pY})
-			if (ret.status==200) playVideo("orthocomposants/orthocomposants-1")
+			if (ret.status==200) playVideo("X-orthocomposants/orthocomposants-1")
 		}
 		else {
 			saisies.failEcheance = Date.now()+ FAILTIMER
@@ -174,7 +174,7 @@
 				titre:"Mauvaise identification",
 				img: "commons/fail.gif",
 				body:[
-					"Je ne vois pas d{'objet permettant l'extraction d'élixir à cet endroit:",
+					"Je ne vois pas d'objet permettant l'extraction d'élixir à cet endroit:",
 					"("+CONFIG.lieux[saisies.pL].lbl+","+saisies.pX+","+saisies.pY+")",
 					{cls:"info", txt:"⚠️Superpose exactement ton personnage sur le composant et indique les coordonnées exactes de ta boussole"}
 				],
@@ -199,7 +199,7 @@
 		let ret=await apiCall(APIROOT+"propositionComposant/"+i,"POST")
 		switch(ret.status) {
 			case 200:
-				playVideo("orthocomposants/orthocomposants-2")
+				playVideo("X-orthocomposants/orthocomposants-2")
 				break
 			case 201: 
 				addNotification("Pas assez d'élixir selon le serveur","yellow",30)
