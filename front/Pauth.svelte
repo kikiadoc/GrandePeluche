@@ -29,7 +29,7 @@
 	// Gestion du pseudo et creation compte
 	/////////////////////////////////////////////////////////////////////
 	// précondition lodestone - vérif locale lodestone mais sera vérifiée aussi coté server
-	async function checkLodestone(prenom,nom,monde) {<!>
+	async function checkLodestone(prenom,nom,monde) {
 		addNotification("Pré-vérification Lodestone","lightgreen",3)
 		// acces lodestone via proxy sur adhoc.click (pour eviter les reponses opaques,sans atttente WS)
 		let ret = await apiCall("/lodestone/check/"+prenom+"/"+nom+"/"+monde,"GET",null,true,'-lodestone-')
