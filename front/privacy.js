@@ -1,6 +1,6 @@
 // Ce module regroupe les fonctions sensibles en terme de RGPD
 // cela inclu le tracking console car peut remonter des trucs style extension du nav
-import {displayInfo, getDynMetro, getLatence} from "./common.js"
+import {displayInfo, getDynMetro, getLatence, playDing} from "./common.js"
 import {GBLSTATE } from "./ground.svelte.js"
 
 //////////////////////////////////////////
@@ -17,7 +17,7 @@ export function G(g,m,f) {
 //////////////////////////////////////////
 // Gestion de la console et report d'erreur sur smartphone
 //////////////////////////////////////////
-let logStatements = {global:{}, reseau:{}, perf:{}, old: [], cur: [] }
+let logStatements = {errors:[],global:{}, reseau:{}, perf:{}, old: [], cur: [] }
 function cPush(o) {
 	if (logStatements.cur.lenght > 100) {
 		logStatements.old = logStatements.cur
@@ -43,6 +43,10 @@ function aClone(args) {
 export function addReport(section,key,value) {
 	if (logStatements[section])	logStatements[section][key]=value
 }
+export function addReportError(value) {
+	if (logStatements.errors.length > 10) logStatements.errors.shift()
+	logStatements.errors.push({dth: Date.now(), desc:value})
+}
 function gUpdate() {
 	logStatements.global.deepCheckSec= window.crossOriginIsolated
 	logStatements.global.metacache= GBLSTATE.swcReady
@@ -59,6 +63,8 @@ function gUpdate() {
 let cNew = null , cOld = null
 export function patchConsole() {
 	if (cNew) return displayInfo({body: ["capture déjà active"]})
+	if (!confirm("La capture console peut entrainer des ralentissements de ton équipement, ne le fait que sur conseil de Kikiadoc"))
+		return
 	cOld = window.console
 	cNew = (function(){
 		return {
@@ -91,7 +97,8 @@ export async function reportConsole() {
 	if (window.showSaveFilePicker) {
 		try {
 			gUpdate()
-			displayInfo({body:
+			playDing('call-to-attention')
+			displayInfo({autoClose: 5, body:
 				["Patiente quelques secondes, je prépare le rapport",
 				 "Pour envoyer ton rapport, tu dois l'enregistrer sur ton équipement",
 				]})
@@ -102,6 +109,7 @@ export async function reportConsole() {
 		  const writableStream = await newHandle.createWritable();
 		  await writableStream.write(reportBlob);
 		  await writableStream.close();
+			playDing('call-to-attention')
 			displayInfo({back:"stars", body:[
 				"Maintenant que tu as enregistré ton rapport, va sur Discord.",
 				"Envoie un MP a Kikiadoc en ajoutant le fichier nommé '"+newHandle.name+"' en pièce jointe à ton message",

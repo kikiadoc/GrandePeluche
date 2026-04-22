@@ -28,25 +28,30 @@ let perfStartDth=0
 let perfEndDth=0
 let perfNbFrames=0
 ////////////////////////////////////////////////////////////////////////////
-// options
+// options et utilitaires
 ////////////////////////////////////////////////////////////////////////////
 let options=loadIt("root3D.options",{sensibilite:3, wheelDir:true, debug: false, perf:true})
 options.IHM=isPC() // INIT type IHM (PC ou SM)
 export function babylonSetOption(o,v,quiet) {
 	let msg = null
 	switch(o) {
+		case "axes":
+			options[o] = (v!==undefined)? v: !options[o]
+			addNotification( (options[o])? "Axes: affichés":"Axes: non affichés")
+			setSceneActiveAxes()
+			break
 		case "wheelDir":
 			options[o] = (v!==undefined)? v: !options[o]
 			addNotification( (options[o])? "Molette: Tirer pour avancer":"Molette: Pousser pour avancer")
 			break
 		case "perf":
 			options[o] = (v!==undefined)? v: !options[o]
-			addNotification( (options[o])? "Affichage performances activé":"Affichage performances désactivé")
+			// addNotification( (options[o])? "Affichage performances activé":"Affichage performances désactivé")
 			break
 		case "debug":
 			options[o] = (v!==undefined)? v: !options[o]
-			if(syncIHM) syncIHM.debug = options[o] // permettre l'usage du mode debug 3D dans l'IHM
-			addNotification( (options[o])? "Mode debug activé":"Mode debug désactivé")
+			if(syncIHM) syncIHM.debug = options[o] // permettre l'usage du mode debug 3D dans l'IHM 
+			addNotification( (options[o])? "Mode debug activé (performance dégradée)":"Mode debug désactivé","orange")
 			break
 		case "fullscreen":
 			options[o] = v
@@ -54,7 +59,7 @@ export function babylonSetOption(o,v,quiet) {
 				enterFullScreen()
 			else
 				exitFullScreen()
-			addNotification( (options[o])? "Mode fullscreen activé":"Mode fullscreen désactivé")
+			// addNotification( (options[o])? "Mode fullscreen activé":"Mode fullscreen désactivé")
 			break
 		case "IHM":
 			options.IHM = !options.IHM
@@ -80,6 +85,10 @@ export function babylonHome() {
 	playDing('Ding')
 	padDoAction(padButtonsPC2[0]) // home
 }
+export function babylonGotoPos(x,y,z) {
+	let camera = sceneActive?.getCameraByName("camera")
+	if (camera) camera.position = new BABYLON.Vector3(x,y,z)
+}
 ////////////////////////////////////////////////////////////////////////////
 // lancement, arret, modif de la scene active, metrologie 
 ////////////////////////////////////////////////////////////////////////////
@@ -88,6 +97,7 @@ export async function babylonStart(pPseudo,pSyncIHM) {
 	try {
 		pseudo = pPseudo
 		syncIHM = pSyncIHM
+		syncIHM.debug = options.debug // synchro du mode debug
 		await engineLoad()
 		engineStart()
 		// addNotification("Chargement modèles 3D","green",2)
@@ -115,6 +125,20 @@ export async function babylonSetSceneActive(scene,nom) {
 	syncIHM.ws = sceneActive.metadata.WORLDSIZE/2
 	addSceneObservable(scene)
 	sceneActiveNom=nom
+	setSceneActiveAxes()
+}
+function setSceneActiveAxes(vPos) {
+	if (!sceneActive) return console.log("***** SetSceneActiveAxes, pas de sceneactive")
+	if (options.axes) {
+		// on active les axes si non déjà actifs
+		sceneActive.metadata.axes ??= new BABYLON.AxesViewer(sceneActive, sceneActive.metadata.WORLDSIZE/50);
+	}
+	else if (sceneActive.metadata.axes) {
+		sceneActive.metadata.axes.dispose()
+		sceneActive.metadata.axes=null
+	}
+	if (sceneActive.metadata.axes && vPos)
+		sceneActive.metadata.axes.update(vPos,BABYLON.Axis.X, BABYLON.Axis.Y, BABYLON.Axis.Z)
 }
 
 export function babylonIsSceneActive(nom) {
@@ -416,51 +440,52 @@ let padButtonDown = null
 function padButtonsInit() {
 	padButtonsPC1 =[
 		{ txt:" ", state: false },
-		{ txt:"⇈", state: false, camMove: BABYLON.Vector3.Forward() },
+		{ txt:"⏫", state: false, camMove: BABYLON.Vector3.Forward() },
 		{ txt:" ", state: false },
-		{ txt:"↶", state: false, camRota: new BABYLON.Vector2(0,-0.01) },
-		{ txt:"⇡", state: false, camSlow: BABYLON.Vector3.Forward()  },
-		{ txt:"↷", state: false, camRota: new BABYLON.Vector2(0,0.01)},
-		{ txt:"↥", state: false, camRota: new BABYLON.Vector2(-0.01,0) },
-		{ txt:"⇊", state: false, camMove: BABYLON.Vector3.Backward() },
-		{ txt:"↧", state: false, camRota: new BABYLON.Vector2(0.01,0)}
+		{ txt:"↩️", state: false, camRota: new BABYLON.Vector2(0.0,-0.01) },
+		{ txt:"🔼", state: false, camMove: new BABYLON.Vector3(0.0,0.0,0.1)  },
+		{ txt:"↪️", state: false, camRota: new BABYLON.Vector2(0.0,0.01)},
+		{ txt:"⤴️", state: false, camRota: new BABYLON.Vector2(-0.01,0.0) },
+		{ txt:"⏬", state: false, camMove: BABYLON.Vector3.Backward() },
+		{ txt:"⤵️", state: false, camRota: new BABYLON.Vector2(0.01,0.0)}
 	]
 	padButtonsPC2 =[
-		{ txt:"⇯", state: false, camHome: true, noRepeat: true},
+		{ txt:"🈴", state: false, camHome: true, noRepeat: true},
+		{ txt:"⬆️", state: false, camMove: BABYLON.Vector3.Up()},
 		{ txt:" ", state: false},
+		{ txt:"⬅️", state: false, camMove: BABYLON.Vector3.Left()},
+		{ txt:"✦", state: false, camHome: true, noRepeat: true},
+		{ txt:"➡️", state: false, camMove: BABYLON.Vector3.Right()},
 		{ txt:" ", state: false},
-		{ txt:" ", state: false},
-		{ txt:" ", state: false},
-		{ txt:" ", state: false},
-		{ txt:" ", state: false},
-		{ txt:" ", state: false},
+		{ txt:"⬇️", state: false, camMove: BABYLON.Vector3.Down()},
 		{ txt:" ", state: false}
 	]
 	padButtonsSM1 =[
 		{ txt:"⇈", state: false, camMove: BABYLON.Vector3.Forward()  },
-		{ txt:"⇡", state: false, camSlow: BABYLON.Vector3.Forward() },
+		{ txt:"⇡", state: false, camMove: new BABYLON.Vector3(0.0,0.0,0.1) },
 		{ txt:"↷", state: false, camRota: new BABYLON.Vector2(0,0.01) },
 		{ txt:"↥", state: false, camRota: new BABYLON.Vector2(-0.01,0) }
 	]
 	padButtonsSM2 =[
 		{ txt:"⇊", state: false, camMove: BABYLON.Vector3.Backward() },
-		{ txt:"⇣", state: false, camSlow: BABYLON.Vector3.Backward() },
+		{ txt:"⇣", state: false, camMove: new BABYLON.Vector3(0.0,0.0,-0.1) },
 		{ txt:"↶", state: false, camRota: new BABYLON.Vector2(0,-0.01) },
 		{ txt:"↧", state: false, camRota: new BABYLON.Vector2(0.01,0) }
 	]
 }
 function padDoAction(padButton) {
-	// console.log("padDoAction",padButton)
+	if (options.debug) console.log("padDoAction",padButton)
 	if (sceneActive) {
 		let camera = sceneActive.getCameraByName("camera")
-		if (padButton.camMove)
+		if (padButton.camMove) {
+			if (options.debug) console.log("padDoAction camMove",padButton)
 			camera.cameraDirection.addInPlace(camera.getDirection(padButton.camMove)
-																				.scale(sceneActive.metadata.WORLDSIZE*options.sensibilite/200))
-		if (padButton.camSlow)
-			camera.cameraDirection.addInPlace(camera.getDirection(padButton.camSlow)
-																				.scale(sceneActive.metadata.WORLDSIZE*options.sensibilite/2000))
-		if (padButton.camRota)
+																				.scale(sceneActive.metadata.WORLDSIZE*options.sensibilite*0.001))
+		}
+		if (padButton.camRota) {
+			if (options.debug) console.log("padDoAction camRota",padButton)
 			camera.cameraRotation.addInPlace(padButton.camRota.scale(0.1))
+		}
 		if (padButton.camHome) {
 			camera.position= sceneActive.metadata?.HOMEPOS.clone() || BABYLON.Vector3.Zero()
 			camera.rotation= sceneActive.metadata?.HOMEROT.clone() || BABYLON.Vector3.Zero()
@@ -488,6 +513,7 @@ function padPcSetup(padGrid,padButtons,v,h) {
 		button.background = "green";
 		button.onPointerDownObservable.add( () => padButtonDown = padButtons[i] )
 		button.onPointerUpObservable.add( () => padButtonDown = null )
+		button.isPointerBlocker=true
 		padGrid.addControl(button, Math.floor(i/3), i%3)
 	}
 }
@@ -508,6 +534,7 @@ function padSmSetup(padGrid,padButtons,v,h) {
 		button.background = "green";
 		button.onPointerDownObservable.add( () => padButtonDown = padButtons[i]  )
 		button.onPointerUpObservable.add( () => padButtonDown = null )
+		button.isPointerBlocker=true
 		padGrid.addControl(button, i, 0)
 	}
 }
@@ -580,16 +607,25 @@ function addSceneObservable(scene) {
 		}
 	})
   scene.onPointerObservable.add((eventData) => {
+		// if (options.debug) console.log("onPointerObservable",eventData)
 		switch(eventData.type) {
 			case BABYLON.PointerEventTypes.POINTERMOVE:
-				if (startDrag) {
-					// console.log("POINTERMOVE",eventData.event.movementX,eventData.event.movementY)
-					let camera = sceneActive.getCameraByName("camera")
-					camera.cameraRotation.addInPlace( (new BABYLON.Vector2(eventData.event.movementY,eventData.event.movementX)).scale(0.001))
+				// if (options.debug) console.log("POINTERMOVE",eventData,eventData.event.movementX,eventData.event.movementY)
+				if (startDrag && !padButtonDown) {
+					if (eventData.event?.buttons & 1) {
+						let camera = sceneActive.getCameraByName("camera")
+						camera.cameraRotation.addInPlace( (new BABYLON.Vector2(eventData.event.movementY,eventData.event.movementX)).scale(0.001))
+					}
+					if (eventData.event?.buttons & 2) {
+						let move = new BABYLON.Vector3(-eventData.event.movementX,eventData.event.movementY,0)
+						// if (options.debug) console.log("***rota:",move) // rota X et Y
+						camera.cameraDirection.addInPlace(camera.getDirection(move)
+																				.scale(sceneActive.metadata.WORLDSIZE*options.sensibilite*0.0001))
+					}
 				}
 				break
 			case BABYLON.PointerEventTypes.POINTERUP:
-				startDrag=false
+				startDrag=false 
 				if (options.debug) console.log("POINTERUP",eventData)
 				break
 			case BABYLON.PointerEventTypes.POINTERDOWN:
@@ -607,11 +643,14 @@ function addSceneObservable(scene) {
 					syncIHM.pz = pick?.z
 					if (eventData.event.button==2) {
 						sphereClick.vibility = (syncIHM.debug)? 1 : 0
-						sphereClick.position = new BABYLON.Vector3(pick.x,pick.y,pick.z)
+						sphereClick.position = new BABYLON.Vector3(pick?.x,pick?.y,pick?.z)
 						syncIHM.lx = pick?.x
 						syncIHM.ly = pick?.y
 						syncIHM.lz = pick?.z
 					}
+				}
+				if (options.axes) {
+					setSceneActiveAxes(new BABYLON.Vector3(pick?.x,pick?.y,pick?.z))
 				}
 				event3D("clickMesh",mesh?.name,mesh)
 				break;
@@ -683,7 +722,18 @@ export async function sceneLoadingCreate() {
 		LIGHT: new BABYLON.Vector3(-15, 0, -10)
 	}
 	// const camera = new BABYLON.ArcRotateCamera("camera", -Math.PI/2, Math.PI/3, 10, new BABYLON.Vector3(0, 0, 0), scene);
-	const camera = new BABYLON.UniversalCamera("camera", scene.metadata.HOMEPOS.clone(),scene);
+	const camera = new BABYLON.UniversalCamera("camera", scene.metadata.HOMEPOS.clone(),scene)
+	camera.attachControl(true);
+	camera.speed= 0.2
+	// camera.minZ = -scene.metadata.WORDSIZE/2 
+	// camera.maxZ = scene.metadata.WORDSIZE/2
+	camera.position = scene.metadata.HOMEPOS.clone()
+	camera.rotation = scene.metadata.HOMEROT.clone()
+	camera.inputs.clear()
+	// camera.inputs.addMouse()
+	// camera.inputs.addMouseWheel()
+	camera.attachControl(false);
+
 	const light = new BABYLON.HemisphericLight("light", scene.metadata.LIGHT.clone(),scene)
 	skyboxBuild(scene,"skybox")
 
@@ -787,6 +837,25 @@ function serverPush(op,o) {
 ////////////////////////////////////////////////////////////////////////
 // chrgement de la scene principale 
 ////////////////////////////////////////////////////////////////////////
+export async function babylonPreload(DESC3D) {
+	console.log("babylonPreload")
+	addNotification("Métacache: DL Modèles 3D...","green",10,"Ding")
+	let dlStart = performance.now()
+	let tblPromises = []
+	tblPromises.push(fetch(GP3DURL+DESC3D.PATH+DESC3D.ROOTDESC.glb))
+	Object.keys(DESC3D.OBJ3DDESC).forEach( (nom) => {
+		tblPromises.push(fetch(GP3DURL+DESC3D.PATH+DESC3D.OBJ3DDESC[nom].glb))
+	})
+	let asyncLoad = await Promise.all(tblPromises)
+	let loadError = asyncLoad.some((e)=> (e?.status != 200)  )
+	if (loadError) {
+		console.error("**** chargement modele 3D (loadError,asyncLoad)",loadError,asyncLoad)
+		throw new Error("Erreur de chargement des modèles 3D - contacte immediatement Kikiadoc")
+	}
+	let dlEnd = performance.now()
+	addNotification("Métacache: Modèles 3D OK, "+(Math.round(dlEnd-dlStart))+"ms","green",20,"Ding")
+	console.log("fin babylonPreload")
+}
 export async function babylonMainSceneCreate(DESC3D) {
 	console.log("babylonMainSceneCreate")
 	let dlStart = performance.now()
@@ -802,7 +871,8 @@ export async function babylonMainSceneCreate(DESC3D) {
 		console.log("metadata",scene.metadata)
 	
 		const camera = new BABYLON.UniversalCamera("camera", scene.metadata.HOMEPOS.clone(),scene)
-		// scene.gravity = new BABYLON.Vector3(0, -0.15, 0); 
+		
+		// scene.gravity = new BABYLON.Vector3(0, -0.15, 0);
 		// camera.applyGravity = true; 
 		camera.speed= DESC3D.CAM.speed
 		camera.minZ = DESC3D.CAM.minZ
@@ -811,7 +881,8 @@ export async function babylonMainSceneCreate(DESC3D) {
 		camera.rotation = scene.metadata.HOMEROT.clone()
 		camera.ellipsoid = new BABYLON.Vector3(DESC3D.CAM.elipsX,DESC3D.CAM.elipsY,DESC3D.CAM.elipsZ)
 		camera.inputs.clear()
-		camera.inputs.addMouse()
+		// camera.inputs.addMouse()
+		// camera.inputs.addMouseWheel()
 		camera.attachControl(false);
 		// Light
 		const l = new BABYLON.HemisphericLight("light", scene.metadata.LIGHT.clone())
@@ -834,7 +905,7 @@ export async function babylonMainSceneCreate(DESC3D) {
 		})
 		let asyncLoad = await Promise.all(tblPromises)
 		if(options.debug) console.log("** downloadPromises:",asyncLoad)
-		let loadError = asyncLoad.some((e)=>!e)
+		let loadError = asyncLoad.some((e)=> !e )
 		if (loadError) {
 			console.log("**** Erreur de chargement modele 3D",asyncLoad)
 			addNotification("Erreur de chargement du modele 3D","red",30)
@@ -860,7 +931,7 @@ export async function babylonMainSceneCreate(DESC3D) {
 export function babylonObjetActifUpdate(i,oDyn) {
 	if (!sceneActive) return console.log("** BUG objetActifUpdate sans sceneActive")
 	if (options.debug) console.log("babylonObjetActifUpdate",i,oDyn.mName,oDyn)
-	sceneActive.metadata.objetsActifs[i] ??= { i:i, type: null, cloned: null }
+	sceneActive.metadata.objetsActifs[i] ??= { i:i, type: null, cloned: null, mName:null }
 	let o = sceneActive.metadata.objetsActifs[i]
 	// Si le type a changé positionne le mesh
 	if (o.mName != oDyn.mName) { 
@@ -875,15 +946,15 @@ export function babylonObjetActifUpdate(i,oDyn) {
 		}
 		// on instancie le nouveau
 		if (oDyn.mName) {
-			// creation du clone 
+			// creation du clone
 			let ac = sceneActive.metadata.assetsContainers[oDyn.mName]
 			let mdDesc= sceneActive.metadata.OBJ3DDESC[oDyn.mName]
-			if (options.debug) console.log("mdDesc",i,mdDesc)
+			if (options.debug) console.log("babylonObjetActifUpdate mdDesc,ac",i,mdDesc,ac)
 			o.cloned = ac?.instantiateModelsToScene((n) => "gpObjet="+i+" gpMesh="+oDyn.mName+" gpTech="+n, false, { doNotInstantiate: true });
 			let root = o.cloned?.rootNodes?.[0]
 			let anim = o.cloned?.animationGroups?.[0]
 			if (root) {
-				root.position=new BABYLON.Vector3(mdDesc.x,mdDesc.y,mdDesc.z)
+				root.position=new BABYLON.Vector3(0,0,0)
 				root.rotation=new BABYLON.Vector3(mdDesc.rx,mdDesc.ry,mdDesc.rz)
 				root.scaling=new BABYLON.Vector3(mdDesc.s,mdDesc.s,mdDesc.s)
 			}
@@ -897,10 +968,9 @@ export function babylonObjetActifUpdate(i,oDyn) {
 							0,2*Math.PI,BABYLON.Animation.ANIMATIONLOOPMODE_CYCLE,null,null,sceneActive
 				)
 			}
-	
 		}
-		if (options.debug) console.log("babylonObjetActifUpdate internal",i,o)
 		o.mName=oDyn.mName
+		if (options.debug) console.log("babylonObjetActifUpdate apres construction mesh",i,o.mName,o)
 	}
 	// si position vide , retourne
 	if (! o.mName) return
@@ -908,15 +978,17 @@ export function babylonObjetActifUpdate(i,oDyn) {
 	// Si pas de mesh etc... bug
 	if (! root) return console.log("** BUG sur objetActifUpdate - o.cloned?.rootNodes?.[0]") 
 	// si update position ou rotation...
-	if (options.debug) console.log("mesh Posisition",i,oDyn.x,oDyn.y,oDyn.z)
-	if (! root.position.equalsToFloats(oDyn.x||0.0,oDyn.y||0.0,oDyn.z||0.0))
-		root.position=new BABYLON.Vector3(oDyn.x||0.0,oDyn.y||0.0,oDyn.z||0.0)
+	if (! root.position.equalsToFloats(oDyn.x,oDyn.y,oDyn.z)) {
+		root.position=new BABYLON.Vector3(oDyn.x,oDyn.y,oDyn.z)
+		if (options.debug) console.log("mesh Posisition",i,oDyn.x,oDyn.y,oDyn.z,root.position)
+	}
 	/* 
 	if (! root.rotation.equalsToFloats(oDyn.rx||0.0,oDyn.ry||0.0,oDyn.rz||0.0))
 		root.rotation=new BABYLON.Vector3(oDyn.rx||0.0,oDyn.ry||0.0,oDyn.rz||0.0)
 	*/
 	if (options.debug) console.log("mesh Desc",root)
 }
+
 ////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////
@@ -1917,5 +1989,5 @@ export function babylonObjetActifUpdate(i,oDyn) {
 </div>
 
 */
-/* root3D.js */
+/* BabRoot.js */
 

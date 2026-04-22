@@ -12,7 +12,7 @@ const config = {
       }						
 		),
 		paths: {
-		      base: '/enjoyTest',
+		      base: '/enjoy',
 		},
 		serviceWorker: {
 			register: true,
@@ -33,7 +33,7 @@ const config = {
         'font-src': [ 'self', 'https://fonts.googleapis.com', 'https://fonts.gstatic.com' ],
         'script-src': [ 'self', 'https://cdn.adhoc.click' ],
         'style-src': [ 'self', 'unsafe-inline', 'https://cdn.adhoc.click', 'https://fonts.googleapis.com' ],
-        'connect-src': [ 'self', 'https://api.adhoc.click', 'wss://api.adhoc.click', 'https://cdn.adhoc.click' ]
+        'connect-src': [ 'self', 'https://api.adhoc.click', 'wss://api.adhoc.click', 'https://cdn.adhoc.click', 'https://v2.xivapi.com', 'https://universalis.app' ]
 			}
 		}
 	}

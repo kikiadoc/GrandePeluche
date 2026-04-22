@@ -1,10 +1,10 @@
 
-
 const gbl = require('../infraback/gbl.js');
 const wsserver = require('../infraback/wsserver.js');
 const pseudos = require('../infraback/pseudos.js');
 const collections = require('../infraback/collections.js');
 const pCloud = require('../infraback/pCloudTools.js');
+const discord = require('../infraback/discord.js');
 const pFs = require('fs/promises');
 
 const { PollyClient, SynthesizeSpeechCommand} = require("@aws-sdk/client-polly"); // CommonJS import
@@ -230,8 +230,8 @@ async function getTTS(texte) {
 //////////////////////////////////////////////////////////////////////////
 // aiTTS: appelle l'AI pour le texte et retourne un byteArray de la synthès
 async function aiTTS(texte) {
-	let params = Object.create(paramsBase)
 	console.log('aiTTS:',texte)
+	let params = Object.assign({},paramsBase)
 	params.Text = '<speak><prosody volume="x-loud"><amazon:effect name="drc">'
 	params.Text +=texte
 	params.Text += '</amazon:effect></prosody></speak>'
@@ -273,6 +273,7 @@ async function sendTTS(pseudo,tblTTS) {
 
 
 exports.httpCallback = async (req, res, method, reqPaths, body, pseudo, pwd) => {
+	pseudos.check(pseudo,pwd) // check pseudo
 	switch ( method ) {
 		case "GET":
 			switch ( reqPaths[2] ) {
@@ -297,8 +298,30 @@ exports.httpCallback = async (req, res, method, reqPaths, body, pseudo, pwd) => 
 					})
 					gbl.exception("ok",200)
 			}
+		case "POST": 
+			switch(reqPaths[2]) {
+				case "aideDemande":
+					wsserver.broadcastSimpleText("J'ai besoin d'aide", "Ding", "blue", 10, pseudo)
+					sendTTS (null,[
+						{statique:true,  file: ( gbl.escapeTexte(pseudo) )+'.mp3' },
+						{statique:true,  file: ( gbl.escapeTexte("a besoin d'aide") )+'.mp3' }
+					])
+					gbl.exception( "ok via ws" , 200) 
+				case "aideMessage":
+					let oBody=JSON.parse(body)
+					if (!oBody || !oBody.message) gbl.exception("body sans message",400)
+					let m = discord.escapeText(oBody.message)
+					wsserver.broadcastSimpleText(m, "Ding", "blue", 10, pseudo)
+					sendTTS (null,[
+						{statique:true,  file: ( gbl.escapeTexte(pseudo) )+'.mp3' },
+						{statique:true,  file: ( gbl.escapeTexte("dit") )+'.mp3' },
+						{statique:false, file: await pubSrvTTS(m) }
+					])
+					await discord.postMessage("discussion","**"+pseudo + " dit:** " + m,false,"noTrailer")
+					gbl.exception( "ok via ws" , 200) 
+			}
 	}
-	gbl.exception("Err param",400)
+	gbl.exception("Err param sur TTS",400)
 }
 
 exports.getTTS = getTTS

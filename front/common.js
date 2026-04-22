@@ -13,6 +13,8 @@ export const urlRaw = 'https://filedn.eu/lxYwBeV7fws8lvi48b3a3TH/'
 export const urlImg = 'https://cdn.adhoc.click/'+CDNVER+'/'
 export const urlCdn = 'https://cdn.adhoc.click/'+CDNVER+'/'
 export const urlCdnAI = 'https://cdn.adhoc.click/AI-Generated/'
+export const urlCdnSTATIC = 'https://cdn.adhoc.click/STATIC/'
+export const urlCdnTTS = 'https://cdn.adhoc.click/FF-TTS-STATIC/'
 export const urlMp3 = 'https://cdn.adhoc.click/'+CDNVER+'/'
 const urlApi = 'https://api.adhoc.click/api'+APITYPE
 const wsUrl = 'wss://api.adhoc.click:443/ws'+APITYPE+'/'
@@ -32,6 +34,25 @@ export function capitalizeFirstLetter(str) { return str.charAt(0).toUpperCase() 
 export function lowerFirstLetter(str) { return str.charAt(0).toLowerCase() + str.slice(1); }
 // arrondi un float selon f (f::= 10,100,1000...)
 export function roundFloat(v,f) { return Math.floor(v*(f||10)) / (f||10) }
+
+function checkNbCharInTemplate(ch,str1,str2) {
+	// if (str1.length!=str2.length) return false
+	let nb1=0,nb2=0
+	for (let i=0; i<str1.length; i++) { if (str1.charAt(i)==ch) nb1++ }
+	for (let i=0; i<str2.length; i++) { if (str2.charAt(i)==ch) nb2++ }
+	return nb1==nb2
+}
+export function checkTemplate(str,template) {
+	if (!str || !template || str.length!=template.length) return false
+	if (!checkNbCharInTemplate(" ",template,str)) return false
+	if (!checkNbCharInTemplate("'",template,str)) return false
+	if (!checkNbCharInTemplate(".",template,str)) return false
+	if (!checkNbCharInTemplate("-",template,str)) return false
+	if (!checkNbCharInTemplate(",",template,str)) return false
+	if (!checkNbCharInTemplate("/",template,str)) return false
+	if (!checkNbCharInTemplate("_",template,str)) return false
+	return true
+}
 
 // return le dth d'une string JJ/MM HH:MM, ou 0 si bad format
 export function parseJJMMHHMM(s) {
@@ -56,6 +77,10 @@ export function parseJJMMHHMM(s) {
 	return new Date(yy, mo-1, jj, hh, mm).valueOf();
 }
 
+export function aaaammjjThhmm(dth) {
+	let date = new Date(dth)
+	return date.getFullYear()+"-"+p2(date.getMonth()+1)+"-"+p2(date.getDate())+"T"+p2(date.getHours())+":"+p2(date.getMinutes())
+}
 // ms est un nombre de millisecond
 export function hhmmss(ms) {
 	if (ms) {
@@ -197,6 +222,22 @@ export function isDistance(x,y,tX,tY,d) {
   return (x>=tX-d && x<=tX+d && y>=tY-d && y<=tY+d)
 }
 
+// retourne le nombre de bits dans un int de 32 bits max.
+export function intCountBits32(n) {
+	// https://stackoverflow.com/questions/43122082/efficiently-count-the-number-of-bits-in-an-integer-in-javascript
+	n = n - ((n >> 1) & 0x55555555)
+	n = (n & 0x33333333) + ((n >> 2) & 0x33333333)
+	return ((n + (n >> 4) & 0xF0F0F0F) * 0x1010101) >> 24
+}
+export function intCountBits(n) {
+  var bits = 0
+  while (n !== 0) {
+    bits += intCountBits32(n | 0)
+    n /= 0x100000000
+  }
+  return bits
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////////////
 // Détection du type d'équipement / capacité
@@ -224,7 +265,7 @@ export function isPWA() {
 }
 export function isAdmin(pseudo) {
 	// pas de soucis de cybersecu, le serveur fera la différence si besoin
-	return (pseudo.startsWith('Kikiadoc') || pseudo.startsWith('Grande') || pseudo.startsWith('Althea') )
+	return (pseudo?.startsWith('Kikiadoc') || pseudo?.startsWith('Althea') )
 }
 ///////////////////////////////////////////////////////////////////////////////////////
 // AFFICHAGE
@@ -311,7 +352,7 @@ export async function wsSend(o) {
 	ws.send( JSON.stringify(o) )
 	return true
 }
-export function disconnectFromServer(user) {
+export function disconnectFromServer() {
 	if (ws) {
 		console.log("force disconnect: ws close en cours");
 		try { ws.close(); ws = null }
@@ -329,112 +370,121 @@ function wsPing() {
 	wsTimerError = setTimeout(wsTimeout, 90000)
 }
 
-export async function connectToServer(cbStatus, cbMessage,clientVersion) {
-		disconnectFromServer()
-		const wsId=Date.now()
-		console.log("WS connecting...id=",wsId)
-		ws = new WebSocket(wsUrl)
-		ws.onmessage = (webSocketMessage) => {
-			try{
-				// console.log("webSocketMessage",webSocketMessage);
-  		  const mBody = JSON.parse(webSocketMessage.data);
-	      // console.log("MsgFromWs:", mBody);
-				// traitement des messages standards
-				switch(mBody.op) {
-					case "pong" :
-						// Reception d'un pong, emission d'un ping sur timer
-						clearTimeout(wsTimerError); // annule le timeout d'erreur
-					  wsTimerPing = setTimeout(wsPing, 45000); // ping prochain
-						console.log("Pong reqVer=",mBody.clientVersion,"cliVer=",clientVersion)
-						if (mBody.clientVersion && clientVersion && mBody.clientVersion>clientVersion) {
-							addNotification("Nouvelle version disponible, recharge la page (F5)","red",60);
-							playDing("call-to-attention")
-						}
-						break;
-					case "elipticKeyOk" :
-						console.log("iam... crypto ephemere signée acceptée par le serveur")
-						// password temporaire accepté
-						storeIt("pseudoDesc",mBody.pseudoDesc)
-						let es = loadIt("elipticSecurity",{})
-						storeIt("pseudoPwd", mBody.pseudoDesc.pwd);
-						wsPing(); // Démarrage de la sequence ping/pong
-						cbStatus(wsStatus=1);
-						// si apicall en attente, libere l'apicall
-						let tmpApiWaiting = apiWaiting
-						apiWaiting=[];
-						console.log("Release API call en attente de validation crypto ephemere:",tmpApiWaiting.length)
-						tmpApiWaiting.forEach( (e) => {console.log("Release APICALL",e.u); e.o()} )
-						// si msg en attente, libere les msg
-						let tmpMsgWaiting = msgWaiting
-						msgWaiting=[];
-						console.log("Release MSG call en attente de validation crypto ephemere:",tmpMsgWaiting.length)
-						tmpMsgWaiting.forEach( (e) => {console.log("Release MSG",e.m); e.o()} )
-						break;
-					case "erreur" :
-						let dspMsg = ""
-						if (mBody.texte) dspMsg += mBody.texte
-						if (mBody.msg) dspMsg += mBody.msg
-						if (mBody.name) dspMsg += " ("+mBody.name+")"
-						if (mBody.code) dspMsg += " ("+mBody.code+")"
-						addNotification(dspMsg,"red",60);
-						break;
-					default :
-						cbMessage(mBody);
-				}
+export function getPseudoFromStorage() {
+	return loadIt("pseudo",null);
+}
+
+// Reception de la demande d'init depuis le server 
+async function wsAuthInit(ws,mBody,clientVersion,webAuth) {
+	const es = loadIt("elipticSecurity", {})
+	if (!webAuth.pseudo || !es.jwkPrivateKey || !es.jwkPublicKey) {
+		addNotification("Erreur de logique: pseudo ou clef elliptique non défini, contacte Kikiadoc","red",60)
+		ws.close()
+		return
+	}
+	console.log("iam... Envoi signature elliptique au serveur",webAuth.ephemere+mBody.challenge)
+	let b64uSignature = u8_b64u(await u8ElipticSign(mBody.challenge,es))
+	ws.send( JSON.stringify(
+		{
+			op: "iam",
+			pseudo: webAuth.pseudo,
+			prenom: webAuth.prenom,
+			nom: webAuth.nom,
+			monde: webAuth.monde,
+			lastClose: wsLastClose,
+			clientVersion: clientVersion,
+			// newPwd: es.newPwd, 
+			// publicKey: es.jwkPublicKey,
+			b64uSignature: b64uSignature
+		} ));
+}
+export async function connectToServer(cbStatus, cbMessage,clientVersion,webAuth) { 
+	disconnectFromServer()
+	const wsId=Date.now()
+	console.log("WS connecting...id=",wsId)
+	ws = new WebSocket(wsUrl)
+	ws.onmessage = async (webSocketMessage) => {
+		try{
+			// console.log("webSocketMessage",webSocketMessage)
+			const mBody = JSON.parse(webSocketMessage.data);
+			// traitement des messages standards
+			switch(mBody.op) {
+				case "init" :
+					await wsAuthInit(ws,mBody,clientVersion,webAuth)
+					break;						
+				case "pong" :
+					// Reception d'un pong, emission d'un ping sur timer
+					clearTimeout(wsTimerError); // annule le timeout d'erreur 
+					wsTimerPing = setTimeout(wsPing, 45000); // ping prochain
+					console.log("Pong reqVer=",mBody.clientVersion,"cliVer=",clientVersion)
+					if (mBody.clientVersion && clientVersion && mBody.clientVersion>clientVersion) {
+						addNotification("Nouvelle version disponible, recharge la page (F5)","red",60);
+						playDing("call-to-attention")
+					}
+					break
+				case "elipticKeyOk" :
+					console.log("iam... crypto ephemere signée acceptée par le serveur")
+					// stocke la clef pour le call api
+					storeIt("pseudo",mBody.pseudo)
+					storeIt("pseudoPwd",mBody.pwd)
+					wsPing(); // Démarrage de la sequence ping/pong  
+					cbStatus(wsStatus=1)
+					// si apicall en attente, libere l'apicall
+					let tmpApiWaiting = apiWaiting
+					apiWaiting=[];
+					console.log("Release API call en attente de validation crypto ephemere:",tmpApiWaiting.length)
+					tmpApiWaiting.forEach( (e) => {console.log("Release APICALL",e.u); e.o()} )
+					// si msg en attente, libere les msg
+					let tmpMsgWaiting = msgWaiting
+					msgWaiting=[];
+					console.log("Release MSG call en attente de validation crypto ephemere:",tmpMsgWaiting.length)
+					tmpMsgWaiting.forEach( (e) => {console.log("Release MSG",e.m); e.o()} )
+					break;
+				case "erreur" :
+					let dspMsg = ""
+					if (mBody.texte) dspMsg += mBody.texte
+					if (mBody.msg) dspMsg += mBody.msg
+					if (mBody.name) dspMsg += " ("+mBody.name+")"
+					if (mBody.code) dspMsg += " ("+mBody.code+")"
+					addNotification(dspMsg,"red",60);
+					break;
+				default :
+					cbMessage(mBody);
 			}
-			catch(e) {
-	      console.log("Exception/ws message", e);
-				addNotification("Erreur: " + wsUrl + " e=" + e.toString(), "red");
-			}
-	  };
-		ws.onopen = async (ev) => {
-			console.log('WS connecté id=',wsId)
-			const pseudo = loadIt("pseudo","nondefini");
-			const pwd = loadIt("pseudoPwd", "00000000-0000-4000-8000-000000000000");
-			let es = loadIt("elipticSecurity", {})
-			if (es.jwkPrivateKey==null || es.jwkPublicKey==null) {
-				addNotification("Erreur: crypto eliptic root key non définie","red",60)
-				ws.close()
-				return
-			}
-			es.newPwd = uuidv4() // generation aleatoire
-			es.signature = await cryptoSign(pseudo+es.newPwd)
-			console.log("iam... creation crypto ephemere signée selon crypto eliptic root")
-			ws.send( JSON.stringify(
-				{
-					op: "iam",
-					pseudo: pseudo,
-					pwd: pwd, // inutile en elliptic
-					lastClose: wsLastClose,
-					clientVersion: clientVersion,
-					newPwd: es.newPwd,
-					publicKey: es.jwkPublicKey,
-					signature: es.signature
-				} ));
-			console.log("iam... demande validation crypto ephemere signée sur server")
-		};
-		ws.onclose = (ev) => {
-			wsLastClose = ev.code;
-			console.log("WS close (id,code):",wsId,wsLastClose);
-			clearTimeout(wsTimerPing)
-			cbStatus(wsStatus=0);
-			// Si la connexion est perdu....
-			displayInfo({
-				titre:"Déconnecté du server multijoueurs "+wsUrl+ " (code:"+wsLastClose+")",
-				body: [
-					"Il faut recharger la page ou fermer/ouvrir la fenêtre de ton navigateur.",
-					"Ce message peut-être normal si tu t'es connecté depuis une autre fenêtre "+
-					"ou si ton équipement passe en veille"
-				],
-				trailer: "En cas de souci, contacte Kikiadoc sur discord"
-			});
-		};
-		ws.onerror = (ev) => {
-			clearTimeout(wsTimerPing)
-			cbStatus(wsStatus=2)
-			addNotification("Erreur avec "+wsUrl+", contacter Kikiadoc sur discord","red",60);
-		}; 
-  };
+		}
+		catch(e) {
+			console.log("Exception/ws message", e);
+			addNotification("Erreur: " + wsUrl + " e=" + e.toString(), "red");
+			ws.close()
+		}
+	};
+	ws.onopen = async (ev) => {
+		console.log('WS connecté id=',wsId,'ephemere:',webAuth.ephemere)
+	};
+	ws.onclose = (ev) => {
+		wsLastClose = ev.code;
+		console.log("WS close (id,code,msg):",wsId,wsLastClose,ev);
+		clearTimeout(wsTimerPing)
+		cbStatus(wsStatus=0);
+		// Si la connexion est perdu...
+		displayInfo({
+			titre:"Déconnecté du server multijoueurs "+wsUrl+ " (code:"+wsLastClose+")",
+			body: [
+				"Tu as été déconnecté de façon autoritaire par SyncServer, le serveur de synchronisation multi-joueurs de la Grande Peluche",
+				"Raison: "+ ev.code + " ("+ (ev.reason || "sans libellé")+")" ,
+				{ cls:"petit", txt: "Il faut recharger la page ou fermer/ouvrir la fenêtre de ton navigateur. "+
+						"Ce message peut-être normal si tu t'es connecté depuis une autre fenêtre "+
+						"ou si ton équipement passe en veille profonde." }
+			],
+			trailer: "Si cela se reproduit, contacte Kikiadoc sur discord"
+		});
+	};
+	ws.onerror = (ev) => {
+		clearTimeout(wsTimerPing)
+		cbStatus(wsStatus=2)
+		addNotification("Erreur avec "+wsUrl+", contacter Kikiadoc sur discord","red",60);
+	}; 
+};
 
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -442,7 +492,7 @@ export async function connectToServer(cbStatus, cbMessage,clientVersion) {
 ///////////////////////////////////////////////////////////////////////////////////////
 
 // Retourne toujours un objet ou null
-export async function apiCallExtern(url,method,body)
+export async function apiCallExtern(url,method,body,quiet)
 {
 	try {
 		const res = await fetch(url, {
@@ -452,7 +502,9 @@ export async function apiCallExtern(url,method,body)
 			body: (body)? JSON.stringify(body) : null
 		});
 		if (res.status >= 300) {
-			addNotification("Erreur sur "+url+ ": ("+ res.status+ ") -- contactez Kikiadoc sur discord", "red", 60);
+			console.log("Erreur sur "+url+" : "+ res.status)
+			if (!quiet)
+				addNotification("Erreur sur "+url+ ": ("+ res.status+ ") -- contactez Kikiadoc sur discord", "red", 60);
 			return null
 		}
 	  return await res.json()
@@ -472,8 +524,10 @@ export function getLatence() { return dynMetro.srv && (Math.round(Math.floor(100
 }
 
 
-// appel api de la grande peluche: url, mehod, body, noWaitWS: ne pas attendre le WS pour l'api call
-export async function apiCall(url,method, body, noWaitWs)
+// appel api de la grande peluche: url, mehod, body,
+// noWaitWS: ne pas attendre le WS pour l'api call
+// forcePseudo: force l'usage d'un pseudo "transiant"
+export async function apiCall(url,method, body, noWaitWs, forcePseudo)
 {
 	try {
 		// le WS doit être connecte pour disposer de la clef crypto éphémère... sauf demande exlicite
@@ -482,7 +536,7 @@ export async function apiCall(url,method, body, noWaitWs)
 			await waitWsForAPI(url) 
 		}
 		// console.log("API Call",url);
-		const user = loadIt("pseudo","nondefini");
+		const user = forcePseudo || loadIt("pseudo","-nondefini-")
 		// clef éphémère ou précedent ou init, permet l'appel si nowait sur WS
 		const pwd = loadIt("pseudoPwd", "00000000-0000-4000-8000-000000000000")
 		dynMetro.cliReq = performance.now()
@@ -522,39 +576,56 @@ export async function apiCall(url,method, body, noWaitWs)
 const ecKeyGenParams = { name: "ECDSA", namedCurve: "P-384" }
 const ecKeyImportParams = { name: "ECDSA", namedCurve: "P-384" }
 const ecdsaParams = { name: "ECDSA", hash: "SHA-256" }
-// creation d'une paire de clefs, retourne la publique ou null
-export async function crypoCreateKeyPair() {
+export function b64_b64u(b64) {
+    return b64.replaceAll('+', '-').replaceAll('/', '_')
+}
+export function b64u_b64(b64u) {
+		return b64u.replaceAll('-', '+').replaceAll('_', '/') // base64url -> base64
+}
+export function u8_b64u(u8) {
+		return new Uint8Array(u8).toBase64({alphabet:"base64url"})
+}
+export function b64u_u8(b64u) {
+    return Uint8Array.fromBase64(b64u, {alphabet:"base64url"} )
+}
+export function b64u_str(b64u) {
+    return atob(b64u_b64(b64u))
+}
+export function str_b64u(txt) {
+		return b64_b64u(btoa(txt))
+}
+export function str_u8(txt) {
+		return Uint8Array.fromBase64(btoa(txt))
+}
+
+// creation d'une paire de clefs, retourne la clef ou null
+export async function cryptoNewElliptic() {
 	try {
+		// addNotification("Création clef crytographique elliptique","lightgreen",3)
 		let keyPair = await crypto.subtle.generateKey(ecKeyGenParams, true,  ["sign", "verify"] );
-		let jwkPublicKey = await crypto.subtle.exportKey("jwk",keyPair.publicKey);
-		let jwkPrivateKey = await crypto.subtle.exportKey("jwk",keyPair.privateKey);
-		// stockage des clefs
-		storeIt("elipticSecurity", {jwkPublicKey: jwkPublicKey, jwkPrivateKey: jwkPrivateKey})
-		return jwkPublicKey;		
+		return {
+			jwkPublicKey: await crypto.subtle.exportKey("jwk",keyPair.publicKey),
+			jwkPrivateKey: await crypto.subtle.exportKey("jwk",keyPair.privateKey)
+		}
 	}
 	catch(e) {
-		console.log(e)
+		displayInfo({titre:"Erreur dans cryptoNewElliptic",
+								 body:[e?.message],
+								 trailer:"Contacter Kikiadoc", back: "rouge", ding:"explosion"})
 		return null
 	}
 }
-async function cryptoSign(texte) {
-	try {
-		let es = loadIt("elipticSecurity", {} )
-		let jwkPrivateKey = await crypto.subtle.importKey(
-			"jwk", es.jwkPrivateKey, ecKeyImportParams, false, ["sign"]
-		)
-		let signature = await crypto.subtle.sign(
-			 ecdsaParams, jwkPrivateKey, new TextEncoder().encode(texte)
-		)
-		let ret = uint8ArrayToHex(signature);
-		// console.log("signed",signature,"ret",ret)
-		return ret;
-	}
-	catch (e) {
-		addNotification("Erreur cryptoSign elipticCurve, contactez Kikiadoc","red,60")
-		console.log(e)
-		return null;
-	}
+// signe un texte avec l'eliptic en parametre et retourne un U8int
+export async function u8ElipticSign(texte,es) {
+	return await crypto.subtle.sign(
+		ecdsaParams,
+		await crypto.subtle.importKey("jwk", es.jwkPrivateKey, ecKeyImportParams, false, ["sign"]),
+		new TextEncoder().encode(texte))
+}
+// signe un texte avec l'eliptic courante et retourne une chaine HEX
+export async function cryptoSign(texte) {
+	let es = loadIt("elipticSecurity", {} )
+	return uint8ArrayToHex(u8ElipticSign(texte,es))
 }
 // pour test uniquement, le verify est fait sur le server 
 async function cryptoVerify(texte, hexString) {
@@ -582,7 +653,7 @@ async function cryptoClearKey() {
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
-// GESTION DU STOCKAGE
+// GESTION DU STOCKAGE 
 ///////////////////////////////////////////////////////////////////////////////////////
 export function loadIt(cle,defaut)
 {
@@ -652,6 +723,7 @@ export function markClick(e) {
 	// console.log("markclick",e.toString())
 	e.gpHelp ??= e.currentTarget.getAttribute("gphelp")
 	e.gpImg ??= e.currentTarget.getAttribute("gpImg")
+	e.gpImgClass ??= e.currentTarget.getAttribute("gpImgClass")
 	e.gpVideo ??= e.currentTarget.getAttribute("gpVideo")
 	e.gpNotif ??= e.currentTarget.getAttribute("gpNotif")
 	e.gpLink ??= e.currentTarget.getAttribute("gpLink")
@@ -679,11 +751,11 @@ export function countDownInit(node) {
 // curval peut-être >0, 0 ou <0
 function timerCountDown() {
 	// console.log("timerCoundDownStart")
-	let tblElt = document.getElementsByTagName('countdown')
+	let tblElt = Array.from(document.getElementsByTagName('countdown'))
+	// console.log("tblElt",tblElt)
 	let nb = tblElt.length
 	// console.log('countdown #elt in dom:',nb)
-	for (let i = 0; i<nb; i++) {
-		let elt = tblElt.item(i)
+	for (let elt of tblElt) {
 		let tDth=elt.getAttribute("dth")
 		if (tDth) {
 			// cas du timer
@@ -705,17 +777,10 @@ function timerCountDown() {
 		if (tCnt) {
 			// cas du compteur
 			let cnt = parseInt(tCnt,10)
-			let step = parseInt(elt.getAttribute("step"),10) || 1
-			let tStart = elt.getAttribute("start")
-			if (!tStart) {
-				tStart = Date.now()
-				elt.setAttribute('start',tStart)
-			}
-			else {
-				tStart = parseInt(tStart,10)
-			}
+			let step = parseInt(elt.getAttribute("cntstep"),10) || 1
+			let tStart = parseInt(elt.getAttribute("cntdth"),10) || 1
 			// calcul de la valeur : Date.now()-tStart est le nombre de ms a prendre en compte
-			let current= cnt- ((step* (Date.now()-tStart) / 1000))
+			let current= cnt - ((step * (Date.now()-tStart) / 1000))
 			elt.setAttribute('curval',current)
 			if (current > 0) {
 				elt.innerHTML = String(Math.floor(current))
@@ -728,6 +793,7 @@ function timerCountDown() {
 				elt.innerHTML = elt.getAttribute('txtTimeout') || "0"
 				elt.dispatchEvent(new Event("cdTimeout",{ bubbles: true} ))
 			}
+			continue // countdown suivant
 		}
 	}
 	// console.log("timerCoundDownEnd")
@@ -923,7 +989,7 @@ export function mediaPlay(dom,resume) {
 	if (!resume) {
 		console.log('Pipeline reset pour',domId,domSrc)
 		dom.pause() // gestion du cas de media en cours, par précaution (noop si pas playing)
-		dom.load() // reset du pipeline pour éviter les abort error
+		dom.load() // reset du pipeline pour éviter les abort error 
 	}
 	dom.play()
 		.then((e)=>console.log("mediaPlayOk",domId,domSrc)) 
@@ -1046,7 +1112,7 @@ export function audioResume() {
 function getDescAudioByName(nom) {
 	const desc = AUDIODESCS[nom]
 	if (desc) return desc
-	addNotification("AudioBlaster: pas normalized: "+nom,"yellow",10)
+	addNotification("AudioBlaster: pas équalisée: "+nom,"yellow",10)
 	return null
 };
 
@@ -1086,9 +1152,16 @@ export function playMusic(music,force) {
 export function playDing(mp3) {
 	let ap=document.getElementById("ding")
 	if (!ap) return addNotification("playDing dom not ready","red",10)
+	let desc= getDescAudioByName(mp3) || AUDIODESCS.Ding
 	// setup handler si besoin
 	if (!ap.onerror) ap.onerror = function(e) {	 mediaError(e) }
-	let desc= getDescAudioByName(mp3) || AUDIODESCS.Ding
+	if (desc.ifDingPause) {
+		ap.onended = audioResume
+		audioPause()	
+	}
+	else {
+		ap.onended = null
+	}
 	ap.gpDesc= desc
 	ap.src= urlCdn+desc.mp3
 	ap.volume = Math.min(1.0,desc.vol*ap.gpVolume)
@@ -1166,7 +1239,7 @@ export function playVideo(mp4,cb,tTime,cbLu) {
 	const desc = VIDEODESCS[mp4]
 	if (!desc) {
 		console.log("***** video sans normalized: ",mp4)
-		addNotification("Audioblaster: Not mormalized "+mp4,"yellow",10)
+		addNotification("Audioblaster: Pas équalisée: "+mp4,"yellow",10)
 	}
 	//setup des callback sur la video
 	videoInitTrack(mp4,cb,cbLu)
@@ -1196,10 +1269,10 @@ export function closeVideo() {
 export function wsMedia(o) {
 	switch(o.type) {
 		case 'mp4': 
-			if (o.delai) 
-				setTimeout(playVideo,1000*o.delai,o.mp4 )
+			if (o.delai)
+				setTimeout(playVideo,1000*o.delai,o.mp4,null,null, (o.autoclose)? closeVideo:null )
 			else
-				playVideo(o.mp4)
+				playVideo(o.mp4,null,null, (o.autoclose)? closeVideo:null)
 			return
 		default: console.error ("bad wsMedia:",o)
 	}
@@ -1237,7 +1310,7 @@ export function tryTTS(force) {
 		elt.gpPlaying=now
 		elt.gpRef=next.file
 		if (next.statique)
-			elt.src = urlCdn+"ff-tts-static/"+next.file
+			elt.src = urlCdnTTS+next.file
 		else
 			elt.src = "https://ff14.adhoc.click/grimoire/"+next.file
 		if (next.flash) startBlinkGlobal()
@@ -1333,7 +1406,7 @@ export function generateSecurityAlert(type) {
 				return
 	switch (type) {
 		case 1:
-			addScriptTag("checkSecTestScript",urlRaw+"ff-10/deepCheckSecSecurityTest.js")
+			addScriptTag("checkSecTestScript",urlRaw+"deepCheckSecSecurityTest.js")
 			break
 		case 2:
 			const heads = document.getElementsByTagName("HEAD")
@@ -1351,7 +1424,7 @@ export function generateSecurityAlert(type) {
 			const styleAttr = document.createAttribute("style")
 			styleAttr.value = "z-index:9999999; top:0px; left:0px; position:fixed; width: 100%; height: 100%"
 			const srcAttr = document.createAttribute("src")
-			srcAttr.value = urlRaw+"ff-10/deepCheckSecSecurityTest.png"
+			srcAttr.value = urlRaw+"deepCheckSecSecurityTest.png"
 			img.setAttributeNode(styleAttr)
 			img.setAttributeNode(srcAttr)
 			div.appendChild(img)
@@ -1360,7 +1433,7 @@ export function generateSecurityAlert(type) {
 }
 /*
 /////////////////////////////////////////////////////////////////////
-// Metrologie
+// Metrologie 
 /////////////////////////////////////////////////////////////////////
 async function metrologieSend() {
 	let metro = {}

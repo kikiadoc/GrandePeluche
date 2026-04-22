@@ -219,7 +219,7 @@ exports.httpCallback = async (req, res, method, reqPaths, body, pseudo, pwd) => 
 		case  "POST": {
 			switch(reqPaths[1]) {
 				case "contextes":
-					if (reqPaths[3]!=pseudo) gbl.exception('bad pseudo in req',400)
+					if (reqPaths[3]!=pseudo) pseudos.check(pseudo,pwd,true) // si autre pseudo, doit etre admin
 					gbl.exception(pseudoContextSet(reqPaths[2],reqPaths[3],JSON.parse(body)),200)
 			}
 			gbl.exception("bad POST",400);

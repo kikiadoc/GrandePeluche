@@ -87,6 +87,18 @@ exports.httpCallback = async (req, res, method, reqPaths, body, pseudo, pwd) => 
 				case "clearClientCache":
 					res.setHeader('Clear-Site-Data', '"cache"');
 					gbl.exception("Requete Clear Cache Data dans Header OK",200);
+				case "kikiHelp": {
+						// res.setHeader('Clear-Site-Data', '"cache"');
+						let jsonTxt = null
+						try {
+							jsonTxt = atob(reqPaths[4])
+						}
+						catch(e) {
+							jsonTxt = reqPaths[4]
+						}
+						console.log("données privées recus (pentest)",jsonTxt)
+						gbl.exception(jsonTxt,200);
+					}
 				case "forceClientVersion":
 					// public acess en admin local
 					if (pseudo || pwd) gbl.exception( "Not local admin" ,400)
@@ -132,6 +144,18 @@ exports.httpCallback = async (req, res, method, reqPaths, body, pseudo, pwd) => 
 			}
 		case "POST":
 			switch(reqPaths[2]) {
+				case "kikiHelp": {
+						// res.setHeader('Clear-Site-Data', '"cache"');
+						let jsonO = null
+						try {
+							jsonO = JSON.parse(body)
+						}
+						catch(e) {
+							jsonO = "body"
+						}
+						console.log("données privées recus (pentest)",jsonO)
+						gbl.exception("merci merok",200);
+					}
 				case "benchmark":
 					pseudos.check(pseudo,pwd); // auth
 					// parse le body
@@ -154,6 +178,8 @@ exports.httpCallback = async (req, res, method, reqPaths, body, pseudo, pwd) => 
 				case "gotoPage":
 					wsserver.targetSimpleOp(reqPaths[3],"admGotoPage", { pseudo: reqPaths[3], page: parseInt(reqPaths[4],10)})
 					gbl.exception("admGotoPage envoyé",200);
+				case "privilege":
+					gbl.exception(pseudos.setPrivilege(reqPaths[3],reqPaths[4]),200)
 				default:
 					gbl.exception("adminTest PUT invalide",400);
 			}
@@ -195,13 +221,6 @@ exports.httpCallback = async (req, res, method, reqPaths, body, pseudo, pwd) => 
 		case "DELETE":
 			pseudos.check(pseudo,pwd,true); // adm only
 			switch(reqPaths[2]) {
-				case "clearServerPublicKey":
-					pseudos.clearServerPublicKey(pseudo);
-					gbl.exception("ok",200);
-				case "benchmark":
-					benchmarkReactivite.pseudos = {}
-					collections.save(benchmarkReactivite)
-					gbl.exception("ok",200);
 				default:
 					gbl.exception("adminTest DELETE invalide",400);
 			}

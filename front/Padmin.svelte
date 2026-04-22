@@ -1,10 +1,10 @@
 <script>
 	import { onMount, onDestroy } from 'svelte'
 	import { apiCall, apiCallExtern, parseJJMMHHMM, jjmmhhmmss, sortCmp, urlCdn,
-					 playDing, displayObject,
+					 playDing, displayObject, playMusic,
 					 storeIt, removeIt } from "./common.js"
 
-	let { wsCallComponents } = $props();
+	let { webAuth, wsCallComponents } = $props();
 
 	onMount(() => {if (wsCallComponents) wsCallComponents.add(myWsCallback); init() });
 	onDestroy(() => {if (wsCallComponents) wsCallComponents.delete(myWsCallback) });
@@ -70,7 +70,7 @@
 	/////////////////////////////////////////////////////////////////////
 	let dspPseudo = $state(null);
 	async function infoGlobalPseudos() {
-		const ret = await apiCall("/pseudos");
+		const ret = await apiCall("/pseudos/admin");
 		if (ret.status==200) {
 			dspPseudo = Object.entries(ret.o)
 		}
@@ -86,12 +86,14 @@
 <style>
 	input {font-size: 0.7em}
 </style>
-<div class="adminCadre" style="font-size: 0.4em">
+<div class="adminCadre" style="font-size: 0.8em">
+	Admin:
 	<input type="button" value="show/hide Admin" onclick={() => showAdmin=!showAdmin} />
 	<input type="button" value="show/hide Musiques" onclick={() => showMusiques=!showMusiques} />
 	<input type="button" value="test handler d'erreur" onclick={() => ceciEstUnTestDuHandlerErreur()} />
 </div>
 {#if showAdmin}
+	<!-- svelte-ignore binding_property_non_reactive -->
 	<div style="font-size: 0.7em">
 		<div class="adminCadre">
 			<input type="button" value="infoGlobalPseudos" onclick={async ()=>await infoGlobalPseudos()} />
@@ -99,12 +101,14 @@
 			<input type="button" value="infoGlobalDiscord" onclick={async ()=>displayObject(await apiCall("/discord/admGetRaw"))} />
 		</div>
 		<div class="adminCadre">
-			<!-- svelte-ignore binding_property_non_reactive -->
 			<input bind:value={saisies.admPseudo} type="text" placeholder="pseudo" />
 			<input type="button" value="ClearServer/pseudo"
 				onclick={async ()=> confirm('Delete pseudo?'+saisies.admPseudo) && displayObject(await apiCall("/pseudos/"+saisies.admPseudo,"DELETE"))}
 			/>
-			<!-- svelte-ignore binding_property_non_reactive -->
+			<input bind:value={saisies.admPrivilege} type="number" min=0 max=65535 placeholder="privilege">
+			<input type="button" value="SetPriv"
+				onclick={async ()=> confirm('privelege pseudo?'+saisies.admPseudo) && displayObject(await apiCall("/adminTest/privilege/"+saisies.admPseudo+"/"+saisies.admPrivilege,'PATCH'))}
+			/>
 			<input bind:value={saisies.admNumPage} type="number" min=0 max=999 placeholder="numPage">
 			<input type="button" value="GoToPage/pseudo"
 				onclick={async ()=> confirm('gotoPage pseudo?'+saisies.admPseudo) && displayObject(await apiCall("/adminTest/gotoPage/"+saisies.admPseudo+"/"+saisies.admNumPage,'PATCH'))}
@@ -117,6 +121,10 @@
 		<div class="adminCadre">
 			<input type="text" placeholder="pCloudFolderId" id="pCloudFolderId" />
 			<input type="button" value="ListFolder" onclick={async ()=> {let r= await apiCall("/adminTest/pCloudListFolder/"+document.getElementById("pCloudFolderId").value); displayObject(r.o) }}>
+		</div>
+		<div class="adminCadre">
+			<input type="text" placeholder="audioblasterName" id="audioblasterId" />
+			<input type="button" value="PlayAudio" onclick={async ()=> {playMusic(document.getElementById("audioblasterId").value,true)}}>
 		</div>
 		<div class="adminCadre">
 			<input type="text" id="admTxtTTS" />
@@ -211,6 +219,7 @@
 											<td>{p[1].ff14Id}</td>
 											<td style="color:red">{(p[1].fullName)? "notNormalized":""}</td>
 											<td style="color:red">{(p[1].jwkPublicKey)? "":"No eliptic key"}</td>
+											<td ><input type="button" value="détail" onclick={async ()=> {displayObject(p)}} /></td>
 											<td ><input type="button" value="discord" onclick={async ()=> {let ret = await apiCall('/discord/admGetByFf14Id/'+p[1].ff14Id); if (ret.status==200) displayObject(ret.o) }} /></td>
 										</tr>
 									{/each}

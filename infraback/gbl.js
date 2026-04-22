@@ -134,7 +134,7 @@ exports.apiCall = async (fullUrl,method,body,headers) => {
 		return json;
 	}
 	catch(e) {
-		console.log(e);
+		console.log("Erreur sur APICALL",e);
 		return { status: 503 };
 	}
 }

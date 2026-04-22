@@ -39,6 +39,7 @@ function broadcastClient(o) {
 	console.log("broadcastClient(op,nbCli,jsonLength,jsonMs,totalMs):" , o.op, clients.size, jsonMsg.length, mid-start, now-start)
 }
 
+// verification périodique (10 sec) sur la base ping/pong technique WS
 function broadcastPing() {
   clients.forEach((meta,ws) => {
 		if (ws.estVivant) {
@@ -106,14 +107,15 @@ exports.broadcastRaw = (o) => {
 	broadcastClient(o);
 }
 
-exports.broadcastSimpleText = (texte, ding, couleur, duree) => {
+exports.broadcastSimpleText = (texte, ding, couleur, duree, fromPseudo) => {
 	broadcastClient({
 		op : "notif",
 		mp3: (typeof ding === "string")? ding : (ding)? "Ding" : null,
-		texte : texte,
+		texte : texte || "TBD",
 		dth: Date.now(),
-		couleur: couleur,
-		duree: duree
+		couleur: couleur || "red",
+		duree: duree || 15,
+		fromPseudo: fromPseudo || null
 	});
 }
 
@@ -125,9 +127,9 @@ exports.targetSimpleOp= (pseudo,op,o) => {
 	targetClient( pseudo, { op: op , o: o, status:200, dth: Date.now() } );
 }
 
-// execution d'une video v apres un delai en seconde d par les connectes
-exports.broadcastVideo = (v,d) => {
-	exports.broadcastSimpleOp('wsMedia',{ type:'mp4', mp4:v, delai:d })
+// execution d'une video v apres un delai en seconde d par les connectes avec autoclose si c
+exports.broadcastVideo = (v,d,c) => {
+	exports.broadcastSimpleOp('wsMedia',{ type:'mp4', mp4:v, delai:d, autoclose: c||null })
 }
 
 exports.getMetadata = (pseudo) => {
@@ -158,38 +160,47 @@ exports.start = (wsCallback, port) => {
 	    // console.log('pong recu :', metadata, m);
     });
     ws.on('message', async (m) => {
+			let jMsg = null
 			try {
 				let p = m.toString();
-				let jMsg = JSON.parse(p);
+				jMsg = JSON.parse(p);
 				let start = performance.now()
 				switch (jMsg.op) {
 					case "ig": // image ingame depuis le kikibidge
 						if (metadata.ip != gbl.ipAdmin) gbl.exception("not bot",400)
 						await igImage.jsonEvent(jMsg)
 						break;
-					case "ping":
+					case "ping":	// ping pong fonctionnel
 	    			ws.estVivant=true;
 						ws.send(clientPong);
 						break;
 					case "iam":
-						let pseudoDesc = await pseudos.asyncSetPwdSession(jMsg.pseudo,jMsg.newPwd,jMsg.signature,jMsg.publicKey,metadata)
-						if (pseudoDesc) {
-							metadata.pseudo = jMsg.pseudo;
-							ws.send(JSON.stringify( { op: "elipticKeyOk", pseudoDesc: pseudoDesc } ));
-							// fermeture des autres connexions du pseudo
-  						clients.forEach( (metaScan,wsScan) => {
-								if (metaScan.pseudo == jMsg.pseudo && wsScan != ws)  {
-									wsScan.send(JSON.stringify({op : "erreur", texte: "Une autre connexion est activée, fermeture de cette connexion"}));
-									wsScan.close();
-								}
-							});
-							exports.broadcastNotification(jMsg.pseudo+ " s'est connecté");
-							broadcastPseudoList();
+						let pseudoDesc = pseudos.getDesc(jMsg.pseudo,jMsg.prenom,jMsg.nom,jMsg.monde)
+						// console.log("IAM pseudoDesc",pseudoDesc)
+						if (!pseudoDesc) {
+							ws.send(JSON.stringify( { op: "erreur", texte:"Pas de pseudoDesc, contacte Kikiadoc" } ))
+							ws.close()
+							break
 						}
-						else {
-							ws.send(JSON.stringify( { op: "erreur", texte:"Pas de clef elliptique, contacte Kikiadoc" } ));
-							ws.close();
+						pseudos.verifyElipticEcheance(pseudoDesc)	 // exception si erreur
+						let isOk = await pseudos.verifyElipticSignature(metadata.id,pseudoDesc.jwkPublicKey,jMsg.b64uSignature)
+						if (!isOk) {
+							ws.send(JSON.stringify( { op: "erreur", texte:"WSIAM: Erreur signature elliptique, contacte Kikiadoc" } ))
+							ws.close()
+							break
 						}
+						metadata.pseudo = pseudoDesc.pseudo;
+						pseudos.validatePwd(pseudoDesc,metadata)
+						ws.send(JSON.stringify( { op: "elipticKeyOk", pseudo: pseudoDesc.pseudo, pwd: pseudoDesc.pwd } ));
+						// fermeture des autres connexions du pseudo
+  					clients.forEach( (metaScan,wsScan) => {
+							if (metaScan.pseudo == jMsg.pseudo && wsScan != ws)  {
+								wsScan.send(JSON.stringify({op : "erreur", texte: "Une autre connexion est activée, fermeture de cette connexion"}));
+								wsScan.close();
+							}
+						});
+						exports.broadcastNotification(jMsg.pseudo+ " s'est connecté");
+						broadcastPseudoList();
 						break;
 					case "iamBot":
 						if (metadata.ip != gbl.ipAdmin) gbl.exception("not admin",400)
@@ -198,14 +209,19 @@ exports.start = (wsCallback, port) => {
 						broadcastPseudoList();
 						break;
 					default:
-						wsCallback(metadata.pseudo,jMsg);
+						if (!metadata.pseudo) {
+							ws.send(JSON.stringify( { op: "bad sequence" } ))
+							ws.close()
+						}
+						else
+							wsCallback(metadata.pseudo,jMsg);
 				}
 				console.log("WSmessage:",metadata.pseudo,jMsg.op,performance.now()-start);
 			}
 			catch(ev) {
-				console.log("WS INBOUND msg:", m.toString(), "exception:" , ev);
-				ws.send(JSON.stringify({op : "erreur", code: ev.code, msg: ev.msg, o: ev.o, name : ev.name }));
-				ws.close();
+				console.log("WS INBOUND msg:", m?.toString(), "exception:" , ev);
+				ws?.send(JSON.stringify({op : "erreur", refOp: jMsg?.op , code: ev.code, msg: ev.msg, o: ev.o, name : ev.name }));
+				ws?.close(3000,ev.msg || "voir log server");
 			}
     });
 
@@ -231,6 +247,7 @@ exports.start = (wsCallback, port) => {
 
     ws.estVivant=true;
     ws.ping();
+		ws.send(JSON.stringify({ op: "init", challenge: metadata.id }))
 
   }); 
 

@@ -45,12 +45,13 @@ const MUSIQUES = [
 	,{ i:23, mu: 17625, x:13.1, y:12.0, tip: "Ishgard" } // 118 : Ishgard (X 13.1 Y 12.0)
 	,{ i:24, mu: 48210, x:21.9, y:13.2, tip: "Expédition cosmique" } // 733 : Marelomentum expedition cosmique X 21.9 Y 13.2
 ]
-const TIMERSUCCES = 70000 // la musique change toutes les 5 minutes
+const TIMERSUCCES = 7*60000 // la musique change toutes les 7 minutes
 const TIMERWAIT = 30000 // delai d'attente apres decouverte
 const TIMERAIDE = 7*60000 // delai d'attente pour aider les autres
 const NBDISSONANCES = 25 // nombre de dissonances a identifier
+const GILS = 50 // nombre de dissonances a identifier
 
-const CONF = { MUSIQUES:MUSIQUES, TIMERWAIT: TIMERWAIT, TIMERSUCCES: TIMERSUCCES, NBDISSONANCES:NBDISSONANCES, TIMERAIDE:TIMERAIDE }
+const CONF = { MUSIQUES:MUSIQUES, TIMERWAIT: TIMERWAIT, TIMERSUCCES: TIMERSUCCES, NBDISSONANCES:NBDISSONANCES, TIMERAIDE:TIMERAIDE, GILS:GILS }
 const CONFJSON = JSON.stringify(CONF)
 
 // Avancement du mini jeu

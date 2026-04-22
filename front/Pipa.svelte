@@ -2,14 +2,17 @@
 	import { onMount, onDestroy  } from 'svelte';
 	import { playVideo, playMusic, markClick, urlCdn,
 					 apiCall, displayInfo, scrollPageToTop,
-					 loadIt, storeIt, isAdmin
-				 } from './common.js'
+					 loadIt, storeIt, isAdmin, addNotification, displayObject
+				 } from './common.js' 
+	import Common from './Common.svelte'
+	import Btn from './Btn.svelte'
+	import { G }  from './privacy.js'
 
-	/** @type {Props} */
 	let {
 		wsCallComponents,
 		pageDesc = null,
 		pseudo,
+		pseudoGenre,
 		pseudoList,
 		etatTTS = null,
 		page = $bindable(),
@@ -19,30 +22,18 @@
 		audioVolume = $bindable(),
 	} = $props();
 
-	const PAGEEPIQLBL= "P"+pageDesc.n+"_epiqStep"
-	const PAGESAISIESLBL = "P"+pageDesc.n + "_saisies"
-
-	
-	onMount(() => { if (wsCallComponents) wsCallComponents.add(myWsCallback); init() });
-	onDestroy(() => { if (wsCallComponents) wsCallComponents.delete(myWsCallback); reset() });
-	function init () { loadVideosStatus() }
-	function reset () {}
-	async function myWsCallback(m) { return false } 
-
-	// etat des saisies persistantes
-	let saisies = $state(normalizedSaisies(loadIt(PAGESAISIESLBL,{})))
-	$effect(()=>storeIt(PAGESAISIESLBL,saisies))
-	
-	// normalization des saisies persistantes
-	function normalizedSaisies(s) {
-		// s.caracs ??= [] // exemple de normalized
-		// s.pipoVal ??= 0 // exemple de normalized
-		s.tri ??= false
-		return s
-	}
-
-
-	let entreesRef = [
+	const entreesRef = [
+		{
+			nom: "marche2025", hdr:"Marche de Noël 2025",
+			mp4:"X-ventes-privees/ventes-privees-f", gains: 140,
+			resume: "Les fans des tenues, de housing, mascottes et montures sont aux anges",
+			dep: [
+				{
+					dep: "marche2025", hdr:"L'annonce du marché de Noël",
+					mp4:"X-ventes-privees/ventes-privees-t"
+				},
+			]
+		},
 		{
 			nom: "metropolis", hdr:"Métropolis (Mars 2025)",
 			mp4:"ff-10/ff-10-metro-trailer", gains: 32,
@@ -66,7 +57,7 @@
 				},
 				{
 					dep: "metropolis", hdr:"Métropolis dans le monde 3D de l'Ortho-temps",
-					mp4:"ff-10/ff-10-metropolis-3d"
+					mp4:"ff-10/ff-10-metropolis-3d", like: true
 				},
 				{
 					dep: "metropolis", hdr:"Retour en Eorzéa",
@@ -80,7 +71,7 @@
 		},
 		{
 			nom: "hegemonie", hdr:"Event IX: L'Hégémonie (Janvier 2025)",
-			mp4:"ff-7/ff-7-trailer", gains: 411,
+			mp4:"ff-7/ff-7-trailer", gains: 411, like: true,
 			resume: "Les Nouveaux Anciens tente de prendre possession des âmes, et ils ont échoué!",
 			dep: [
 				{
@@ -93,7 +84,7 @@
 				},
 				{
 					dep: "hegemonie", hdr:"Prélude #2",
-					mp4:"ff-7/ff-7-prelude-2"
+					mp4:"ff-7/ff-7-prelude-2", like: true
 				},
 				{
 					dep: "hegemonie", hdr:"Prélude #3",
@@ -137,7 +128,7 @@
 				},
 				{
 					dep: "hegemonie", hdr:"Challenge: Détruire la Torchère à Gaz de Possession",
-					mp4:"ff-7/ff-7-torches-1"
+					mp4:"ff-7/ff-7-torches-1", like:true
 				},
 				{
 					dep: "hegemonie", hdr:"Cinématique: La Torchère à Gaz est détruite",
@@ -161,7 +152,7 @@
 				},
 				{
 					dep: "hegemonie", hdr:"Challenge: Spartaci, le sauvetage de la Grande Peluche",
-					mp4:"ff-7/ff-7-spartaci-1"
+					mp4:"ff-7/ff-7-spartaci-1", like: true
 				},
 				{
 					dep: "hegemonie", hdr:"Cinématique: La Grande Peluche est sauvée et la station Oméga localisée",
@@ -196,7 +187,7 @@
 		},
 		{
 			nom: "uchronie", hdr:"Event VIII: L'Uchronie (mars 2024)",
-			mp4:"ff-6-trailer", gains: 388,
+			mp4:"ff-6-trailer", gains: 388, like: true,
 			resume: "L'Uchronie a perturbé le Temps, l'Espace et l'Histoire. Les Aventuriers les ont restaurés",
 			dep: [
 				{
@@ -213,7 +204,7 @@
 				},
 				{
 					dep: "uchronie", hdr:"Challenge: Les lieux déracinés",
-					mp4:"ff14-6-screens"
+					mp4:"ff14-6-screens", like: true
 				},
 				{
 					dep: "uchronie", hdr:"Challenge: Le cristal de l'Uchronie",
@@ -221,7 +212,7 @@
 				},
 				{
 					dep: "uchronie", hdr:"Challenge: La restauration du Temps",
-					mp4:"ff-6-dontgiveup"
+					mp4:"ff-6-dontgiveup", like: true
 				},
 				{
 					dep: "uchronie", hdr:"Challenge: Le Dirac des Quatre",
@@ -244,7 +235,7 @@
 		},
 		{
 			nom: "avantUchronie", hdr:"L'avant Uchronie (décembre 2023)",
-			mp4: "ff14-avant-uchronie", gains: 30,
+			mp4: "ff14-avant-uchronie", gains: 30, like: true,
 			resume: "Alors que les Quatre explorent l'Ortho-Temps, l'Univers Connu semble perturbé par la Magie."
 		},
 		{
@@ -295,7 +286,7 @@
 		},
 		{
 			nom: "hypostasis", hdr:"Event VII: Hypostasis (mai 2023)",
-			mp4: "ff-5-trailer", gains: 350, 
+			mp4: "ff-5-trailer", gains: 350, like: true,
 			resume: "Lors d'Hypostasis, les aventuriers vont réconcilier les Dimensions Quantiques et les Dimensions Classiques.\
 				Il vont découvrir une nouvelle dimension, l'Ortho-temps et les Quatre vont aller l'explorer.",
 			dep: [
@@ -317,7 +308,7 @@
 				},
 				{
 					dep: "hypostasis", hdr:"Challenge: Troubles et temple du Quantique",
-					mp4:"ff-5-troubles"
+					mp4:"ff-5-troubles", like:true
 				},
 				{
 					dep: "hypostasis", hdr:"Challenge: Les lieux de la vision classique",
@@ -345,7 +336,7 @@
 				},
 				{
 					dep: "hypostasis", hdr:"Challenge: Le Chronogyre",
-					mp4:"ff-5-chronogyre"
+					mp4:"ff-5-chronogyre",like: true
 				},
 				{
 					dep: "hypostasis", hdr:"Challenge: L'Ortho-temps'",
@@ -386,7 +377,7 @@
 		},
 		{
 			nom: "ascension", hdr:"Event VI: L'ascension d'Anakin (septembre 2022)",
-			mp4: "ff-4-trailer", gains: 320,
+			mp4: "ff-4-trailer", gains: 320, like: true,
 			resume: "Après avoir aidé Anakin à maitriser les 4 pouvoirs et obtenu la capacité de replier l'espace,\
 				les Compagnons de l'Ascension ont permis à Anakin et Luke de vaincre Sauron du Mordor\
 				et empêcher la destruction de l'Univers Connu",
@@ -397,7 +388,7 @@
 				},
 				{
 					dep: "ascension", hdr:"Teaser: #2",
-					mp4:"ff-4-teaser1"
+					mp4:"ff-4-teaser1", like: true
 				},
 				{
 					dep: "ascension", hdr:"Teaser: #3",
@@ -409,7 +400,7 @@
 				},
 				{
 					dep: "ascension", hdr:"Challenge: Le quatrième pouvoir",
-					mp4:"ff-4-4emepouvoir"
+					mp4:"ff-4-4emepouvoir", like: true
 				},
 				{
 					dep: "ascension", hdr:"Challenge: Le troisième pouvoir",
@@ -437,7 +428,7 @@
 				},
 				{
 					dep: "ascension", hdr:"Challenge: L'épice pour tous",
-					mp4:"ff-4-epicepourtous"
+					mp4:"ff-4-epicepourtous", like: true
 				},
 				{
 					dep: "ascension", hdr:"Challenge: La Grande Menace",
@@ -445,7 +436,7 @@
 				},
 				{
 					dep: "ascension", hdr:"Challenge: Les lieux de paix",
-					mp4:"ff-4-lieuxdepaix"
+					mp4:"ff-4-lieuxdepaix", like: true
 				},
 				{
 					dep: "ascension", hdr:"Challenge: La stratégie finale",
@@ -472,7 +463,7 @@
 		},
 		{
 			nom: "ultimate", hdr:"Event V: Ultimate Walker (février 2022)",
-			mp4: "ff-3-trailer", gains: 320,
+			mp4: "ff-3-trailer", gains: 320, like:true,
 			resume: "Ultimate Walker verra naître l'Amour entre Hikaru et Robin.\
 				Les Aventuriers vont protéger cet Amour des velléités des Templiers et d'autres.\
 				Cet Amour va sauver l'Univers Connu de Dark Vador.\
@@ -496,11 +487,11 @@
 				},
 				{
 					dep: "ultimate", hdr:"Challenge: Le Carnet du Temps",
-					mp4:"ff-3-temps"
+					mp4:"ff-3-temps", like: true
 				},
 				{
 					dep: "ultimate", hdr:"Challenge: Le Labyrinthe",
-					mp4:"ff-3-dedale"
+					mp4:"ff-3-dedale", like: true 
 				},
 				{
 					dep: "ultimate", hdr:"Challenge: Robin du Bois Bandé",
@@ -508,7 +499,7 @@
 				},
 				{
 					dep: "ultimate", hdr:"Challenge: Les templiers",
-					mp4:"ff-3-templiers"
+					mp4:"ff-3-templiers", like: true
 				},
 				{
 					dep: "ultimate", hdr:"Challenge: Youki, Pépère et Mémère",
@@ -516,7 +507,7 @@
 				},
 				{
 					dep: "ultimate", hdr:"Challenge: Anakin et Robin, le rendez-vous",
-					mp4:"ff-3-rendez-vous"
+					mp4:"ff-3-rendez-vous", like: true
 				},
 				{
 					dep: "ultimate", hdr:"Challenge: Le temple marin",
@@ -528,7 +519,7 @@
 				},
 				{
 					dep: "ultimate", hdr:"Challenge: Power Of Love",
-					mp4:"ff-3-power-of-love"
+					mp4:"ff-3-power-of-love", like: true
 				},
 			]
 		},
@@ -539,7 +530,7 @@
 			dep: [
 				{
 					dep: "retour", hdr:"Teaser: #1",
-					mp4:"ff-2-teaser"
+					mp4:"ff-2-teaser", like: true
 				},
 				{
 					dep: "retour", hdr:"Teaser: #2",
@@ -563,7 +554,7 @@
 				},
 				{
 					dep: "retour", hdr:"Challenge: LALA où t'es?",
-					mp4:"ff-2-lalaoutes"
+					mp4:"ff-2-lalaoutes", like: true
 				},
 				{
 					dep: "retour", hdr:"Challenge: LALA table ronde",
@@ -587,7 +578,7 @@
 				},
 				{
 					dep: "retour", hdr:"Soluce: Touch my tra-LALA",
-					mp4:"ff-2-boum-soluce"
+					mp4:"ff-2-boum-soluce", like: true
 				},
 				{
 					dep: "retour", hdr:"Challenge: LALAbitant",
@@ -657,58 +648,192 @@
 			resume: "Hélas, je n'ai meme pas une archive vidéo de ce premier Evenement !"
 		}
 	]
+	////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////
+	const PAGEEPIQLBL= (()=>"P"+pageDesc.n+"_epiqStep")()
+	const PAGESAISIESLBL = (()=>"P"+pageDesc.n + "_saisies")()
+	const APIROOT = (()=>'/'+pageDesc.rootName+'/')()
+	const VIDEOINIT='X-ipa/cabaret'
+
+	const SCOREEXTRAORDINAIRE = 80*60*1000 // minutes de visionnage
+	const SCOREEMERITE = SCOREEXTRAORDINAIRE * 0.4 // minutes de visionnage
+
+	const HAUTFAITS = [ "néophyte","émérite","extraordinaire","fantastique" ]
+	const NOTIFS = [
+		null,
+		{ titre: "Haut fait réalisé!", ding:"Applaudissements", back:"stars", img: "X-ipa/clap-3.gif",
+			body: [ "Tu es "+G( (()=>pseudoGenre)(),"un ","une")+" cinéphile émérite",
+							{ cls:"info", txt: "Contacte Kikiadoc pour récupérer tes gains"},	]
+		},
+		{ titre: "Haut fait réalisé!", ding:"Applaudissements", back:"stars", // img: "X-ipa/clap-3.gif",
+			body: [ "Tu es "+G( (()=>pseudoGenre)(),"un ","une")+" cinéphile extraordinaire",
+							{ cls:"info", txt: "Contacte Kikiadoc pour récupérer tes gains"},	]
+		},
+		{	titre: "Haut fait réalisé!", ding:"Applaudissements", back:"stars", // img: "X-ipa/clap-3.gif",
+			body: ["Tu as obtenu le titre de cinéphile fantastique, c'est le plus haut niveau de reconnaissance.",
+							{ cls:"info", txt: "Contacte Kikiadoc pour récupérer tes gains"},	]
+		}
+	]
+	
+	// Gestion de l'épique
+	let epiqStep = $state(loadIt(PAGEEPIQLBL, 0))
+	$effect(()=>storeIt(PAGEEPIQLBL,epiqStep))
+	// $effect(()=>epiqStepChange(epiqStep))
+
+	// etat des saisies persistantes 
+	let saisies = $state(normalizedSaisies(loadIt(PAGESAISIESLBL,{})))
+	$effect(()=>storeIt(PAGESAISIESLBL,saisies))
+	// normalization des saisies persistantes
+	function normalizedSaisies(s) {
+		// s.caracs ??= [] // exemple de normalized
+		// s.pipoVal ??= 0 // exemple de normalized
+		s.tri ??= false
+		s.notifs ??= [] // flags notif des niveaux
+		s.clsClickLvl ??= "blinkFlag"
+		return s
+	}
+
+	onMount(() => { if (wsCallComponents) wsCallComponents.add(myWsCallback); init() });
+	onDestroy(() => { if (wsCallComponents) wsCallComponents.delete(myWsCallback); reset() });
+
+	function init () { 
+		if (!saisies.initVideo) {
+			saisies.initVideo = true 
+			playVideo(VIDEOINIT)
+		}
+		loadVideosStatus()
+	}
+	
+	function reset () {}
+	
+	async function myWsCallback(m) { return false } 
+
 
 	// tri des videos
 	let entrees = $state(null)
 	$effect(()=> entrees = (saisies?.tri) ? entreesRef : entreesRef.toReversed(entreesRef) )
+	// index des videos "like" 
+	let likes = {}
+	let mp4s = {} // liste unique des mp4
+	let nbUniques = $state(0) // nombre de video unique a visionner
+	function reverseIndex() {
+		entreesRef.forEach( (e) => {
+			if (e.mp4) mp4s[e.mp4] = true // marque une video a lire
+			if (e.like) likes[e.mp4] = true // marque un like
+			if (e.dep) {
+				e.dep.forEach( (d) => {
+					if (d.mp4) mp4s[d.mp4] = true // marque une video a lire
+					if (d.like) likes[d.mp4] = true
+				})
+			}
+		})
+		nbUniques = Object.keys(mp4s).length // nombre total de videos unique à lire
+		// console.log("reverseIndex",mp4s,nbUniques)
+	}
+	reverseIndex()
 	
 	// Etat de lecture des vidéos { luDth: , score:  } indexé par le mp4
-	let videosStatus = $state({})
+	let videosStatus = $state(null)
+	function calcScore() {
+		let s = 0 // score
+		let nb= 0 // nb de videos lues intégralement
+		console.log(videosStatus) 
+		for (const e in videosStatus) {
+			if (videosStatus[e]?.score > 0) {
+				s+=videosStatus[e]?.score
+				if (likes[e]) s+=videosStatus[e]?.score // si video "love" double les points
+			}
+			if (videosStatus[e]?.luDth) nb++ // nombre de video totalement lues
+		}
+		// calcul de synthese
+		videosStatus.score = s
+		videosStatus.nbLu = nb
+		videosStatus.lvl =
+			(nb >= nbUniques)? 3 :
+			(s >= SCOREEXTRAORDINAIRE)? 2 :
+			(s >= SCOREEMERITE)? 1 : 0
+		// Notif eventuelles
+		if ( !saisies.notifs[videosStatus.lvl] ) {
+			saisies.notifs[videosStatus.lvl]=true // falg de notif
+			if (NOTIFS[videosStatus.lvl]) displayInfo(NOTIFS[videosStatus.lvl])
+		}
+	}
 	async function loadVideosStatus() {
 		let ret = await apiCall("/contextes/ipa/"+pseudo)
 		if (ret.status==200) videosStatus=ret.o
+		calcScore()
 	}
 	async function videoEnd(mp4,duree,total) {
 		console.log('videoEnd duree',mp4,duree,total)
 		videosStatus[mp4] ??= {luDth: null, score: 0}
-		if (total > videosStatus[mp4].score) {
-			// amelio score
-			videosStatus[mp4].score = total
-			displayInfo({
-				titre:"Score de cinéphile",
-				body: [
-					"En regardant PARTIELLEMENT cette vidéo, tu as obtenu un score de cinéphile de "+total+" pour cette vidéo",
-					"Tu peux améliorer ton score en revisionnant toute la vidéo sans interruption"
-				]
-			})
-		}
-		if (total >= duree) {
-			// lecture faite
-			videosStatus[mp4].luDth = Date.now()
-			displayInfo({
-				titre:"Score de cinéphile",
-				body: [
-					"En regardant l'intégralité de cette vidéo, tu as obtenu un score de cinéphile de "+total,
-					"Pour augmenter ton score global de cinéphile, regarde d'autres vidéos"
-				]
-			})
-		}
+		// recalcul du score et push serveur
+		if (total > videosStatus[mp4].score) { videosStatus[mp4].score = total }
+		if (total >= duree) { videosStatus[mp4].luDth = Date.now() }
+		calcScore()
+		addNotification("Ton score de cinéphile est de "+Math.floor(videosStatus.score/1000),"green",10)
+		console.log("videoEnd: optimisation de modif partielle à étudier")
 		let ret =	await apiCall("/contextes/ipa/"+pseudo,'POST',videosStatus)
 		if (ret.status==200) videosStatus = ret.o
 	}
 	function clickEntree(entree) {
+		if (videosStatus[entree.mp4]?.luDth)
+				displayInfo({titre: "Vidéo déjà vu en intégralité", class:"papier", ding:"Ding",
+										 body: ["Tu as déjà vu cette vidéo.",
+														"Tu n'obtiendras pas de points de cinéphile."]
+										})
 		if (entree.mp4) playVideo(entree.mp4,null,null,videoEnd)
 		if (entree.mp3) playMusic(entree.mp3)
 	}
-	function getIconVideoLu(mp4,dummy) {
+	function getIconVideoLu(mp4,dummy) { 
 		if (!mp4) return ""
 		if (videosStatus[mp4]?.luDth) return "👁"
 		return "➥"
 	}
+	function affNiveau() {
+		saisies.clsClickLvl = ""
+		displayInfo({
+			titre:"Progression de cinéphile", img: "X-ipa/clap-3.gif",
+			body:[ "Tu es cinéphile "+HAUTFAITS[videosStatus.lvl || 0]+".",
+						 "Ton score est "+Math.floor(videosStatus.score/1000)+".",
+						 "Tu as visionné "+videosStatus.nbLu+" vidéos uniques.", 
+						 { cls: (videosStatus.lvl >=1)? "petit cGreen": "petit cRed", txt: "Niveau émérite: Score "+Math.round(SCOREEMERITE/1000)+" (0.5 Million Gils)"},
+						 { cls: (videosStatus.lvl >=2)? "petit cGreen": "petit cRed", txt: "Niveau extraordinaire: Score "+Math.round(SCOREEXTRAORDINAIRE/1000)+" (1 Million en plus)"},
+						 { cls: (videosStatus.lvl >=3)? "petit cGreen": "petit cRed", txt: "Niveau fantastique: Voir "+nbUniques+" vidéos uniques (1 Million en plus)"},
+					 ]
+		})
+	}
+
+	// Afficahge des résulats
+	let dspResultat = $state(null)
+	async function affResultat() {
+		let ret =	await apiCall("/contextes/ipa",'GET') // charge tous les contextes 
+		if (ret.status!=200) return
+		// balaye la liste des participants
+		let lstP = Object.keys(ret.o.pseudos)
+		let tDsp = []
+		lstP.forEach( (p) => tDsp.push({p:p, s:ret.o.pseudos[p].score||0, l:ret.o.pseudos[p].lvl||0, r:ret.o.pseudos[p].remb||0}))
+		console.log("tDsp",tDsp)
+		tDsp.sort( (a,b) => ( (b.s||0) - (a.s||0)))
+		console.log("tDsp",tDsp)
+		dspResultat = { lst: tDsp }
+	}
+	let dspRemboursement = $state(null)
+	async function affRemboursement() {
+		let ret =	await apiCall("/contextes/ipa",'GET') // charge tous les contextes 
+		if (ret.status!=200) return
+		dspRemboursement = ret.o
+	}
+	// remboursement pour pseudo p et niveau r
+	async function admRemb(p,r) {
+		let o = dspRemboursement.pseudos[p]
+		o.remb = r
+		let ret =	await apiCall("/contextes/ipa/"+p,'POST',o)
+		affRemboursement()
+	}
 </script>
 
 <style>
-	.titre { font-size: 1.2em; text-align: center; font-weight: bold }
 	.gains { font-style: italic; color: yellow}
 	.entree { border: 0.2em outset lightgreen; cursor: pointer;
 						background: linear-gradient(to bottom right, green, transparent 30%),
@@ -723,7 +848,7 @@
 	.event { font-weight: bold;	font-size: 1.2em;	text-decoration: underline;	cursor:pointer }
 	.synthese { font-style: italic;	font-weight: bold }
 	.quote { font-style: italic }
-	.imageFull { width: 100% }
+	.imageFull { width: 100% } 
 	.videoDroite { width: 100%; max-height: 70dvh; }
 	*/
 </style> 
@@ -734,68 +859,179 @@
 <div use:scrollPageToTop>
 	{#if isAdmin(pseudo)}
 		<div class="adminCadre" style="font-size: 0.5em">
-			<input type="button" value="resetLecture"
-				onclick={()=>{ apiCall('/contextes/ipa/'+pseudo,'DELETE'); videosStatus={} }}
+			<input type="button" value="remboursement" onclick={affRemboursement} />
+			<input type="button" value="resetLecturePerso"
+				onclick={()=>{ confirm("Reset de toutes lectures de "+pseudo) && apiCall('/contextes/ipa/'+pseudo,'DELETE'); videosStatus={} }}
 			/>
 		</div>
 	{/if}
-	<div class="titre">
-		Bienvenue à l'IPA,
-		<br/>
-		l'Institut Peluchique de l'Audiovisuel de
-		<br/>
-		la Grande Bibliothèque du Bois Bandé
-		<div role="button" class="videoLink" onclick={markClick} gpVideo="ff-10/IPA-BNF">
-			Visite la BNF, l'IPA en IRL</div>
-		<div class="br" />
-		<div class="info">
-			Les Peluches ont regroupé ici l'Histoire des Aventuriers depuis 2020.
-			<br/>
-			Tu retrouveras tes Hauts Faits parmi ces incunables des temps modernes.
-		</div>
-	</div>
-	<div class="adminCadre">
-		<label>
-			<input type="checkbox" bind:checked={saisies.tri}/>
-			Ordre antichronologique
-		</label>
-	</div>
-	<div class="br" />
-	{#each entrees as entree}
-		{#if entree.nom}
-			<div class="entree">
-				{#if entree.img}
-					<img class="imageDroite" src={entree.img} alt="" />
+	{#if videosStatus}
+		<div>
+			<input type="button" value="Revoir le Lore" onclick={() => epiqStep=0} />
+			<input type="button" value="Résultat" onclick={affResultat} />
+			<span role="button" style="cursor:pointer" onclick={affNiveau} >
+				<span class={saisies.clsClickLvl}>💎</span>
+				{#if videosStatus.lvl >=2 }
+					{videosStatus.nbLu}/{nbUniques}
+				{:else}
+					<Common t="jauge" p={ {val:videosStatus.score, max:SCOREEXTRAORDINAIRE, s2:SCOREEMERITE }} />
 				{/if}
-				<div role="button" tabindex=0 onclick={()=>clickEntree(entree)}>
-					<div style="color:lightgreen">
-						{getIconVideoLu(entree.mp4,videosStatus)}
-						{entree.hdr}
-						{#if entree.mp4}📽{/if}
-					</div>	
-					<div class="info">{@html entree.resume}</div>
-					{#if entree.gains}
-						<div class="gains">Les Aventuriers se sont répartis {entree.gains} millions de Gils</div>
-					{/if}
-				</div>
-				{#each entree.dep as dep}
-					<div role="button" tabindex=0 onclick={()=>clickEntree(dep)}>
-						{getIconVideoLu(dep.mp4,videosStatus)}
-						{dep.hdr}📽
-					</div>	
-				{/each}
-				<div class="fin" />
-			</div>
-			<div class="br" />
-		{/if}
-	{/each}
-	<div class="br"/>
-	<div>
-		Ceci termine les Archives du Bois Bandé relatives aux mini jeux et aux événements
-		organisés par Kikiadoc Lepetiot depuis plus de 4 ans.
-	</div>
-	<div>&nbsp;</div>
+			</span>
+			<Common t="headerPage" pageDesc={pageDesc} />
+		</div>
+	{/if}
 
+	{#if epiqStep==0 && videosStatus}
+		<div class="reveal">
+			<div>
+				Bienvenue à l'IPA, l'Institut Peluchique de l'Audiovisuel.
+			</div>
+			<div class="br"/>
+			<div>
+				<input type="button" value="Revoir la vidéo d'introduction" onclick={()=>playVideo(VIDEOINIT)} />
+			</div>
+			<div class="br"/>
+			<div>
+				Les Peluches ont regroupé ici l'Histoire des Aventuriers des Kiki's Events
+				depuis de nombreuses années sous la forme de dizaines de vidéos.
+			</div>
+			<div>
+				En les visionnant, tu augmenteras ton score de cinéphilie et tu pourras réclamer jusque 2.5 Millions de Gils.
+			</div>
+			<div>
+				Tu peux voir ton avancement en cliquant sur 💎 en haut de page.
+			</div>
+			<div class="petit">
+				Légende des vidéos: 
+				<div>➥: Vidéo à lire (points de cinéphile si lecture complète)</div>
+				<div>❤️: Vidéo offrant un bonus de points de cinéphile</div>
+				<div>👁: Vidéo vue intégralement (pas de point de cinéphile si elle est revisionnée)</div>
+			</div>
+			<Btn bind:refStep={epiqStep} step=90 val="Voir la liste des vidéos"
+				ifFct={ ()=>{return apiCall('/clientConfig/confirmations/'+pageDesc.n,'POST') || true }} />
+			<div class="info cOrange">
+				Ce challenge a été réinitialisé le 2 avril 2026 pour acceuillir de nouveaux joueurs
+			</div>
+		</div>
+	{/if}
+	{#if epiqStep==90 && videosStatus}
+		{@const clsFlag= (saisies.flagChrono ? "" : "blinkFlag" )}
+		<div class="reveal">
+			<span class={clsFlag}>
+				<label>
+					<input type="checkbox" bind:checked={saisies.tri} onclick={()=>saisies.flagChrono=true}/>
+					{#if saisies.tri}
+						Les derniers événements en premier
+					{:else}
+						Les événemements selon l'Histoire
+					{/if}
+				</label>
+			</span>
+		</div>
+		
+		<div class="br" />
+		{#each entrees as entree}
+			{#if entree.nom}
+				<div class="entree">
+					{#if entree.img}
+						<img class="imageDroite" src={entree.img} alt="" />
+					{/if}
+					<div role="button" tabindex=0 onclick={()=>clickEntree(entree)}>
+						<div style="color:lightgreen">
+							{getIconVideoLu(entree.mp4,videosStatus)}
+							{#if entree.like}❤️{/if}
+							{entree.hdr}
+							{#if entree.mp4}📽{/if}
+						</div>	
+						<div class="info">{@html entree.resume}</div>
+						{#if entree.gains}
+							<div class="gains">Les Aventuriers se sont répartis {entree.gains} millions de Gils</div>
+						{/if}
+					</div>
+					{#each entree.dep as dep}
+						<div role="button" tabindex=0 onclick={()=>clickEntree(dep)}>
+							{getIconVideoLu(dep.mp4,videosStatus)}
+							{#if dep.like}❤️{/if}
+							{dep.hdr}📽
+						</div>	
+					{/each}
+					<div class="fin" />
+				</div>
+				<div class="br" />
+			{/if}
+		{/each}
+		<div class="br"/>
+		<div>
+			Ceci termine les Archives du Bois Bandé relatives aux mini jeux et aux événements
+			organisés par Kikiadoc Lepetiot depuis de nombreuses années.
+		</div>
+		<div>&nbsp;</div>
+	{/if}
+
+	{#if dspResultat}
+		<div class="popupCadre papier">
+			<div class="close" onclick={()=>dspResultat=null} role="button" tabindex=0>X</div>
+			<div class="popupZone">
+				<div class="popupContent">
+					<div>
+						<div>Scores de cinéphilie</div>
+						<table class="resTable" >
+							<tbody>
+								{#each dspResultat.lst as p}
+									<tr>
+										<td class="resTd">{p.p}</td>
+										<td class="resTd">
+											{
+												(p.l >=3)? "Fantastique!": 
+												(p.l >=2)? "Extraordinaire":
+												(p.l >=1)? "Emérite": "Novice"
+											}
+										</td>
+										<td class="resTd">{Math.floor(p.s/1000)}</td>
+										{#if (p.l > p.r)}
+											<td gpHelp="Gils à réclamer" onclick={markClick} style="cursor:pointer">💰</td>
+										{/if}
+									</tr>
+								{/each}
+							</tbody>
+						</table>
+						<div>Nombre de cinéphiles: {dspResultat.lst.length}</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	{/if}
+
+	{#if dspRemboursement}
+		{@const lstPseudos=Object.keys(dspRemboursement.pseudos)}
+		<div class="popupCadre papier">
+			<div class="close" onclick={()=>dspRemboursement=null} onkeypress={null} role="button" tabindex=0>X</div>
+			<div class="popupZone">
+				<div class="popupContent">
+					<div>
+						<table class="resTable" style="border: 1px solid white">
+							<tbody>
+								<tr><td>Pseudo</td><td>Lvl</td><td>Score</td><td>R fait</td><td></td><td>0.5M</td><td>1M</td><td>1M</td></tr>
+								{#each lstPseudos as p}
+									{@const desc=dspRemboursement.pseudos[p]}
+									<tr>
+										<td class="resTd">{p}</td>
+										<td class="resTd">{desc.lvl}</td>
+										<td class="resTd">{Math.floor(desc.score/1000)}</td>
+										<td class="resTd">{desc.remb}</td>
+										<td><input type="button" value="R0" onclick={()=>admRemb(p,0)} /></td>
+										<td><input type="button" value="R1" onclick={()=>admRemb(p,1)} /></td>
+										<td><input type="button" value="R2" onclick={()=>admRemb(p,2)} /></td>
+										<td><input type="button" value="R3" onclick={()=>admRemb(p,3)} /></td>
+									</tr>
+								{/each}
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</div>
+		</div>
+	{/if}
 	<!-- page Pipa.svelte -->
 
 

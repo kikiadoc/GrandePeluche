@@ -1,19 +1,19 @@
 <script>
 	const SVELTEVERSION=null // SERA MODIFIE LORS DU COMMIT EN STAGING OU PROD ne pas changer
 	const CLIENTVERSION=null  // SERA MODIFIE LORS DU COMMIT EN STAGING OU PROD ne pas changer
+	const VITEVERSION=null  // SERA MODIFIE LORS DU COMMIT EN STAGING OU PROD ne pas changer
 	const GLOBALSTARTDTH=Date.now() // dth de démarrage des traitements 
-	console.log('******** CLIENT START id:',GLOBALSTARTDTH)
-
-	// divers caractères pour copier/coller : ⚙️🔊🔇⁜➤▲⏸◀▶▼⏬🔎📽❓✅🆘⚠️⬇️✅➥📷εΔ⛭
-	// 👉😈ⓘ(ℹ)႞⒤⇛⏳ 😴😭🚫
+	console.log('******** CLIENT START dthid:',GLOBALSTARTDTH)
+	// divers caractères pour copier/coller : ⚙️🔊🔇⁜➤▲⏸◀▶▼⏬🔎📽❓✅🆘⚠️⬇️✅➥📷εΔ⛭⎵
+	// 👉😈ⓘ(ℹ)႞⒤⇛⏳ 😴😭🚫💰🪄😴⚖️🎈🕬 🗺 🔮📢💎
 	// ne fonctionne pas sur android 🛈 utiliser (ℹ)
 
 	//////////////////////////////////////////
-	// Imports 
+	// Imports
 	//////////////////////////////////////////
 	import { onMount, onDestroy } from 'svelte'
 	import {
-		loadIt, storeIt, isProd, swcSetup, urlCdn, urlRaw,
+		loadIt, storeIt, isProd, swcSetup, urlCdn, urlRaw,urlCdnAI,
 		addNotification, displayInfo, displayError,
 		startCountDown, stopCountDown, scrollNodeToBottom, 
 		connectToServer, disconnectFromServer, apiCall,	getDynMetro, getEpsilon,
@@ -23,11 +23,11 @@
 		tts, tryTTS,
 		securitypolicyviolation, generateSecurityAlert,
 		metaCacheList, metaCacheClear, swcGetWaitingIds,
-		isAdmin, isSM
+		isAdmin, isSM, isEquipementPC, isPWA, isAndroid
 	} from "./common.js";
 	
 	import { G, patchConsole, unpatchConsole, getConsole, 
-					 reportConsole, addReport
+					 reportConsole, addReport,addReportError
 				 } from "./privacy.js"
 	import { GBLCONST, GBLSTATE } from "./ground.svelte.js"
 
@@ -35,6 +35,9 @@
 	addReport("global","clientStartDth",GLOBALSTARTDTH)
 	addReport("global","clientVersion",CLIENTVERSION)
 	addReport("global","svelteVersion",SVELTEVERSION)
+	addReport("global","isEquipementPC",isEquipementPC())
+	addReport("global","isPWA",isPWA())
+	addReport("global","isAndroid",isAndroid())
 
 	import Info from './Info.svelte'
 	import Radio from './Radio.svelte'
@@ -42,63 +45,109 @@
 	import Pauth from './Pauth.svelte'
 	import Padmin from './Padmin.svelte'
 	import Pipa from './Pipa.svelte'
+	import Common from './Common.svelte'
+	import Pcodex from './Pcodex.svelte'
+	import Kikitest from './Kikitest.svelte'
 	
 	// import P400 from './P400.svelte' // metropolis
-	import P401 from './P401.svelte' // Kiki's Event X - le bug bounty
+	// import P401 from './P401.svelte' // Kiki's Event X - le bug bounty
+	import P402 from './P402.svelte' // Kiki's Event X - Ventes privées
+	import P403 from './P403.svelte' // Kiki's Event X - Prélude 
+	import P404 from './P404.svelte' // Kiki's Event X - Chercher le lala 
 	import P405 from './P405.svelte' // Kiki's Event X - initiatique
+	import P408 from './P408.svelte' // Kiki's Event X - tranquilite
 	import P410 from './P410.svelte' // Kiki's Event X - Pharao
 	import P420 from './P420.svelte' // Kiki's Event X - Les bases
-	import P425 from './P425.svelte' // Kiki's Event X - Orthocerberus
-	import P430 from './P430.svelte' // Kiki's Event X - Les Failles
+	import P425 from './P425.svelte' // Kiki's Event X - bar a thym
+	import P430 from './P430.svelte' // Kiki's Event X - TBD
 	import P440 from './P440.svelte' // Kiki's Event X - Les orth-composants
 	import P460 from './P460.svelte' // Kiki's Event X - Dissonances
+	import P480 from './P480.svelte' // Kiki's Event X - Dessins
 
+	//////////////////////////////////////////
+	// Gestion de la sécurité
+	//////////////////////////////////////////
+	let pseudo = $state(loadIt('pseudo',""))
+	$effect(() => storeIt('pseudo',pseudo))
+	let webAuth = $state({etat: "initWebAuth"})
+	$effect(() => {
+		console.log("***** Effect webAuth",webAuth.etat)
+		if (webAuth.etat=="reload") { initWebAuth();  }
+	})
 	//////////////////////////////////////////
 	// Gestion du cycle de vie
 	//////////////////////////////////////////
-	onMount(() => {
+	onMount( async () => {
 		console.log('** Mount Début ** id=',GLOBALSTARTDTH)
 		// unlock play media sur first click
 		document.addEventListener("click", firstClick, { once: true })
 		audioInit(GBLSTATE)
 		// audiosetup par call et ensuite via un effect, ca fait redondant, mais nop, possible
 		// d'avoir un start média apres le mount et avant l'effect
-		// audioresume, playVideo gere les appels doublons
+		// audioresume, playVideo gere les appels doublons 
 		audioSetup(GBLSTATE.audioVolume,GBLSTATE.audioBack,GBLSTATE.audioAmbiance,GBLSTATE.audioTTS)
 		$effect(() => audioSetup(GBLSTATE.audioVolume,GBLSTATE.audioBack,GBLSTATE.audioAmbiance,GBLSTATE.audioTTS) )
 		// gestion smartphone		
 		window.screen?.orientation?.addEventListener("change", orientationChange);
 		visibilityChange()
 		startCountDown()
-		GBLSTATE.swcReady = swcSetup() // init le dialogue avec le service worker controller
+		GBLSTATE.swcReady = swcSetup() // init le dialogue avec le service worker controller 
+		// si la page n'est pas dans la desription, reset la page a 0
+		if (page!=0 && !pageList.find( (e) => { return (e.n == page) } ) ) page=0
+		await	initWebAuth()
 		console.log('** Mount Fin ** id=',GLOBALSTARTDTH)
 	});
 	onDestroy(() => {
 		console.log('** UnMount ** id=',GLOBALSTARTDTH)
-		disconnectFromServer()
+		disconnectFromServer()  
 		stopCountDown()
 		document.removeEventListener("click", firstClick, { once: true })
 		window.screen?.orientation?.removeEventListener("change", orientationChange)
 		unpatchConsole()
+		webAuth.etat="unmount"
 		console.log('** UnMount Ok ** id=',GLOBALSTARTDTH)
 	});
 
-	// peut être appelé après l'identification (effect) ou si dejà identifié (loadit)
-	function init(pseudo) {
-		console.log('Pseudo init:',pseudo)
-		if (pseudo)
-			connectToServer(wsCbStatus, wsCbMessage,CLIENTVERSION)
+	async function initWebAuth() {
+		// Recupère un contexte d'authentification pour cette session 
+		if (!pseudo || pseudo==""){
+			// cas particulier ou on a perdu le pseudo...
+			console.log("initWebAuth, pas de pseudo, force reload")
+			webAuth.etat="reload"
+			return
+		}
+		// Uniquement avec le pseudo, le serveur fait le reste 
+		let ret = await apiCall("/pseudos/webauthn","GET",null,true )
+		if (ret.status == 200) {
+			webAuth = ret.o
+			if (webAuth.etat=="ok") { await init(); }
+		}
 		else
-			page = 0; // force login car !pseudo
-	}
-	function initAfterKeyValidation() {
-		// si la page n'est pas dans la desription, reset la page a 0
-		if (page!=0 && !pageList.find( (e) => { return (e.n == page) } ) ) page=0
+			displayInfo({titre:"Erreur d'init cybersécurité", back:"rouge",
+									 body:["Impossible de recevoir le contexte de cybersécurité"],
+									 trailer: "Contacte Kikiadoc IMMEDIATEMENT"
+									})
 	}
 
-	/////////////////////////////////////////////////////////////////////
+	// le webAuth est ok, in
+	async function init() {
+		// acces direct au pseudo
+		pseudo = webAuth.pseudo
+		// connection WS au server
+		connectToServer(wsCbStatus, wsCbMessage,CLIENTVERSION,webAuth)
+	}
+	async function initAfterKeyValidation() {
+		// Maj contexte client
+		// OBSOLETE
+		// let ret= await apiCall('/clientConfig/getContext')
+		// if (ret.status==200) ...
+	}
+
+	///////////////////////////////////////////////////////////////////// 
 	// Configuration générale
 	//
+	let localCtx = $state(loadIt('localCtx',{pseudoOpen:false}))
+	$effect(() => storeIt('localCtx',localCtx))
 	let page = $state(loadIt('page',0))
 	$effect(() => storeIt('page',page))
 	$effect(() => pageChange(page))
@@ -107,10 +156,11 @@
 	let PageComponent = $state(null); // Attention, contient un SVELTE COMPONENT si non null
 	let pageDesc = $state(null)
 	let pseudoList=$state([]) //chargement par WS
-	let pseudo = $state(loadIt('pseudo',""))
-	$effect(() => init(pseudo)) // init selon pseudo ou auth
 	let pseudoGenre = $state(loadIt('pseudoGenre',null))
 	$effect(() => storeIt('pseudoGenre',pseudoGenre))
+
+	// flags locaux
+	let flags = $state({})
 	// affichage popup	
 	let dspPseudo=$state(null) // affichage Popup pseudo
 	let dspMultiPopup=$state(null)
@@ -118,6 +168,7 @@
 	let dspObject = $state(null)
 	let dspError = $state(null)
 	let dspAdminMsg = $state(null)
+
 
 	/////////////////////////////////////////////////////////////////////
 	// gestion du changement de page (sur $effect)
@@ -131,84 +182,148 @@
 	}
 
 	//
-	// Liste des pages de jeu
+	// Liste des pages de jeu 
 	// (page list n'est pas const pour permettre le refresh)
 	// always: true indique qu'il faut toujours afficher
 	// beta: true inidique que c'est disponible en avant premiere
-	// prereq: nnn element prérequis (doit être dans pageDone)
+	// prereq: nnn element prérequis (doit être dans pageDone) 
 	let pageList = $state([
-		{n: 10, texte: "L'IPA, l'Institut Peluchique de l'Audiovisuel",
+		{n: 9, texte: "Codex Master",
+		 music: "S-privilege-music",
+		 start: 0,
+		 end: 0,
+		 always: true,
+		 privilege: 1,
+		 rootName: "S-codex",
+		 component: Pcodex,
+		},
+		{n: 10, texte: "Découvrir l'Institut Peluchique de l'Audiovisuel",
 		 music: "derniere-seance",
 		 start: 0,
 		 end: 0,
 		 always: true,
-		 component: Pipa
+		 rootName: "ipa",
+		 component: Pipa,
+		 resetDth: geUtcMsFrom(2026,4,1,19,0,0)
 		},
 		/*
-		{n: 400, texte: "Métropolis", music: "le-jeu", 
+		{n: 400, texte: "Métropolis", music: "le-jeu",
 		 start: geUtcMsFrom(2025,3,21,19,0,0),
 		 end: geUtcMsFrom(2025,3,25,8,0,0),
 		 after: true,
 		 component: P400
 		},
-		*/
 		{n: 401, texte: "Le Bug Bounty de l'IPA", music: "Alice",
 		 start: geUtcMsFrom(2025,6,20,18,0,0),
 		 end: geUtcMsFrom(2025,7,15,18,0,0),
 		 component: P401,
+		}, 
+		*/
+		{n: 402, texte: "Le Marché de Noël", music: "X-ventesPrivees/Marche-de-noel",
+		 start: geUtcMsFrom(2025,12,13,20,15,0),
+		 end: geUtcMsFrom(2026,1,19,20,0,0),
+		 rootName: "X-ventesprivees",
+		 component: P402,
+		 after: true,
+		 // beta: true 
 		},
-		{n: 405, texte: "Initiatique (Kiki's Event X)", music: "pharao-secrets",
-		 start: 0,
+		{n: 403, texte: "Le Prélude de la Rapidité", music: "X-prelude-rapidite/elcondorpasa",
+		 start: 0, // geUtcMsFrom(2026,4,20,17,0,0),
+		 end: 0, // geUtcMsFrom(2026,4,24,20,0,0),
+		 rootName: "X-prelude",
+		 component: P403,
+		 after: true,
+		 inscription: 20,
+		 // beta: true 
+		},
+		{n: 404, texte: "Cherchez le lala", music: "X-cherchezlelala/Cherchez-le-garcon",
+		 start: 0,//geUtcMsFrom(2026,4,30,19,0,0),
+		 end: 0, //geUtcMsFrom(2026,5,5,20,0,0),
+		 rootName: "X-cherchezlelala",
+		 component: P404,
+		 after: true,
+		 // beta: true 
+		},
+		{n: 405, texte: "L'Initiatique (Kiki's Event X)", music: "X-initiatique/secrets",
+		 start: 0, // geUtcMsFrom(2027,0,1,20,0,0),
 		 end: 0,
 		 component: P405,
+		 beta: true
+		},
+		{n: 408, texte: "Le Temps des Fleurs", music: "X-depasse-temps",
+		 start: 0,  // geUtcMsFrom(2025,11,11,20,0,0),
+		 end: 0,  // geUtcMsFrom(2025,11,17,20,0,0),
+		 rootName: "X-tranquilite",
+		 component: P408,
+		 delaiDebut: 6,
+		 prereq: 405,
 		 // beta: true
 		},
-		{n: 410, texte: "Pharao", music: "plus-pres-des-etoiles",
+		/*
+		{n: 408, texte: "Rendez-vous intertemporels", music: "pharao-secrets",
 		 start: 0,
 		 end: 0,
+		 component: null,
+		 // beta: true
+		},
+		*/
+		{n: 410, texte: "Pharao", music: "plus-pres-des-etoiles",
+		 start: 0,  // geUtcMsFrom(2025,11,12,20,0,0),
+		 end: 0,  // geUtcMsFrom(2025,11,17,20,0,0),
 		 rootName: "X-pharao",
-		 delaiDebut: 20,
+		 delaiDebut: 4,
+		 prereq: 405,
 		 component: P410
 		},
 		{n: 420, texte: "Les Bases", music: "dolmen",
-		 start: 0,
-		 end: 0,
+		 start: 0,  // geUtcMsFrom(2025,11,13,20,0,0),
+		 end: 0,  // geUtcMsFrom(2025,11,17,20,0,0),
 		 rootName: "X-lesbases",
-		 delaiDebut: 20,
+		 delaiDebut: 5,
+		 prereq: 405,
 		 component: P420
 		},
-		{n: 425, texte: "Les Anomalies (TBD)", music: "dolmen",
-		 start: 0,
-		 end: 0,
-		 rootName: "X-orthocerberus",
+		{n: 425, texte: "Les Failles", music: "dolmen",
+		 start: 0,  // geUtcMsFrom(2025,11,14,20,0,0),
+		 end: 0,  // geUtcMsFrom(2025,11,17,20,0,0),
+		 rootName: "X-barathym",
 		 delaiDebut: 20,
+		 prereq: 405,
 		 component: P425
 		},
-		{n: 430, texte: "Les Failles (TBD)", music: "dolmen",
+		/*
+		{n: 430, texte: "(TBD)", music: "dolmen",
 		 start: 0,
 		 end: 0,
-		 rootName: "X-lesfailles",
+		 rootName: "X-xxx",
 		 delaiDebut: 20,
+		 prereq: 405,
 		 component: P430
 		},
-		{n: 440, texte: "Les Ortho-Composants", music: "mercredi",
-		 start: 0,
-		 end: 0,
+		*/
+		{n: 440, texte: "Les Composants", music: "mercredi",
+		 start: 0,  // geUtcMsFrom(2025,11,15,20,0,0),
+		 end: 0,  // geUtcMsFrom(2025,11,17,20,0,0),
 		 rootName: "X-orthocomposants",
 		 delaiDebut: 20,
+		 prereq: 405,
 		 component: P440
 		},
 		{n: 460, texte: "Les Dissonances", music: "mercredi",
-		 start: 0,
-		 end: 0,
+		 start: 0,  // geUtcMsFrom(2025,11,16,20,0,0),
+		 end: 0,  // geUtcMsFrom(2025,11,17,20,0,0),
 		 rootName: "X-dissonances",
 		 delaiDebut: 20,
+		 prereq: 405,
 		 component: P460
 		},
-		{n: 499, texte: "Epilogue", music: "dolmen",
-		 start: 0,
-		 end: 0,
-		 component: null
+		{n: 480, texte: "Retour à L'Orthogonalité", music: "dolmen",
+		 start: 0,  // geUtcMsFrom(2025,11,17,20,0,0),
+		 end: 0,  // geUtcMsFrom(2025,11,18,20,0,0),
+		 rootName: "X-dessins",
+		 delaiDebut: 20,
+		 prereq: 405,
+		 component: P480
 		},
 		/*
 		{n: 400, texte: "Métropolis", music: "le-jeu",
@@ -244,7 +359,7 @@
 			 // un "élu" doit repondre dans les X minutes, les autres doient aider
 			 // les musiques sont partagées et diffusée (usage du # pour synchro??)
 	 		 ///////////////////////////////////
-			 // découvrir un monde grace a la descripiton du monde (monde ou descriptionou...)
+			 // découvrir un monde grace a la descripiton du monde (monde ou descriptionou...) 
 			 // lore: ce n'est pas un mog blanc
 			 // --> devinette pour éliminer les mondes un a un
 			 // --> annonce du chgt du server
@@ -316,7 +431,7 @@
 		}	
 		else if (m.fromPseudo) {
 			chatFlag=true;
-			addNotification(m.fromPseudo+": "+m.texte, "orange", m.duree, m.mp3 || "Ding");
+			addNotification(m.fromPseudo+": "+m.texte, m.couleur || "orange", m.duree || 15, m.mp3 || "Ding");
 		}
 		else
 			addNotification(m.texte, m.couleur, m.duree, m.mp3)
@@ -324,30 +439,39 @@
 		if (chatMsgList.length > 100) chatMsgList.slice(50)
 	}
 	
-	// envoi d'un message
+	// envoi d'un message 
 	function chatSend() {
 		if (chatInput.msg) apiCall("/chat","POST", {texte: chatInput.msg, admin: chatInput.msgAdm} );
 		chatInput.msg=null;
 	}
 
 	/////////////////////////////////////////////////////////////////////
-	// Gestion des clics avec attribute gphelp, gp*, popup info, divers popupinfo, bandeau clignotant etc...
+	// Gestion des clics avec attribute gphelp, gp*, popup info, divers popupinfo,
+	// bandeau clignotant etc...
 	/////////////////////////////////////////////////////////////////////
 	function bubbleClick(e) {
 		//  console.log(e)
 		if (e.target.nodeName=="LABEL") return console.log ("click label ignoré, car bubble")
 		// complete si besoin
+		// console.log("bubbleClick",e.target) 
 		e.gpHelp ??= e.target.getAttribute("gpHelp")
 		e.gpImg ??= e.target.getAttribute("gpImg")
 		e.gpImgClass ??= e.target.getAttribute("gpImgClass")
 		e.gpVideo ??= e.target.getAttribute("gpVideo")
 		e.gpNotif ??= e.target.getAttribute("gpNotif")
 		e.gpLink ??= e.target.getAttribute("gpLink")
+		// console.log("bubbleClick",e)
 		// fait les actions demandées pour le click
-		if (e.gpHelp) dspInfo={titre: "Explication", body: [e.gpHelp], trailer:"Ferme ce popup", img: "ff-7/ff-7-help.gif", back:"papier" }
-		if (e.gpImg) dspInfo={ titre:"", body:[], img: e.gpImg, imgClass: e.gpImgClass, back:"papier" }
+		if (e.gpHelp || e.gpImg) dspInfo={
+			titre: (!e.gpImg)? "Explication" : " ",
+			body: e.gpHelp? [e.gpHelp] : [],
+			trailer:"Ferme ce popup",
+			img: e.gpImg || "commons/help-anim.gif",
+			imgClass: e.gpImgClass,
+			back:"papier"
+		}
 		if (e.gpVideo) playVideo(e.gpVideo)
-		if (e.gpLink) window.open(e.gpLink,"_blank")
+		if (e.gpLink) window.open(e.gpLink,"gpHelp")
 		if (e.gpNotif) {
 			// complements pour notif
 			e.gpColor ??= e.target.getAttribute("gpColor")
@@ -362,12 +486,21 @@
 		else
 			body.push("Pas de stackTrace")
 	}
-	function globalHdlError(e) {
-		console.warn(">>>>>>>> Erreur DEB e:", e)
+	function erreurGlobaleHandler(e) {
+		console.warn(">>>>>>>> Erreur e:", e)
 		let bld = {
-			titre:"FAIT UN SCREEN + MP KIKIADOC", trailer:"Fait un screen et contacte Kikiadoc",
+			titre:"Erreur, fait un rapport à KIKIADOC", trailer:"Fait un rapport à Kikiadoc",
 			back:"rouge",
-			body: ["Type: onerror","Message: "+e.message]
+			body: [
+				"Pour faire un rapport:",
+				"1-ferme ce popup d'erreur",
+				"2-clique sur ton pseudo en haut à droite",
+				"3-scroll jusque la rubrique Rapport technique de fonctionnement",
+				"4-clique sur le bouton 'Envoyer le rapport'",
+				null,
+				"Type: erreurGlobaleHandler",
+				"Message: "+e.message
+			]
 		}
 		bld.body.push("Erreur:"+e.toString())
 		// Ajoute la reason 
@@ -379,33 +512,13 @@
 		// Ajoute le staktrace
 		addStackTrace(bld.body,e.error)
 		displayError(bld)
-		addReport("global","lastError",bld.body)
-		// console.log(">>>>>>>> Erreur FIN e:", e)
+		addReportError(bld.body)
+		// console.log(">>>>>>>> Erreur FIN e:", e) 
 	}
-	function globalHdlRejection(e) {
-		console.warn(">>>>>>>> Rejection DEB e:",e,e?.reason)
-		let bld = {
-			titre:"FAIT UN SCREEN + MP KIKIADOC", trailer:"Fait un screen et contacte Kikiadoc",
-			back:"rouge",
-			body: ["Type: onunhandledrejection", "Raw: "+e?.reason, "Message: "+e?.reason.message]
-		}
-		addStackTrace(bld.body,e.error)
-		displayError(bld)
-		// console.log(">>>>>>>> Rejection FIN e:",e,e?.reason)
+	function togglePseudo() {
+		dspPseudo=!dspPseudo
+		localCtx.popupConfig = true
 	}
-
-	/* debug
-	function testError() {
-		console.log('>> testError')
-		playVideo("pipo")
-		let e= new Error('pipo')
-		e.name="kikiTest"
-		// throw e
-	}
-	setTimeout(()=>{
-		testError()
-	},5000)
-	*/
 </script>
 
 <svelte:document 
@@ -417,8 +530,8 @@
 	onsecuritypolicyviolation={(e)=>securitypolicyviolation(e)}
 />
 <svelte:window
-	onerror={globalHdlError}
-	onunhandledrejection={globalHdlRejection}
+	onerror={erreurGlobaleHandler}
+	onunhandledrejection={erreurGlobaleHandler}
 />
 
 <style>
@@ -520,6 +633,16 @@
 	@keyframes blinkFlagFrames { from { outline-color: black; }	to { outline-color: white; }	}
 
 	div :global(.adminCadre) { border: 2px solid red; background-color: black; margin: 2px }
+	
+	div :global(.greenPointer) { color: lightgreen; cursor: pointer}
+	div :global(.orangePointer) { color: orange; cursor: pointer}
+	div :global(.yellowPointer) { color: yellow; cursor: pointer}
+	div :global(.redPointer) { color: red; cursor: pointer}
+	div :global(.cGreen) { color: lightgreen}
+	div :global(.cOrange) { color: orange}
+	div :global(.cYellow) { color: yellow}
+	div :global(.cRed) { color: red}
+	
 	div :global(.papier) {
 		background-color: grey; background-position: center;
 		background-image: url("https://cdn.adhoc.click/V10a/texture-papier-noir.jpg");
@@ -539,15 +662,15 @@
 		font-size:1.2em;
 	}
 	div :global(.popupCadre) {
-		position: fixed; top: 10%; left: 20%;
+		position: fixed; top: 10%; left: 10%;
 		border: 2px outset red; border-radius: 10%; border-width: 5%;
     transform: translate(-5%, 0%);
 		overflow: visible; z-index: 7000;
 	}
-	div :global(.popupZone) { padding: 1.5em 0.5em 1.0em 1.0em;	}
+	div :global(.popupZone) { padding: 1.5em 0.5em 1.0em 1.0em; 	}
 	div :global(.popupContent) {
 		max-height: 79vh; min-height: 4em; min-width: 10em;
-		scrollbar-color: white grey; scrollbar-width: thin; overflow-y: auto;
+		scrollbar-color: white grey; scrollbar-width: thin; overflow: auto;
 		/* white-space: normal; word-break: break-all; */	}
 	div :global(.close) {
 		display: block; overflow: visible; text-shadow: none; cursor: pointer;
@@ -569,6 +692,7 @@
 	  to { color: white; }
 	}
 	:global(a) {color:lightgreen; text-decoration: unset; cursor: pointer}
+	:global(pre) {text-wrap: wrap; overflow-wrap: anywhere}
 	:global(a::after) {content: "🔎"; font-size:0.8em; vertical-align: top; color: lightgreen}
 	div :global(.br) { min-height: 0.4em; }
 	:global(.extLink) {color: lightgreen; text-decoration: unset; cursor: pointer}
@@ -582,10 +706,16 @@
 	:global(.simpleLink) {color: lightgreen; text-decoration: unset; cursor: pointer}
 	:global(.parchemin) {
 		margin: auto; border: 0.5em 1em; padding: 0.7em 0.7em; max-width: 95%;
-	  border-image-source: url("https://cdn.adhoc.click/V10a/ff-7/parchemin.png");
+	  border-image-source: url("https://cdn.adhoc.click/STATIC/parchemin.png");
+		border-image-repeat: stretch;	border-image-slice: 2% 2% fill; text-align: center;
+	}
+	:global(.parchemin-vertical) {
+		margin: auto; border-width: 0.5em 1em; padding: 3.3em 1.4em; max-width: 95%; 
+	  border-image-source: url("https://cdn.adhoc.click/STATIC/parchemin-vertical.jpg");
 		border-image-repeat: stretch;	border-image-slice: 2% 2% fill; text-align: center;
 	}
 	:global(.info) { font-style: italic; font-size: 0.8em }
+	:global(.petit) { font-size: 0.8em }
 	:global(.gpHelp) { color: lightgreen; cursor: pointer }
 	:global(.selOui) { border: 4px inset red; cursor: pointer }
 	:global(.selNon) { border: 4px outset #404040; cursor: pointer }
@@ -607,8 +737,12 @@
 		from { outline-color: black; }
 		to { outline-color: yellow; }
 	}
-
-
+	:global(.resTable) {
+		font-size: 0.8em; text-align: center; border-collapse: collapse;  width:100%;
+		scrollbar-width: thin; overflow: scroll;
+		/* white-space: normal; word-break: break-all; overflow-wrap: break-word;  */
+	}
+	:global(.resTd) { border: 1px solid white }
 </style> 
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -616,7 +750,7 @@
 <!-- svelte-ignore a11y_interactive_supports_focus -->
 <!-- svelte-ignore a11y_media_has_caption -->
 
-<div class="body" id="topPage" role="none" >
+<div class="body" id="topPage" role="none">
 	<back>&nbsp;</back>
 	<notifications id="notifications"></notifications>
 	<titre>
@@ -626,11 +760,11 @@
 		</div>
 		<div class="pseudo">
 			{#if wsStatus==1}
-				<span style="color: lightgreen" onclick={()=>dspPseudo=!dspPseudo} role="button">
+				<span style="color: lightgreen" onclick={togglePseudo} role="button">
 					{pseudo}
 				</span>
 			{:else}
-				<span style="color: yellow;" onclick={()=>dspPseudo=!dspPseudo}  role="button">
+				<span style="color: yellow;" onclick={togglePseudo} role="button">
 					{pseudo || "pseudo"} non validé
 				</span>
 			{/if}
@@ -643,11 +777,11 @@
 			{#if GBLSTATE.audioAmbiance}🔊{:else}🔇{/if}
 		</div>
 	</titre>
-	<blinkGlobal id="blinkGlobal" />
+	<blinkGlobal id="blinkGlobal"/>
 
-	<audio id="ding" onerror={(e)=>mediaError(e)}  />
-	<audio id="musique" onerror={(e)=>mediaError(e)} />
-	<audio id="tts" onended={()=>tryTTS(true)} onerror={(e)=>mediaError(e)}></audio>
+	<audio id="ding"/>
+	<audio id="musique"/>
+	<audio id="tts" onended={()=>tryTTS(true)}></audio>
 	<div id="divVideo" class="divVideo">
 		<div class="close" onclick={closeVideo} role="button" tabindex=0>X</div>
 		<video id="video" class="video stars" width="1920" height="1080" controls />
@@ -655,29 +789,34 @@
 
 	<div id="contenu" class="contenu">
 		{#if isAdmin(pseudo)}
-			<Padmin wsCallComponents={wsCallComponents} />
+			<Padmin webAuth={webAuth} wsCallComponents={wsCallComponents} />
 		{/if}
-		
-		{#if pseudo}
+		{#if !isProd}
+			<Kikitest CLIENTVERSION={CLIENTVERSION} bind:pseudo={pseudo} bind:webAuth={webAuth} />
+		{/if}
+
+		{#if webAuth?.etat=="ok" && webAuth?.existJwkPublicKey && pseudo && pseudo!=""}
 			{#if page==0}
-				<Phome pseudo={pseudo} pageList={pageList} bind:page={page} />
+				<Phome pseudo={pseudo} pageDone={pageDone} pageList={pageList} webAuth={webAuth}
+					bind:page={page} bind:localCtx={localCtx} />
 			{:else if PageComponent !== null}
 				<div>
 					<PageComponent
 						wsCallComponents={wsCallComponents}
-						pageDesc={pageDesc}
+						pageDesc={Object.assign({}, pageDesc)}
 						pseudo={pseudo}
 						pseudoGenre={pseudoGenre}
 						pseudoList={pseudoList}
 						bind:page={page}
-						bind:pageDone={pageDone} 
+						bind:pageDone={pageDone}
+						bind:localCtx={localCtx}
 					/>
 				</div>
 			{:else}
 				<div>Le contenu de la page {page} n'est pas disponible dans cette configuration</div>
 			{/if}
-		{:else}
-			<Pauth bind:pseudo={pseudo}/>
+		{:else if webAuth?.etat!="initWebAuth"}
+			<Pauth bind:pseudo={pseudo} bind:webAuth={webAuth} CLIENTVERSION={CLIENTVERSION} />
 		{/if}
 	</div>
 
@@ -711,55 +850,28 @@
 	{/if}
 	
 	{#if dspPseudo}
-		{@const desc = loadIt("pseudoDesc",{})}
 		{@const es= loadIt("elipticSecurity",{})}
 		{@const dynMetro= getDynMetro()}
 		<div class="popupCadre papier">
 			<div class="close" onclick={()=>dspPseudo=!dspPseudo} role="button">X</div>
 			<div class="popupZone">
 				<div class="popupContent">
+					<img class="parchemin" style="float:right; width: 4em" alt="" src={urlCdnAI+"pseudo-"+pseudo+".jpg"} />
 					<div>
-						Ton pseudo est {pseudo} ({desc.prenom} {desc.nom} @{desc.monde})
+						Ton pseudo est {pseudo} ({webAuth.prenom} {webAuth.nom} @{webAuth.monde})
 					</div>
 					<div>
 						Ton
 						<span class="infoLink" gpHelp="C'est une information sensible, elle ne quittera pas ton appareil. Elle restera inconnue du serveur. Elle sera utilisée pour adapter nos intéractions lors des post-traitements sur ton appareil uniquement">
 							genre
 						</span>
-						est
+						est:
+						<br/>
 						<span role="none" onclick={markClick} gpColor="yellow" gpDing="Ding" gpTimeout="15" 
 							gpNotif="Cette information sensible restera sur ton appareil"						>
 							<Radio bind:value={pseudoGenre} nom="pseudoGenre" options={GBLCONST.GENRES} />
 						</span>
 					</div>
-					<hr/>
-					{#if es.jwkPrivateKey}
-						<div>
-							Tu as une 
-							<a href="https://fr.wikipedia.org/wiki/Cryptographie_sur_les_courbes_elliptiques" target="_blank">
-								clé cryptographique elliptique
-							</a>
-							valide sur cet appareil.
-							<u>Tes échanges sont cryptés, signés et vérifiés</u>.
-						</div>
-						<div>
-							Tu utiliseras une 
-							<a href="https://fr.wikipedia.org/wiki/Cryptographie_post-quantique" target="_blank">
-								signature post-quantique
-							</a>
-							dès que possible
-						</div>
-					{:else}
-						<div style="color:red">
-							Tu as n'as pas de clé cryptographique elliptique valide sur cet appareil.
-						</div>
-					{/if}
-					{#if wsStatus!=1}
-						<div style="color:red">
-							Il semble que ton appareil n'a pas été validé par mon Grimoire
-							de Sécurité, alors il te faut contacter Kikiadoc sur Discord pour analyser ta situation
-						</div>
-					{/if}
 					<hr/>
 					{#if ! GBLSTATE.audioAmbiance}
 						<div style="color:red">
@@ -778,7 +890,7 @@
 					<div><input style="width:80%" bind:value={GBLSTATE.audioVolume} id="newVolumeAudio" type="range" min=0 max=100 /></div>
 					<div class="br">
 						Le volume audio de ma
-						<a href="https://fr.wikipedia.org/wiki/Synth%C3%A8se_vocale" target="_blank">
+						<a href="https://fr.wikipedia.org/wiki/Synth%C3%A8se_vocale" target="gpHelp">
 							voix
 						</a>
 						est actuellement de {GBLSTATE.audioTTS}% avant mixage par ton appareil.
@@ -806,14 +918,28 @@
 							<div class="info">L'ambance sonore continuera même si ta fenêtre de navigateur est masquée</div>
 						{/if}
 					</div>
-					<hr />
-					<div class="info blinkMsg">
-						Les informations ci-dessous sont à utiliser selon les conseils de Kikiadoc
-					</div>
-					<div class="adminCadre">
+					<div class="adminCadre petit">
+						<div class="blinkMsg cRed">
+							Les informations ci-dessous sont à utiliser selon les conseils de Kikiadoc
+						</div>
+						<hr />
+						<div>Sécurité</div>
+						<div class={(webAuth?.etat=="ok")?"cGreen":"blinkMsg cRed"}>
+							<label><input type="checkbox" bind:checked={flags.dspWebAuth} />Infos de sécurité webAuthn</label>
+						</div>
+						{#if flags.dspWebAuth}<pre>{JSON.stringify(webAuth,null,2)}</pre>{/if}
+						<div class={(es.jwkPrivateKey)?"cGreen":"blinkMsg cRed"}>
+							<label><input type="checkbox" bind:checked={flags.dspElliptic} />Clef publique racine elliptique</label>
+						</div>
+						{#if flags.dspElliptic}<pre>{JSON.stringify(es.jwkPublicKey,null,2)}</pre>{/if}
+						<div class={(wsStatus!=1)?"cRed":"cGreen"}>
+							<label><input type="checkbox" bind:checked={flags.dspCleSession} />Challenge éphémère de session temps réel</label>
+						</div>
+						{#if flags.dspCleSession}<pre>{loadIt("pseudoPwd","???")}</pre>{/if}
+						<hr/>
 						{#if dynMetro?.srv} 
 							{@const latence=Math.floor(1000*(( (dynMetro.cliRes - dynMetro.cliReq) - (dynMetro.srv.load + dynMetro.srv.run + 1.0) ) / 2.0))/1000}
-							<div style="font-size: 0.8em">
+							<div>
 								<div>Synchro temps réel:
 									<input type="button" onclick={()=> dspObject=dynMetro} value="🛈" />
 								</div>
@@ -831,83 +957,35 @@
 								<div>DeltaServer: {Math.floor(1000*(dynMetro.srv.load + dynMetro.srv.run + 1.0))/1000} ms</div>
 							</div>
 						{:else}
-							<div style="font-size: 0.8em; color:yellow">
+							<div style="color:yellow">
 								Je n'ai pas encoré vérifié la synchronisation temporelle entre ton équipement et le serveur.
 								Ce sera le cas lorsque je ferai une requête serveur permettant de la déterminer.
 							</div>
 						{/if}
 						<hr />
-						<div style="font-size: 0.8em">
-							<div role="button" style="cursor: pointer" onclick={markClick} gpHelp="Ceci est la taille mémoire utilisable, limitée à 8Go">
-								Mémoire globale utilisable sur ton équipement: {navigator.deviceMemory} Go<sup>(i)</sup> (RAM ou SWAP)
-							</div>
-							{#if navigator.storage?.estimate}
-								{#await navigator.storage.estimate()}
-									<div>Analyse en cours...</div>
-								{:then e}
-									<div role="button" style="cursor: pointer" onclick={markClick} gpHelp="Cette information est approximative, c'est un stockage utilisé par MétaCache">
-										Usage/Quota:
-										{(e.usage/(1024*1024*1024)).toFixed(2)}/{(e.quota/(1024*1024*1024)).toFixed(2)}Go
-										<sup>(i)</sup> (disque ou SSD sur PC/MAC, SD/smartphone)
-									</div>
-								{:catch error}
-									<div style="color: red">{error.message}</div>
-								{/await}
-							{:else}
-								<div style="color:yellow">
-									Ton navigateur ne permet pas l'analyse du stockage associé au site par storage.estimate
-								</div>
-							{/if}
-							{#if performance?.measureUserAgentSpecificMemory}
-								{#await performance.measureUserAgentSpecificMemory()}
-									<div>Analyse en cours...</div>
-								{:then e}
-									<div role="button" onclick={()=>dspObject=e} style="cursor: pointer">
-										Usage:
-										{(e.bytes/(1024*1024)).toFixed(2)}Mo
-										<sup>(i)</sup>
-									</div>
-								{:catch error}
-									<div style="color: red">{error.message}</div>
-								{/await}
-							{:else}
-								<div style="color:yellow">
-									Ton navigateur ne dispose pas de l'introspection mémoire par
-									<a href="https://developer.mozilla.org/en-US/docs/Web/API/Performance/measureUserAgentSpecificMemory"
-										target="_blank">
-										{#if isSM()}
-											measureUser...
-										{:else}
-											measureUserAgentSpecificMemory
-										{/if}
-									</a>
-									C'est une fonction récente qui n'est pas supportée par tous les navigateurs.
-								</div>
-							{/if}
-						</div>
-						<hr />
+						<div>DeepCheckSec (sécurité de ton navigateur)</div>
 						{#if window.crossOriginIsolated}
-							<div style="font-size: 0.8em">
-								DeepCheckSec est <span style="color:lightGreen">active</span>. 
+							<div>
+								✅DeepCheckSec est <span style="color:lightGreen">active</span>. 
 								Cette page est isolée via 
-								<a target="_blank" href="https://developer.mozilla.org/fr/docs/Web/HTTP/CSP">
+								<a target="gpHelp" href="https://developer.mozilla.org/fr/docs/Web/HTTP/CSP">
 									CSP
 								</a>,
-								<a target="_blank" href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cross-Origin-Opener-Policy">
+								<a target="gpHelp" href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cross-Origin-Opener-Policy">
 									COOP
 								</a>
 								et
-								<a target="_blank" href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cross-Origin-Embedder-Policy">
+								<a target="gpHelp" href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cross-Origin-Embedder-Policy">
 									COEP
 								</a>
 							</div>
 						{:else}
-							<div style="font-size: 0.8em; color:red">
-								DeepCheckSec n'est pas active, contacte Kikiadoc
+							<div class="redPointer blinkMsg">
+								🛑DeepCheckSec n'est pas active, pour ta sécurité, contacte immédiatement Kikiadoc
 							</div>
 						{/if}
 						{#if pseudo && isAdmin(pseudo)}
-							<div style="font-size: 0.8em; color:red">
+							<div>
 								<div class="infoLink" role="button" onclick={markClick}
 									gpHelp="En cliquant sur un bouton 'Provoquer...',
 													je vais provoquer une vraie tentative de hack du site.
@@ -925,29 +1003,51 @@
 							</div>
 						{/if}
 						<hr />
-						<div style="font-size: 0.8em">
+						<div>Métacache (optimisation téléchargements)</div>
+						<div>
+							<Common t="checklist3D" />
 							{#if GBLSTATE.swcReady}
 								<div>
-									Métacache est <span style="color:lightGreen">active</span>,
-									les accès réseau de cette page sont optimisés.
-									<br/>
 									<input type="button" value="Liste" onclick={metaCacheList}/>
 									<input type="button" value="Vider" onclick={metaCacheClear}/>
 									<input type="button" value="En attente" onclick={() => dspObject= swcGetWaitingIds()}/>
 								</div>
+							{/if}
+						</div>
+						<hr />
+						<div>
+							<div role="button" style="cursor: pointer" onclick={markClick} gpHelp="Ceci est la taille mémoire utilisable, limitée à 8Go">
+								Mémoire globale utilisable sur ton équipement: {navigator.deviceMemory} Go<sup>(i)</sup> (RAM ou SWAP)
+							</div>
+							{#if performance?.measureUserAgentSpecificMemory}
+								{#await performance.measureUserAgentSpecificMemory()}
+									<div>Analyse en cours...</div>
+								{:then e}
+									<div role="button" onclick={()=>dspObject=e} style="cursor: pointer">
+										Usage:
+										{(e.bytes/(1024*1024)).toFixed(2)}Mo
+										<sup>(i)</sup>
+									</div>
+								{:catch error}
+									<div style="color: red">{error.message}</div>
+								{/await}
 							{:else}
-								<div style="color:red">
-									Métacache n'est pas active. C'est normal si tu es en navigation privée.
-									Recharge la page et si cela ne suffit pas, 
-									ferme TOUS les onglets sur le site, puis FERME TON NAVIGATEUR et
-									reviens visiter le site.
-									<br/>
-									Contacte Kikiadoc en cas de souci.
+								<div style="color:yellow">
+									Ton navigateur ne dispose pas de l'introspection mémoire par
+									<a href="https://developer.mozilla.org/en-US/docs/Web/API/Performance/measureUserAgentSpecificMemory"
+										target="gpHelp">
+										{#if isSM()}
+											measureUser...
+										{:else}
+											measureUserAgentSpecificMemory
+										{/if}
+									</a>
+									C'est une fonction récente qui n'est pas supportée par tous les navigateurs.
 								</div>
 							{/if}
 						</div>
-						<div style="font-size: 0.8em">
-							<hr/>
+						<hr/>
+						<div>
 							<div>
 								Rapport technique de fonctionnement:
 							</div>
@@ -958,8 +1058,8 @@
 								<input type="button" value="Envoyer le rapport à Kikiadoc" onclick={()=>reportConsole()} />
 							</div>
 						</div>
-						<div style="font-size: 0.8em">
-							<hr />
+						<hr />
+						<div>
 							<div>
 								Resynchro lodestone, IA vocale etc...
 							</div>
@@ -970,11 +1070,20 @@
 						<hr />
 						<div style="font-size: 0.8em">
 							<div>
-								Moteur HTML: <a href="https://svelte.dev/" target="_blank">Svelte</a>
-								{SVELTEVERSION || "Playground"}
+								Version client: {CLIENTVERSION || 'DEV'}
+							</div>
+						</div>
+						<div style="font-size: 0.8em">
+							<div>
+								Build: <a href="https://vite.dev/" target="gpHelp">Vite</a>
+								{VITEVERSION || "DEV"}
 							</div>
 							<div>
-								Moteur 3D: <a href="https://www.babylonjs.com/" target="_blank">BabylonJS</a>
+								Moteur HTML: <a href="https://svelte.dev/" target="gpHelp">Svelte</a>
+								{SVELTEVERSION || "DEV"}
+							</div>
+							<div>
+								Moteur 3D: <a href="https://www.babylonjs.com/" target="gpHelp">BabylonJS</a>
 								{#if typeof BABYLON == 'object'}
 									{BABYLON.Engine.Version}
 								{:else}

@@ -2,7 +2,7 @@
 	import { onMount, onDestroy  } from 'svelte';
 	import { loadIt, storeIt, scrollPageToTop, displayInfo, displayObject,
 					 markClick, isAdmin,
-					 urlCdn, apiCall, apiCallExtern, getEpsilon,
+					 urlCdn, apiCall, apiCallExtern, getEpsilon, urlCdnAI,
 					 addNotification, mediaPlay,countDownInit,
 					 addTexteTTS, isPlaying, isProd
 				 } from './common.js'
@@ -22,13 +22,17 @@
 		pageDone = $bindable([]),
 	} = $props();
 
+	// svelte-ignore state_referenced_locally
 	const PAGEEPIQLBL= "P"+pageDesc.n+"_epiqStep"
+	// svelte-ignore state_referenced_locally
 	const PAGESAISIESLBL = "P"+pageDesc.n + "_saisies"
+	// svelte-ignore state_referenced_locally
 	const APIROOT = '/'+pageDesc.rootName+'/'
 	
 	const APICONFIG = APIROOT+'config'	
 	const APIETAT = APIROOT+'etat'	
 	const APIREQUPDATE = APIROOT+'reqUpdate'	
+	// svelte-ignore state_referenced_locally
 	const WSMSGETAT = pageDesc.rootName+".etat"
 	
 	onMount(() => { if (wsCallComponents) wsCallComponents.add(myWsCallback); init() });
@@ -53,7 +57,7 @@
 	let dspIndices=$state(false) 	// indices d'un pseudo
 
 	// appelé apres mount du component
-	function init() { console.log('**mount P'+pageDesc.n+'**'); getConfig(); getEtat() }
+	async function init() { console.log('**mount P'+pageDesc.n+'**'); await getConfig(); getEtat() }
 	
 	// appelé apres unmount du component
 	function reset() { console.log('**unmunt P'+pageDesc.n+'**')	}
@@ -71,6 +75,7 @@
 		// s.pipoVal ??= 0 // exemple de normalized
 		s.targetPseudo = null // cible actuelle
 		s.nextIndiceEcheance ??= 1 // 1ms pour forcer le refresh timer
+		console.log("**************************normalizedSaisies nextIndiceEcheance corriger ")
 		s.nextIndiceEcheance ||= 1 // 1ms pour forcer le refresh timer
 		return s
 	}
@@ -101,7 +106,6 @@
 	}
 	// chargement etat du challenge
 	let etat = $state(null)
-	let cagnotte = $state(0) // recalculée a chaque modif etat
 	async function getEtat(msgWs) {
 		let ret = msgWs || await apiCall(APIETAT);
 		if (ret.status != 200) return console.error("erreur sur",APIETAT,ret.status)
@@ -111,22 +115,24 @@
 	async function recalcEtat(tEtat) {
 		console.log("recalcEtat")
 		// Si pas d'état précédent 
-		if (!etat)
+		if (!etat) {
 			etat=tEtat
+			etat.cagnotteNb = 0
+		}
 		else { 
-			etat.nbDissonanes = tEtat.nbDissonances
+			etat.nbDissonances = tEtat.nbDissonances
 			etat.dthVersion = tEtat.dthVersion
-			cagnotte = 0
+			etat.cagnotteNb = 0
 			// balaye les pseudos et miodifie ceux qui ont évolués
-			Object.keys(etat.pseudos).forEach( (p) => {
+			Object.keys(tEtat.pseudos).forEach( (p) => {
 				let e = tEtat.pseudos[p]
+				if (e?.score) etat.cagnotteNb += 1
 				if (e?.muDth != etat.pseudos[p]?.muDth) {
 					console.log("update etat:",p)
-					etat.pseudos[p] = tEtat.pseudos[p]
+					etat.pseudos[p] = e
 				}
 				else
 					console.log("pas update etat:",p)
-				if (e?.score) cagnotte+=10
 			})
 		}
 		toggleToPseudo()
@@ -147,11 +153,12 @@
 	function toggleToPseudo(p) {
 		if (p) saisies.targetPseudo = p
 		let e = getEtatPseudo(saisies.targetPseudo)
+		if (!e) return console.log("toggleToPseudo null p=",p)
+		let domAudio = document.getElementById("audioDissonances")		
 		console.log("toggleToPseudo",e)
 		// si une musiqu est en cours sur le pseudo...
-		if ( e?.muIdx && (e.muDth+getEpsilon()+CONFIG.TIMERSUCCES > Date.now()) ) {
+		if ( e.muIdx && (e.muDth+getEpsilon()+CONFIG.TIMERSUCCES > Date.now()) ) {
 			addNotification("Tu écoutes les dissonances de "+saisies.targetPseudo)
-			let domAudio = document.getElementById("audioDissonances")		
 			// console.log("music en cours",e,m)
 			if (domAudio && domAudio.gpPseudo!=saisies.targetPseudo) {
 				if (saisies.targetPseudo==pseudo)
@@ -171,10 +178,13 @@
 		else {
 			// pas de musique sur le pseudo...
 			addNotification("Pas de dissonances pour "+saisies.targetPseudo)
-			// addTexteTTS("Tu n'entends aucune dissonance")
-
-			let domAudio = document.getElementById("audioDissonances")
-			if (domAudio) { domAudio.pause(); domAudio.src=urlCdn+"commons/hildiscord-jenairiendit.mp3"; domAudio.gpPseudo=null }
+			addTexteTTS(saisies.targetPseudo)
+			addTexteTTS("ne perçoit aucune dissonance")
+			if (domAudio) { 
+				domAudio.pause()
+				domAudio.src=urlCdn+"commons/hildiscord-jenairiendit.mp3"
+				domAudio.gpPseudo=null
+			}
 			// console.log("music non dispo",e) 
 			dspAide=null
 			dspIndices=null
@@ -261,34 +271,203 @@
 			</div>
 		</div>
 	{/if}
-	<Common t="popupDebutChallenge" pageDesc={pageDesc} />
+
 	<div>
 		<input type="button" value="Revoir le Lore" onclick={() => epiqStep=0} />
 		<input type="button" value="Resultats" onclick={calcResultats} />
+		<Common t="headerPage" pageDesc={pageDesc} />
 	</div>
 
 	{#if epiqStep==0}
 		<div class="reveal" use:scrollPageToTop>
-			<img class="parchemin" src={urlCdn+"pharao/hilbert-espace.jpg"} style="width:30%; float:right" alt="" />
+			<img class="parchemin" src={urlCdn+"X-dissonances/prime-directive.jpg"} style="width:30%; float:right" alt="" />
 			<div>
-				blabla hyper-temps lancement en difficulté
-				dissonances perturbent
-				trouver les origines des dissonances dans le temps eorzeen
+				Après qu'Anakin eût découvert l'Ortho-Temps (Hypostasis, Kiki's Event VII),
+				les Peluches définissaient les Directives Déontologiques des Dimensions.
+				<br/>
+				La
+				<a href="https://fr.wikipedia.org/wiki/Directive_Premi%C3%A8re" target="gpHelp">
+					Directive Première
+				</a>
+				définit le principe de non-ingérence.
+				<br/>
+				Daniel Jackson, notre explorateur de l'Hyper-Temps, se doit de la respecter.
 			</div>
-			<Btn bind:refStep={epiqStep} step=80 val="Explique-moi!" />
+			<Btn bind:refStep={epiqStep} step=10 val="Et alors?" />
+			<div style="clear:both" class="br"></div>
+		</div>		
+	{/if}
+	{#if epiqStep==10}
+		<div class="reveal" use:scrollPageToTop>
+			<img class="parchemin" src={urlCdn+"X-dissonances/tableau-math.jpg"} style="width:30%; float:right" alt="" />
+			<div>
+				Et alors {pseudo}, la situation est délicate:
+				<br/>
+				Les Humains de la Terre paramètre leur Pharao selon leur temps ce qui n'est pas assez précis.
+				<br/>
+				Daniel ne peut révéler aux Humains de la Terre qu'il faut tenir compte
+				de l'existence de trois dimensions temporelles lors de ce paramétrage.
+				<br/>
+				Ces approximations provoquent des Dissonnances dans notre espace-temps classique
+				et le triplet de Pharao ne peut pas encore mettre en évidence la dérive des Orthogonalités.
+			</div>
+			<Btn bind:refStep={epiqStep} step=20 val="Des Dissonances?" />
+			<div style="clear:both" class="br"></div>
+		</div>		
+	{/if}
+	{#if epiqStep==20}
+		<div class="reveal" use:scrollPageToTop>
+			<img class="parchemin" src={urlCdn+"X-dissonances/cds-musique.png"} style="width:30%; float:right" alt="" />
+			<div>
+				Oui {pseudo}, j'ai appelé ce phénomène les Dissonances car ce paramétrage imprécis
+				des humains de la terre provoque des vibrations sonores dans l'atmosphère d'Eorzéa.
+			</div>
+			<div>
+				Si nous dissipons chacune de ces Dissonances de notre espace-temps classique,
+				le retour de force intertemporel devrait provoquer le reparamétrage
+				du Pharao des Humains de la Terre aux bonnes valeurs.
+			</div>
+			<div class="br"/>
+			<div>
+				Hélas, localiser une Dissonance n'est pas une opération facile:
+				elles sont nombreuses, elles ne sont pas stables,
+				elle apparaissent, disparaissent de la surface d'Eorzéa et
+				ne peuvent être localisées que par la mesure d'infimes variations
+				de pression se propageant dans l'atmosphère.
+			</div>
+			<div class="br"/>
+			<div>
+				C'est ta mission. Tu as tout compris?
+			</div>
+			<Btn bind:refStep={epiqStep} step=30 val="Oui, bien sur" />
+			<Btn bind:refStep={epiqStep} step=30 val="Peut-être pas..." />
+			<div style="clear:both" class="br"></div>
+		</div>		
+	{/if}
+	{#if epiqStep==30}
+		<div class="reveal" use:scrollPageToTop>
+			<img class="parchemin" src={urlCdn+"X-dissonances/cds-musique.png"} style="width:30%; float:right" alt="" />
+			<div>
+				Bon, je vais préciser ta mission.
+				<div class="br"/>
+				Comme tous les habitants d'Eorzéa, tu es équipé{G(pseudoGenre,"","e")} de
+				<a href="https://fr.wikipedia.org/wiki/Oreille" target="gpHelp">
+					deux capteurs
+				</a>
+					te permettant de percevoir une Dissonance comme un
+				<a href="https://fr.wikipedia.org/wiki/Musique">
+					flux harmonieux
+				</a>.
+				Cela devrait te permettre de la localiser et
+				ta seule présence sur son lieu source, {G(pseudoGenre,"équipé","équipée")}
+				d'une tunique temporelle,	suffira alors à la dissiper.
+			</div>
+			<div class="br"/>
+			<div>
+				D'après les calculs de la Peluche Mathématicienne
+				<a href="https://fr.wikipedia.org/wiki/Nicolas_Bourbaki" target="gpHelp">
+					Nicolas Bourbaki
+				</a>,
+				le cardinal de l'ensemble des
+				Dissonances devrait être égal
+				<br/>
+				➥au premier
+					triplet pythagoricien
+				(3²+4²=5²=<u>25</u> )
+				<br/>
+				➥au troisième
+					nombre octogonal centré
+				(1, 9, <u>25</u>, 49, ... )
+			</div>
+			<div>
+				Voila ta mission. C'est limpide non?
+			</div>
+			<Btn bind:refStep={epiqStep} step=40 val="Heu..." />
+			<div style="clear:both" class="br"></div>
+		</div>		
+	{/if}
+	{#if epiqStep==40}
+		<div class="reveal" use:scrollPageToTop>
+			<img class="parchemin" src={urlCdn+"X-dissonances/cds-musique.png"} style="width:30%; float:right" alt="" />
+			<div>
+				Bon, je vais encore plus détailler.
+				<div class="br" />
+				Cette mission est impossible à faire en solo.
+				Elle nécessite une équipe où chaque membre de l'équipe collabore
+				pour atteindre l'objectif commun.
+				Plus grande sera cette collaboration, plus rapide sera la réalisation de cette mission.
+				<div class="br" />
+				Il y a 25 Dissonances à la surface d'Eorzéa. Il faut les trouver et les dissiper toutes.
+			</div>
+			<Btn bind:refStep={epiqStep} step=50 val="C'est clair" />
+			<div style="clear:both" class="br"></div>
+		</div>		
+	{/if}
+	{#if epiqStep==50}
+		<div class="reveal" use:scrollPageToTop>
+			<img class="parchemin" src={urlCdn+"X-dissonances/cds-musique.png"} style="width:30%; float:right" alt="" />
+			<div>
+				Chaque membre de l'équipe percevra, si cela est possible, 
+				une des Dissonances encore actives sous forme de musique.
+				Pour dissiper sa Dissonance, il devra être équipé d'une tunique temporelle et
+				indiquer les coordonnées du lieu d'origine de cette musique.
+				Ces coordonnées peuvent être le résultat de sa propre exploration,
+				ou d'indices proposés par d'autres membres de l'équipe.
+				<br/>
+			</div>
+			<Btn bind:refStep={epiqStep} step=60 val="D'autres détails?" />
+			<div style="clear:both" class="br"></div>
+		</div>
+	{/if}
+	{#if epiqStep==60}
+		<div class="reveal" use:scrollPageToTop>
+			<img class="parchemin" src={urlCdn+"X-dissonances/cds-musique.png"} style="width:30%; float:right" alt="" />
+			<div>
+				A tout moment, tu peux:
+				<br/>
+				➥Sélectionner ta Dissonance.
+				Tu peux, si tu es {G(pseudoGenre,"équipé","équipée")} d'une tunique temporelle,
+				indiquer les coordonnées de sa source et la dissiper.
+				Tu peux aussi te rendre sur le lieu de sa source pour en connaître les coordonnées.
+				<br/>
+				➥Sélectionner la Dissonance d'un autre membre de l'équipe.
+				Tu peux alors l'aider de différentes manières et selon tes possibilités.
+				Tu peux lui crafter une tunique temporelle et lui envoyer un message.
+				Tu peux, si tu reconnais la musique de sa Dissonance, te rendre sur le lieu
+				associé et lui indiquer les coordonnées.
+				Tu pourras aussi, parfois, lui indiquer un indice.
+				<br/>
+			</div>
+			<Btn bind:refStep={epiqStep} step=70 val="Coopération!" />
+			<div style="clear:both" class="br"></div>
+		</div>
+	{/if}
+	{#if epiqStep==70}
+		<div class="reveal" use:scrollPageToTop>
+			<img class="parchemin" src={urlCdn+"X-dissonances/cds-musique.png"} style="width:30%; float:right" alt="" />
+			<div>
+				oui {pseudo}, coopérer est la clef de ce challenge.
+				<div class="br"/>
+				Les extraits de musique sont les débuts de musiques d'ambiance de donjon, raid ou cités.
+				<br/>
+				➥Les positions à indiquer sont les coordonnées de l'Ethérite principale de la cité ou
+				celles de la petite éthérite permettant d'accéder au donjon ou au raid.
+				<br/>
+				Pour vérifier une musique d'un raid ou d'un donjon, tu peux y entrer en solo en
+				activant le mode "Sans restriction" dans le panneau des raids et donjon.
+			</div>
+			<div>
+			</div>
+			<Btn bind:refStep={epiqStep} step=80 val="Dernieres suggestions?" />
 			<div style="clear:both" class="br"></div>
 		</div>
 	{/if}
 	
 	{#if epiqStep==80}
 		<div class="reveal" use:scrollPageToTop>
-			<img class="parchemin" src={urlCdn+"pharao/hilbert-espace.jpg"} style="width:30%; float:right" alt="" />
+			<img class="parchemin" src={urlCdn+"X-pharao/hilbert-espace.jpg"} style="width:30%; float:right" alt="" />
 			<div>
 				Réglages de l"audio...
-			</div>
-			<div>
-				Les extraits de musique sont les débuts de musiques de donjon, raid ou cités,
-				pour le vérifier, active le mode machin pour y entrer en solo
 			</div>
 			<div>
 				Position à indiquer quand donjon, ville etc...
@@ -309,7 +488,7 @@
 		</div>
 	{/if}
 
-	{#if epiqStep==90 && etat && CONFIG && MUSIQUESENUM}
+	{#if epiqStep==90 && etat}
 		<div use:scrollPageToTop>
 			<div>
 				<div style="display: {(saisies.debug)? 'block' : 'none'} ">
@@ -322,8 +501,8 @@
 				<div>
 					<div style="cursor:pointer" >
 						<span onclick={markClick}
-							gpHelp="Cagnotte globale en millions de gils. Elle augmente à chaque fois qu'une personne trouve sa première dissonance (voir le bouton résultats)." >
-							💰{cagnotte}
+							gpHelp="Cagnotte globale. Elle augmente à chaque fois qu'une personne trouve sa première dissonance (voir le bouton résultats)." >
+							💰{etat.cagnotteNb}/{GBLCONST.EQUILIBRAGE.NB}
 						</span>
 						<span onclick={markClick}
 							gpHelp="Nombre total de dissonances détruites." >
@@ -408,24 +587,28 @@
 						<tbody>
 							{#each Object.keys(etat.pseudos) as p,i}
 								{@const e = etat.pseudos[p] }
-								{@const mDesc = getMusicFromItemId(e.muIdx) }
+								{@const mDesc = getMusicFromItemId(e?.muIdx) }
 								<tr class= {(p==saisies.targetPseudo)? "trOn":"trOff"} onclick={()=>toggleToPseudo(p)}>
 									<td>
 											{p}
 									</td>
-									<td>
-										<span>
-											{#if e.muIdx}
-												<countdown dth={e.muDth+CONFIG.TIMERSUCCES} use:countDownInit
-													oncdTimeout={async ()=> await renewTimer(p)} txtTimeout="00:00:00" />
-												🔊
-											{:else}
-												<countdown dth={e.muDth+CONFIG.TIMERWAIT} use:countDownInit
-													oncdTimeout={async ()=> await renewTimer(p)} txtTimeout="00:00:00" />
-												🔇
-											{/if}
-										</span>
-									</td>
+									{#if e.muIdx}
+										<td>
+											🔊
+										</td>
+										<td>
+											<countdown dth={e.muDth+CONFIG.TIMERSUCCES} use:countDownInit
+												oncdTimeout={async ()=> await renewTimer(p)} txtTimeout="--:--:--" />
+										</td>
+									{:else}
+										<td>
+											🔇
+										</td>
+										<td>
+											<countdown dth={e.muDth+CONFIG.TIMERWAIT} use:countDownInit
+												oncdTimeout={async ()=> await renewTimer(p)} txtTimeout="--:--:--" />
+										</td>
+									{/if}
 									<td>
 										{#if e.m1}
 											𐂫
@@ -565,20 +748,39 @@
 			<div class="popupZone">
 				<div class="popupContent">
 					<div>
-						La cagnotte de {cagnotte} millions sera répartie
-						entre ceux qui ont trouvé au moins une dissonnance (💰).
+						Résultats: 💰{etat.cagnotteNb}/{GBLCONST.EQUILIBRAGE.NB}⇒ {etat.cagnotteNb.toFixed(1)}M/{CONFIG.GILS}M Gils
 					</div>
-					<table>
+					<table class="resTable">
 						<tbody>
+							<tr class="petit">
+								<td>Pseudos</td>
+								<td>Disson.</td>
+								<td>Coef</td>
+								<td>Gils</td>
+							</tr>
 							{#each Object.keys(etat?.pseudos) as p}
 								{@const e = etat.pseudos[p]}
 								<tr>
-									<td>{p}</td>
-									<td>{#if e.score}💰{:else}❌{/if}</td>
+									<td class="resTd">
+										<img style="width: 1em" alt="" src={urlCdnAI+"pseudo-"+p+".jpg"} />
+										{p}
+									</td>
+									<td class="resTd">{#if e.score}🪙{/if}{e.score}</td>
+									<td class="resTd">{Math.floor(100*e.score)}%</td>
+									<td class="resTd">{(e.score*CONFIG.GILS).toFixed(3)}M</td>
 								</tr>
 							{/each}
+							<tr class="petit">
+								<td>Contributions</td>
+								<td>🪙={etat.cagnotteNb}</td>
+								<td></td>
+								<td colspan=3>💰=min({etat.cagnotteNb},{GBLCONST.EQUILIBRAGE.NB})={etat.cagnotteNb}</td>
+							</tr>
 						</tbody>
 					</table>
+					<div class="info">
+						⚠️Les gains varient tant que le challenge n'est pas terminé.
+					</div>
 				</div>
 			</div>
 		</div>

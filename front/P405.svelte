@@ -3,7 +3,7 @@
 	import { loadIt, storeIt, scrollPageToTop, displayInfo,
 					 markClick, playMusic, tts, playDing,
 					 generateSecurityAlert, isEquipementPC, isPC, isSM,
-					 getEpsilon, getLatence,
+					 getEpsilon, getLatence, displayObject,
 					 addNotification, apiCall,
 					 urlCdn, urlCdnAI, jjmmhhmmss,
 					 isPWA, isAndroid, isAdmin,
@@ -13,13 +13,14 @@
 					 babylonStart, babylonStop,
 					 babylonSetSceneActive, sceneLoadingCreate, babylonHome,
 					 babylonGetMetrologie
-				 } from './3Droot.js'
+				 } from './BabRoot.js'
 	import { G }  from './privacy.js'
-	import { GBLCONST,GBLSTATE }  from './ground.svelte.js'
+	import { GBLCONST,GBLSTATE, calcCagnotte }  from './ground.svelte.js'
 
 	import Btn from './Btn.svelte'
 	import Info from './Info.svelte'
 	import Common from './Common.svelte'
+	import BabHeader from './BabHeader.svelte'
 	
 	let {
 		GBLCTX,
@@ -32,7 +33,9 @@
 		pageDone = $bindable([]),
 	} = $props();
 
+	// svelte-ignore state_referenced_locally
 	const PAGEEPIQLBL= "P"+pageDesc.n+"_epiqStep"
+	// svelte-ignore state_referenced_locally
 	const PAGESAISIESLBL = "P"+pageDesc.n + "_saisies"
 	
 	onMount(() => { wsCallComponents.add(myWsCallback); init() });
@@ -51,7 +54,7 @@
 	let dspResultats=$state(false) 	// affichage des résltats
 
 	// appelé apres mount du component (en async)
-	function init() {	getMetadata(); getNovices() }
+	function init() {	getNovices() }
 	
 	// appelé apres unmount du component
 	function reset() { babylonStop()	}
@@ -69,6 +72,10 @@
 		s.isInitDone ??= false // indique que les metaata on ete calculées
 		s.aleaReq ??= Math.floor(Math.random()*100) // Nombre demandé pour lecture popup
 		s.sensibilite3D ??= 3
+		s.simulBaton ??= 50
+		s.simulContrib ??= 0
+		s.simulRatio ??= 0
+		s.simulMax ??= 0
 		return s
 	}
 
@@ -79,7 +86,8 @@
 		epiqStepChangeDth=Date.now()
 	}
 
-	
+	// variable poubelle
+	let poub = {}
 
 	//////////////////////////////////////////////////
 	// spécifique composant
@@ -87,17 +95,6 @@
 
 	const VIDEO_PIPO="ff-3-rendez-vous" // Video en attente d'une nouvelle
 
-	//////////////////////////////////////////////////
-	// gestion des metadata 
-	//////////////////////////////////////////////////
-	let metadata = null
-	async function getMetadata() {
-		if (!saisies.isInitDone) {
-			let ret = await apiCall('/clientConfig/refresh');
-			if (ret.status == 200) { metadata = ret.o; saisies.isInitDone=true }
-		}
-	}
-	
 	//////////////////////////////////////////////////
 	// gestion des novices
 	//////////////////////////////////////////////////
@@ -129,10 +126,10 @@
 	//////////////////////////////////////////////////
 	// boutons d'assistance pour le reglage audio
 	//////////////////////////////////////////////////
-	const AUDIO_PLAYMUSIC="LOTR-connaissances"
+	const AUDIO_PLAYMUSIC="X-initiatique/secrets"
 	async function audioRien() {
 		GBLSTATE.audioAmbiance = true;
-		GBLSTATE.audioBack=true
+		GBLSTATE.audioBack=false
 		GBLSTATE.audioVolume=50
 		playMusic(AUDIO_PLAYMUSIC,true)
 		displayInfo({
@@ -149,7 +146,7 @@
 	}
 	async function audioFaible() {
 		GBLSTATE.audioAmbiance = true;
-		GBLSTATE.audioBack=true
+		GBLSTATE.audioBack=false
 		GBLSTATE.audioVolume=50
 		playMusic(AUDIO_PLAYMUSIC,true)
 		displayInfo({
@@ -163,7 +160,7 @@
 	}
 	async function audioFort() {
 		GBLSTATE.audioAmbiance = true;
-		GBLSTATE.audioBack=true
+		GBLSTATE.audioBack=false
 		playMusic(AUDIO_PLAYMUSIC,true)
 		displayInfo({
 			titre: "Le volume est trop fort", back:"papier",
@@ -178,7 +175,6 @@
 	// chargement de la scene 3D pour test 
 	/////////////////////////////////////////////////////////////////////////////////////
 	let babIHM = $state({})
-	let babMessage = $state(null)
 	let dspBabParam = $state(false)
 	async function start3D() {
 		console.log("****************** START3D")
@@ -195,7 +191,7 @@
 		let o = e?.srcElement?.Event3D // recupere les complements de l'event
 		if (babylonGetOption("debug")) console.log('descEvent:',o)
 		if (!o) return
-		if(o.nom=="btnGo") {
+		if(o.action=="btnGo") {
 			let babMetro = babylonGetMetrologie()
 			console.log("event3d - babMetro",babMetro)
 			if ( (Date.now() - babMetro.perfStartDth) < 20000) {
@@ -209,9 +205,9 @@
 				epiqStep=70
 			}
 		}
-		if(o.nom=="cannette#1") { babMessage="Il est interdit de boire la cannette de droite" }
-		if(o.nom=="cannette#2") { babMessage="Il est interdit de boire la cannette de gauche" }
-		if(o.nom=="OrthoStargate") { babMessage="C'est le Chronogyre. Il te permettra d'accéder à l'Ortho-Temps, mais pour l'instant le voyage est impossible. Clique sur le bouton au centre du chronogyre pour sortir de la Porte de l'Ortho-Temps" }
+		if(o.nom=="cannette#1") { babIHM.msg="Il est interdit de boire la cannette de droite" }
+		if(o.nom=="cannette#2") { babIHM.msg="Il est interdit de boire la cannette de gauche" }
+		if(o.nom=="OrthoStargate") { babIHM.msg="C'est le Chronogyre. Il te permettra d'accéder à l'Ortho-Temps, mais pour l'instant le voyage est impossible. Clique sur le bouton au centre du chronogyre pour sortir de la Porte de l'Ortho-Temps" }
 	}
 </script>
 
@@ -246,10 +242,16 @@
 	<div>
 		<input type="button" value="Revoir le Lore" onclick={() => epiqStep=0} />
 		<input type="button" value="Resultats" onclick={() => dspResultats=true} />
+		<Common t="headerPage" pageDesc={pageDesc} />
 	</div>
 	{#if epiqStep==0 && novices}
 		<div class="reveal" use:scrollPageToTop>
 			<img class="parchemin" src={urlCdn+"gamemaster.jpg"} style="width:20%; float:right" alt="" />
+			{#if isAdmin(pseudo)}
+				<div class="adminCadre">
+					isEquipementPC={isEquipementPC()} isPWA={isPWA()} isAndroid={isAndroid()}
+				</div>
+			{/if}
 			Bienvenue {pseudo} dans <b>{NOVICIAT_LBL}</b>, le Kiki's Event X.
 			{#if novices.nb >= NOVICIAT_NBMAX && !novices.pseudos[pseudo]}
 				<div class="adminCadre">
@@ -263,26 +265,24 @@
 				</div>
 			{/if}
 			<div class="br"></div>
-			<u>Lit attentivement mes instructions</u>,
-			même si tu as déjà participé à de précédents événements.
-			<div class="br"></div>
-			{#if ! isPWA()}
-				{#if isAndroid()}
+			<div>
+				<u>Lit attentivement mes instructions</u>, même si tu as déjà participé à de précédents événements.
+			</div>
+			{#if !isPWA() && isAndroid()}
 					<div class="adminCadre">
 						Tu utilises un smartphone Android.
 						Si tu utilises Chrome comme navigateur par défaut sur ton smartphone,
 						tu peux activer le mode
-						<a href="https://developer.mozilla.org/fr/docs/Web/Progressive_web_apps" target="_blank">
+						<a href="https://developer.mozilla.org/fr/docs/Web/Progressive_web_apps" target="gpHelp">
 							PWA
 						</a> et transformer le site en une application.
 						<br/>
-						<a href="{urlCdn}commons/Installation Grande Peluche comme PWA sur smartphone (portait).pdf" target="_blank">
+						<a href="{urlCdn}commons/Installation Grande Peluche comme PWA sur smartphone (portait).pdf" target="gpHelp">
 						Suis ces instructions pour installer l'application.
 						</a>.
 						<br/>
 						Après installation, ferme cette fenêtre et lance l'application.
 					</div>
-				{/if}
 			{/if}
 			<div class="br"></div>
 			A tout moment, tu peux cliquer sur "Grande Peluche" en haut à gauche de ton écran,
@@ -292,7 +292,7 @@
 			<div class="br"></div>
 			<div class="br"></div>
 			N'hésite pas à cliquer sur des éléments identifiés par une
-			<a href="https://fr.wikipedia.org/wiki/Hyperlien" target="_blank">loupe</a>
+			<a href="https://fr.wikipedia.org/wiki/Hyperlien" target="gpHelp">loupe</a>
 			d'un <span class="imgLink" gpImg="ff-7/kiki-1.png" gpImgClass="img100">appareil photo</span>
 			d'un <span class="videoLink" gpVideo={VIDEO_PIPO}>projecteur vidéo</span>,
 			ou d'un <span class="infoLink" gpHelp="Exemple de message d'information">signe d'information</span>,
@@ -307,14 +307,17 @@
 			et même les vidéos qui peuvent poper au milieu d'un challenge: 
 			<u>celà n'impacte jamais tes résultats</u>
 			et c'est même parfois une source d'info pour aller plus vite.
-			C'est aussi un temps où je fais des opérations invisibles: En ce moment,
-			je synchronise ton profil avec le jeu.
+			<br/>
+			Quand tu lis le lore, c'est aussi un temps où je fais des opérations invisibles.
+			<br/>
+			Tu verras parfois un chrono sur un bouton,
+			tu ne devras pas cliquer sur le bouton tant que le chrono s'affiche.
 			<div class="br"></div>
 			A tout moment, tu peux cliquer sur le bouton "Revoir le lore" en haut de page
 			pour relire le lore depuis le début,
 			ou cliquer sur "Résultats" pour voir le classement actuel des participants.
 			<br/>
-			<Common t="delayStep" p={{nbMs:45000, step:5}} bind:refStep={epiqStep} bind:epiqStepChangeDth={epiqStepChangeDth} />
+			<Btn bind:refStep={epiqStep} refDth={epiqStepChangeDth} delai=20 step=5 val="J'ai compris" />
 			<div style="clear:both" class="br" />
 		</div>
 	{/if}
@@ -355,33 +358,39 @@
 					{genreLbl}
 				</span>
 			</div>
-			<div>
-				J'utiliserai donc
-				{#if pseudoGenre=='M'}
-					le masculin
-				{:else if pseudoGenre=='F'}
-					le féminin
-				{:else}	
-					le masculin ou le féminin <u>selon mon humeur</u>
-				{/if}.
-				<br/>
-				A titre d'exemple, "tu es heureu..." se décline, à cet instant, selon ton genre en
-				"tu es heureu{G(pseudoGenre,"x","se")}".
-			</div>
+			{#if !pseudoGenre}
+				<div class="blinkMsg" style="color:yellow">
+					Tu n'as pas encore indiqué ton genre.
+				</div>
+			{:else}
+				<div>
+					J'utiliserai donc
+					{#if pseudoGenre=='M'}
+						le masculin
+					{:else if pseudoGenre=='F'}
+						le féminin
+					{:else}	
+						le masculin ou le féminin <u>selon mon humeur</u>
+					{/if}.
+					<br/>
+					A titre d'exemple, "tu es heureu..." se décline, à cet instant, selon ton genre en
+					"tu es heureu{G(pseudoGenre,"x","se")}".
+				</div>
+			{/if}
 			<div onclick={markClick} gpHelp="Tu peux modifier ton genre à tout moment. Pour celà clique sur ton pseudo en haut à droite de ton écran et modifie-le. Tu en verras les effets immédiats sur la page affichée">
 				<Btn val="Je veux changer mon genre" />
 				<Btn bind:refStep={epiqStep} step=10 val="Pour mon genre, {genreLbl}, c'est OK" />
 			</div>
 			<div class="info">
 				Pour éviter de passer sous les fourches caudines de la
-				<a href="https://www.cnil.fr/fr" target="_blank">CNIL</a>
+				<a href="https://www.cnil.fr/fr" target="gpHelp">CNIL</a>
 				et respecter totalement
-				<a href="https://www.cnil.fr/fr/reglement-europeen-protection-donnees" target="_blank">
+				<a href="https://www.cnil.fr/fr/reglement-europeen-protection-donnees" target="gpHelp">
 					le règlement RGPD
 				</a>,
 				tes données personnelles sensibles (ex: ton genre...) sont uniquement
 				stockées sur ton appareil dans un stockage privé, le 
-				<a href="https://developer.mozilla.org/fr/docs/Web/API/Window/localStorage" target="_blank">
+				<a href="https://developer.mozilla.org/fr/docs/Web/API/Window/localStorage" target="gpHelp">
 					Local Storage
 				</a>
 				accessible uniquement quand tu es en communication sécurisée avec le site https://ff14.adhoc.click.
@@ -441,7 +450,6 @@
 	{/if}
 	
 	{#if epiqStep==15}
-		{@const epsilon=getEpsilon()}
 		<div class="reveal" use:scrollPageToTop>
 			<img class="parchemin" src={urlCdn+"audio.jpg"} style="width:20%; float:right" alt="" />
 			Je vais aussi utiliser ma Voix pour te commander.
@@ -461,12 +469,12 @@
 				msg="Monte le volume de ma voix à 100% et baisse celui de l'ambiance sonore."	/>
 			<Btn val="J'ai un souci"
 				msg="Si même avec un volume à 100%, tu n'entends pas ma voix, contacte Kikiadoc sur Discord, Il t'aidera a compléter tes reglages en paramétrant aussi le mixer de ton appareil"	/>
-			<Btn bind:refStep={epiqStep} step=20 val="J'entend parfaitement ta Voix" />
+			<Btn bind:refStep={epiqStep} step=18 val="J'entend parfaitement ta Voix" />
 			<div style="clear:both" class="br"></div>
 		</div>
 	{/if}
 
-	{#if epiqStep==20 && novices}
+	{#if epiqStep==18 && novices}
 		{@const epsilon=Math.abs(getEpsilon())}
 		<div class="reveal" use:scrollPageToTop>
 			<img class="parchemin" src={urlCdn+"ff-10/lalateam.png"} style="width:20%; float:right" alt="" />
@@ -476,12 +484,6 @@
 				il ne supporterai pas que tu sois bloqu{G(pseudoGenre,"é","ée")},
 				ennuy{G(pseudoGenre,"é","ée")}
 				ou frustr{G(pseudoGenre,"é","ée")}!
-				<br/>
-				Et si tu découvres un bug notable, il y a même un
-				<a href="https://fr.wikipedia.org/wiki/Prime_aux_bogues" target="_blank">
-					bug bounty
-				</a>
-				avec des gils en récompense!
 			</div>
 			<div class="br"></div>
 			<div>
@@ -494,16 +496,15 @@
 				{#if isEquipementPC()}
 					Appuie sur la touche F5 de ton PC
 				{:else}
-					Appuie sur le haut de ron écran et glisse vers le bas
-					sur ton smartphone.
+					Appuie sur le haut de l'écran de ton smartphone et glisse vers le bas
 				{/if}
 			</div>
 			<div class="br"></div>
-			<Btn bind:refStep={epiqStep} step=25 val="J'ai compris" />
+			<Btn bind:refStep={epiqStep} step=20 val="J'ai compris" />
 			<div class="info">
 				La charge de Game Master Numérique ne peut se maîtriser seule.
 				Mon équipe est composée de multiples Peluches (développements par Kikiadoc), 
-				deux "Engines" réputés (gratuits et "open-source") et d'autres solutions techniques.
+				deux "Engines" réputés (gratuits et "open-source") et d'autres solutions techniques (payantes).
 				Tu verras parfois leurs noms.
 				<br/>
 				➥Moi, la Grande Peluche, je suis en charge de l'apparence et la dynamique du site.
@@ -516,36 +517,79 @@
 				<br/>
 				➥SyncServer assure la synchronisation en temps-réel de l'ensemble des participants.
 				<br/>
-				➥Métacache optimise ta bande passante.
+				➥Métacache optimise tes gros téléchargements et ta bande passante.
 				<br/>
 				➥CheckSec est en charge de la cybersécurité du server.
 				<br/>
 				➥DeepCheckSec est en charge de la cybersécurité de ton navigateur.
 				<br/>
-				➥<a href="https://fr.wikipedia.org/wiki/Svelte" target="_blank">Svelte</a>
+				➥<a href="https://fr.wikipedia.org/wiki/Svelte" target="gpHelp">Svelte</a>
 				assure le rendu et la réactivité des pages web en 2D
 				<br/>
-				➥<a href="https://fr.wikipedia.org/wiki/Babylon.js" target="_blank">Babylon</a>
+				➥<a href="https://fr.wikipedia.org/wiki/Babylon.js" target="gpHelp">Babylon</a>
 				assure le rendu des scènes en 3D.
 				<br/>
-				➥<a href="https://www.pcloud.com/fr/eu" target="_blank">pCloud</a>
-				est mon stockage sécurisé de référence pour les données (sauvegardes, médias...)
+				➥Mon server
+				<a href="https://aws.amazon.com/fr/ec2/" target="gpHelp">EC2</a>
+				(localisé à Paris) fait tourner LogicServer, SyncServer, CheckSec, Hildiscord
+				et permet de télécharger les composants fonctionnant dans ton navigateur.
 				<br/>
-				➥<a href="https://aws.amazon.com/fr/polly/" target="_blank">Polly</a>
-				est mon AI de synthèse vocale.
+				➥Mon service <a href="https://www.pcloud.com/fr/eu" target="gpHelp">pCloud</a>
+				(localisé au Luxembourg et en Suisse)
+				assure un triple stockage sécurisé de référence des codes sources,
+				des sauvegardes et des fichiers médias.
 				<br/>
-				➥<a href="https://aws.amazon.com/fr/cloudfront/" target="_blank">Cloudfront</a>
-				est mon CDN assurant la diffusion des médias
+				➥Mon service <a href="https://aws.amazon.com/fr/polly/" target="gpHelp">Polly</a>
+				(localisé à Paris et backend en Ireland)
+				assure la synthèse vocale par IA.
+				<br/>
+				➥Mon service <a href="https://aws.amazon.com/fr/cloudfront/" target="gpHelp">Cloudfront</a>
+				(localisé à Paris, Londres, Francfort, Milan...)
+				assure la diffusion optimisées des médias.
+				<br/>
 			</div>
 			<div style="clear:both" class="br"></div>
 		</div>
 	{/if}
 	
+	{#if epiqStep==20}
+		<div class="reveal" use:scrollPageToTop>
+			<img class="parchemin" src={urlCdn+"audio.jpg"} style="width:20%; float:right" alt="" />
+			<div>
+				Il y a des cas où tu ne peux pas utiliser facilement ton micro sur discord,
+				parfois même tu n'en as pas.
+				<br/>
+				C'est pourquoi Audioblaster peux relayer tes messages en synthèse vocale à tous les connectés
+				sur le site et Hildiscord envoyer tes messages en texte dans le canal blablatage de Discord.
+			</div>
+			<div class="br" />
+			<div>
+				Dans la zone de saisie marquée "message" en haut page, à coté du bouton "Résultat",
+				tu peux indiquer un message.
+				<br />
+				Pour l'envoyer,
+				{#if isPC()}
+					appuie sur la touche "retour" de ton PC,
+				{:else}
+					valide ton message par le bouton style "aller à" sur ton smartphone,
+				{/if}
+				ou clique sur "➤".
+			</div>
+			<div>
+				<input type="button" value="Je peux faire un test?"
+					onclick={markClick} gpHelp="Oui, tu peux faire un test!!" />
+				<Btn bind:refStep={epiqStep} step=25 val="C'est cool!" />
+			</div>
+			<div style="clear:both" class="br"></div>
+		</div>
+	{/if}
+
+	
 	{#if epiqStep==25}
 		<div class="reveal" use:scrollPageToTop>
 			<img class="parchemin" src={urlCdn+"ff-7/checksec.png"} style="width:30%; float:right" alt="" />
 			Un collègue
-			<a href="https://fr.wikipedia.org/wiki/Responsable_de_la_s%C3%A9curit%C3%A9_des_syst%C3%A8mes_d%27information" target="_blank">
+			<a href="https://fr.wikipedia.org/wiki/Responsable_de_la_s%C3%A9curit%C3%A9_des_syst%C3%A8mes_d%27information" target="gpHelp">
 				RSSI
 			</a> de Kikiadoc lui a dit un jour:
 			<i>En cybersécurité, il faut faire au mieux et s'attendre au pire</i>.
@@ -564,7 +608,7 @@
 			<br/>
 			➥Son marteau est de grande taille: à chaque frappe,
 			il bannit entre 256 et 17 millions d'adresses IP.
-			Actuellement, des dizaines de millions d'adresses IP sont actuellement bannies du site.
+			Actuellement, des dizaines de millions d'adresses IP sont bannies du site.
 			<div class="br"></div>
 			⚠️Si vous êtes plusieurs à partager ta connexion Internet, indique le à Kikiadoc.
 			Normalement à 2, ca doit passer, mais à 3 ça bloque.
@@ -581,7 +625,7 @@
 			⚠️Ton pseudo et l'indicateur "multijoueurs" en haut à droite de ton écran doivent
 			toujours être verts. Cela indique une communication temps-réel sécurisée et signée.
 			<br/>
-			<Btn bind:refStep={epiqStep} step=30 val="J'ai compris" />
+			<Btn bind:refStep={epiqStep} refDth={epiqStepChangeDth} delai=15 step=30 val="J'ai compris" />
 			<div style="clear:both" class="br"></div>
 		</div>
 	{/if}
@@ -592,7 +636,7 @@
 			DeepCheckSec est mon Erudit furtif.
 			<br/>
 			Il applique ma
-			<a href="https://developer.mozilla.org/fr/docs/Web/HTTP/Guides/CSP" target="_blank">
+			<a href="https://developer.mozilla.org/fr/docs/Web/HTTP/Guides/CSP" target="gpHelp">
 				stratégie de sécurité du contenu
 			</a>.
 			Il peut ainsi détecter certains comportements déviants.
@@ -600,11 +644,14 @@
 			Dans ce cas, l'accès à la ressource inappropriée est bloqué.
 			Il t'alerte par un message dans ton navigateur et si possible sur Discord.
 			<br/>
-			➥Un antivirus moisi, un VPN moisi peut provoquer une alerte de DeepCheckSec
+			➥Un malware ou un virus présent sur ton équipement peut
+			provoquer une alerte de DeepCheckSec. Dans ce cas, tu devras agir rapidement.
+			<br/>
+			➥Un antivirus moisi, un VPN moisi peut aussi provoquer une alerte de DeepCheckSec
 			s'il bidouille ta navigation.
 			<br/>
-			➥Un malware ou un virus présent sur ton équipement peut aussi 
-			provoquer une alerte de DeepCheckSec. Dans ce cas, tu devras agir rapidement.
+			➥Le navigateur TOR bidouille les paramètres de DeepCheckSec
+			et provoque des "faux positifs" stupides et annule la protection intégrée au site.
 			<br/>
 			⚠️Il FAUT utiliser un antivirus (même gratuit) fiable, à jour et bien conçu.
 			<br/>
@@ -617,23 +664,14 @@
 			N'oublie pas de le solliciter en permanence
 			afin d'éviter un comportement compulsif de tes doigts.
 			<div class="br"/>
-			Enfin, tu peux consulter ma
-			<a href={GBLCONST.PAGEASSISTANCE} target="_blank">
-				page d'assistance
-			</a>.
-			Elle te permet de vérifier si CheckSec t'a bloqué
-			et comment faire si tu changes ton pseudo sur FF14
-			ou si tu changes d'équipement pour accéder au site.
-			<div class="br"></div>
 			<Btn ifFct={()=>generateSecurityAlert(3)} val="Test DeepCheckSec" />
-			<Btn ifFct={()=>window.open(GBLCONST.PAGEASSISTANCE)} val="Voir la page d'assistance" />
-			<Btn bind:refStep={epiqStep} step=35 val="J'ai regardé la page d'assistance" />
+			<Btn bind:refStep={epiqStep} refDth={epiqStepChangeDth} delai=15 step=32 val="J'ai bien compris" />
 			<div class="info">
 				<img class="parchemin" src={urlCdn+"pc-kiki.jpg"} style="width:30%; float:right" alt="" />
 				<u>Configuration et avis personnel de Kikiadoc</u>
 				<br/>
-				Comme "résolver DNS", j'utilise le DNS "souverain" 
-				<a href="https://www.joindns4.eu/about" target="_blank">
+				Comme "résolver DNS", j'utilise le DNS "souverain"
+				<a href="https://www.joindns4.eu/about" target="gpHelp">
 					DNS4EU
 				</a>
 				avec les parametres bloquant automatiquement la majorité des sites dangereux et
@@ -642,47 +680,103 @@
 				ou des réseaux mobiles,
 				mais j'espère qu'il le deviendra.
 				<br/>
-				Comme "gestionnaire de mots de passe", j'utilise 
-				<a href="https://keepass.info/" target="_blank">
+				Comme "gestionnaire de mots de passe", j'utilise
+				<a href="https://keepass.info/" target="gpHelp">
 					Keepass
 				</a>,
 				ce n'est pas le plus ergonomique, mais le seul
-				outil gratuit et 
-				<a href="https://www.cybermalveillance.gouv.fr/tous-nos-contenus/bonnes-pratiques/mots-de-passe" target="_blank">
+				outil gratuit, sans lien cloud et
+				<a href="https://www.cybermalveillance.gouv.fr/tous-nos-contenus/bonnes-pratiques/mots-de-passe" target="gpHelp">
 					recommandé par l'ANSSI
 				</a>.
 				Je génère un mot de passe "fort et unique" pour chaque site que j'utilise.
 				<br/>
-				J'utilise AVAST comme antivirus (gratuit) et aucun VPN sur 
-				nos équipements personnels (PC fixe, PC portable, tablettes et smartphones).
+				J'utilise AVAST comme antivirus (gratuit).
 				Je considère, depuis plus de 20 ans, et bien avant les avis
 				des instances officielles de cybersécurité, que Kaspersky est une solution dangeureuse.
 				Je considère aussi que Norton est une usine à gaz s'inscrutant telle une horde de morpions.
 				<br/>
+				Je n'utilise aucun VPN "grand public" sur 
+				nos équipements personnels (PC fixe, PC portable, tablettes et smartphones) car
 				AUCUN antivirus ou VPN ne garantit l'absence de collecte de données personnelles,
 				quoiqu'ils en disent.
-				Les VPN gratuits ne vivent que par ça et pour ça.
-				<u>Il ne faut JAMAIS utiliser un VPN gratuit</u>.
 				<br/>
-
 				Le sigle VPN est, aujourd'hui, totalement galvaudé.
-				Je considère les VPN "payant grand public" comme un danger plus qu'une solution même
+				<u>Il ne faut JAMAIS utiliser un VPN gratuit qui ne vivent que par la collecte de données,
+				voire l'injection de malware</u>,
+				et je considère les VPN "payant grand public" comme un danger plus qu'une solution même
 				s'ils implémentent le protocole
 				<a href="https://fr.wikipedia.org/wiki/IPsec" target="gpHelp">
 					IPSEC
 				</a>
-				(ce n'est pas vrai pour un usage professionnel,
-				mais ce ne sont pas les mêmes solutions techniques).
 				<br/>
-				J'utilise de préférence Firefox sinon Chrome.
-				En cas de besoin d'anonymat, j'utilise le
-				<a href="https://www.torproject.org/fr/" target="_blank">browser tor</a>,
-				il offre une confidentialité bien plus importante que tous les VPN.
+				Deux bémols:
+				<br/>
+					➥Pour un usage professionel, un VPN est obligatoire
+						mais ce ne sont pas les mêmes solutions techniques.
+				<br/>
+					➥Pour un usage privé, le VPN <u>proposé par ton fournisseur d'accès</u> ne garantit pas l'anonymat
+						mais peut contribuer à la protection contre les sites malveillants (Orange, Free).
+				<br/>
+				J'utilise de préférence Firefox sinon Chrome ou Brave.
+				<br/>
+				Je n'utilise le
+				browser Tor
+				que dans de très rares occasions.				
+				Il offre une confidentialité bien plus importante que tous les VPN/navigateur
+				mais est une daube en temps de réponse et ne permet jamais l'accès à des sites
+				technologiquement évolués.
+				Il facilite surtout l'accès aux forums illégaux du DarkWeb et aux sites de boules.
+				<br/>
 				L'anti-pub Ublock Origin sur Firefox (PC ou mobiles) est activé par défaut.
 				Par éthique, les pubs sont activées sur les
 				sites ayant une vraie valeur et dont les pubs ne sont pas envahissantes.
 				Les sites putapubs ou putaclics sont bloqués.
 			</div>
+			<div style="clear:both" class="br"></div>
+		</div>
+	{/if}
+
+	{#if epiqStep==32}
+		<div class="reveal" use:scrollPageToTop>
+			<img class="parchemin" src={urlCdn+"ff-10/lalabouclier-resize.png"} style="width:30%; float:right" alt="" />
+			Tu peux consulter ma
+			<a href={(GBLCONST.PAGEASSISTANCE)} target="gpHelp">
+				page d'assistance
+			</a>
+			pour:
+			<div class="info">
+				➥vérifier si CheckSec t'a bloqué en cas de soucis d'accès au site
+				<br/>
+				➥savoir comment faire si tu changes ton pseudo sur FF14
+				<br/>
+				➥savoir comment faire si tu changes d'équipement
+				<div class="gpHelp" role="button" onclick={markClick}
+					gpHelp="Pour ajouter la page d'assistance en favori, ferme ce popup puis clique sur le lien de la page d'assistance un peu plus haut. Quand elle est affichée, clique sur le symbole ☆ dans la barre d'url de ton navigateur" >
+					💡Ajoute cette page dans tes favoris.
+				</div>
+			</div>
+			<div class="br"/>
+			Si tu rencontres un bug, tu peux remonter un rapport d'erreur à Kikiadoc.
+			Pour cela:
+			<div class="info">
+				➥Ferme la popup d'erreur si elle est affichée
+				<br/>
+				➥Clique sur ton pseudo en haut à droite de ton écran
+				<br/>
+				➥Scroll jusque la rubrique 'Rapport technique de fonctionnement'
+				<br/>
+				➥Clique sur le bouton 'envoyer un rapport à Kikiadoc'
+				<div>
+					💡Si tu es {G(pseudoGenre,"le premier","la première")} à identifier un bug bloquant,
+					tu gagnes un
+					<a target="gpHelp" href="https://fr.wikipedia.org/wiki/Prime_aux_bogues">
+						bug bounty
+					</a>
+					de 300K gils.
+				</div>
+			</div>
+			<Btn bind:refStep={epiqStep} step=35 val="J'ai compris" />
 			<div style="clear:both" class="br"></div>
 		</div>
 	{/if}
@@ -694,9 +788,9 @@
 			<img class="parchemin" src={urlCdn+"commons/course.gif"} style="width:20%; float:right" alt="" />
 			Tu vas participer à des challenges où le timing est important.
 			<br/>
-			➥Ta correction temporelle instantannée actuelle est de
+			➥Ta correction temporelle actuelle est de
 			{#if epsilon < 300}
-				<span style="color:lightgreen">{epsilon} millisecondes, tu n'as pas de soucis</span>
+				<span style="color:lightgreen">{epsilon} millisecondes, tu n'as pas de souci</span>
 			{:else if epsilon < 1000}
 				<span style="color:yellow">{epsilon} millisecondes, c'est un peu trop mais je peux gérer</span>
 			{:else}
@@ -704,9 +798,9 @@
 			{/if}
 			<sup>(*)</sup>.
 			<br/>
-			➥Ta latence réseau instantannée actuelle est de
+			➥Ta latence réseau actuelle est de
 			{#if latence < 50}
-				<span style="color:lightgreen">{latence} millisecondes, tu n'as pas de soucis</span>
+				<span style="color:lightgreen">{latence} millisecondes, tu n'as pas de souci</span>
 			{:else if latence < 150}
 				<span style="color:yellow">{latence} millisecondes, c'est un peu trop mais je peux gérer</span>
 			{:else}
@@ -715,23 +809,24 @@
 			<br/>
 			<div class="br"></div>
 			Enfin, attention à ne pas purger les "données de site" de ton navigateur(**).
-			Si tu fais cela, tu perdras ta clé privée(***), tes données saisies et tu ne pourras pas te reconnecter.
-			Il faudra alors contacter Kikiadoc sur Discord.
+			Si tu fais cela, tu perdras les données stockées dans ton équipement,
+			(style saisies en cours, flags indiquant tes actions précédentes etc...)
+			et tu devras te reidentifier. 
 			<div class="br"></div>
-			<Btn bind:refStep={epiqStep} step=50 val="J'ai compris" />
+			<Btn bind:refStep={epiqStep} refDth={epiqStepChangeDth} delai=12 step=50 val="J'ai compris" />
 			<div style="font-size:0.8em">
 				(*) la correction temporelle est l'écart entre l'horloge du serveur et celle de ton équipement.
 				Cet écart est compensé par les algorithmes utilisés dans la limite du raisonnable,
 				mais un écart de plus d'un seconde indique un souci sur ton équipement
 				(l'horloge server est synchronisée sur le 
-				<a href="https://fr.wikipedia.org/wiki/Temps_universel_coordonn%C3%A9" target="_blank">
+				<a href="https://fr.wikipedia.org/wiki/Temps_universel_coordonn%C3%A9" target="gpHelp">
 					temps UTC
 				</a>
 				à ±10µs).
 				Tu peux vérifier à tout moment la correction temporelle en cliquant sur ton pseudo
 				en haut à droite de ton écran
 				et en scollant vers le bas du popup.
-				Tu peux aussi vérifier le rapport technique quotidien du server en consultat le
+				Tu peux aussi vérifier la synchronisation du server en consultant le
 				<a href="https://filedn.eu/lxYwBeV7fws8lvi48b3a3TH/AI-Generated/yumUpdate.txt" target="gpHelp">
 					rapport quotidien de patch de sécurité et synchronisation de l'horloge
 				</a>
@@ -741,13 +836,14 @@
 				les informations relatives à "ff14.adhoc.click".
 				<br/>
 				(***) Ta clé privée est utilisée pour générer des "jetons" aléatoires, éphémères et signés.
-				C'est bien plus sécurisé que l'usage d'un mot de passe classique.
-				Elle est obligatoire pour que le serveur t'authentifie.
+				Elle est validée par une clef enfouie dans le coffre numérique de ton équipement.
+				C'est bien plus sécurisé et confidentiel que l'usage d'un mot de passe classique,
+				l'usage d'un compte Tiktoké, Fesse-Livre ou autres stupidités dévoreuses de ta vie privée.
 			</div>
 			<div style="clear:both" class="br"></div>
 		</div>
 	{/if}
-		
+	<!--	
 	{#if epiqStep==40}
 		<div class="reveal" use:scrollPageToTop>
 			<img class="parchemin" src={urlCdn+"lore.jpg"} style="width:30%; float:right" alt="" />
@@ -769,6 +865,7 @@
 			<div style="clear:both" class="br"></div>
 		</div>
 	{/if}
+	-->
 	
 	{#if epiqStep==50}
 		<div class="reveal" use:scrollPageToTop>
@@ -828,9 +925,11 @@
 		<div class="reveal" use:scrollPageToTop>
 			<img class="parchemin" src={urlCdn+"hof-lalalex.png"} style="width:30%; float:right" alt="" />
 			<div>
-				Avec la capture de Méthistophéles, 
-				une nouvelle ère de tranquillité semble se profiler en Eorzéa.
+				Après la capture de Méthistophéles, il y a quelques mois,
+				Erozéa est entré dans une nouvelle ère de tranquillité.
 				<br/>
+				D'éminentes Peluches Philosophes l'ont appelé <b>Le Temps des Fleurs</b>.
+				<div class="br"/>
 				Les Peluches Scientifiques vont de découvertes en découvertes.
 				<br/>
 				Les Aventuriers et Aventurières découvrent des lieux encore inexplorés,
@@ -850,16 +949,16 @@
 			<div class="br" />
 			<div>
 				La Peluche 
-				<a href="https://fr.wikipedia.org/wiki/Nostradamus" target="gpHelpTab">
+				<a href="https://fr.wikipedia.org/wiki/Nostradamus" target="gpHelp">
 					Nostradamus
 				</a>
 				a prédit que lorsque Eorzéa sera apaisée,
-				<a href="https://fr.wikipedia.org/wiki/Expansion_de_l%27Univers" target="gpHelpTab">
+				<a href="https://fr.wikipedia.org/wiki/Expansion_de_l%27Univers" target="gpHelp">
 					l'Expansion de l'Univers Connu
 				</a>
 				sera menacée.
 			</div>
-			<Btn bind:refStep={epiqStep} step=60 val="C'est inquiétant" />
+			<Btn bind:refStep={epiqStep} refDth={epiqStepChangeDth} delai=10 step=60 val="C'est inquiétant" />
 			<div style="clear:both" class="br"></div>
 		</div>
 	{/if}
@@ -867,15 +966,19 @@
 		<div class="reveal" use:scrollPageToTop>
 			<img class="parchemin" src={urlCdn+"hof-lalalex.png"} style="width:30%; float:right" alt="" />
 			<div>
-				Lors de cet événement, tu devras te rendre dans l'Ortho-Temps.
-				Je te propose visiter la Porte de l'Ortho-Temps,
+				Tu as bien raison {pseudo}. C'est inquiétant.
+				<div class="br"/>
+				Peut-être que lors de cette prochaine période troublée,
+				tu devras te rendre dans l'Ortho-Temps,
+				la cinquième dimension de notre Univers Connu.
+				<div class="br"/>
+				Je te propose de visiter la Porte de l'Ortho-Temps,
 				afin de vérifier les capacités de ton équipement.
-			</div>
-			<div>
+				<div class="br"/>
 				Les éléménts importants, dans l'Ortho-Temps, sont:
 				<br/>
 				{#if isPC()}
-					➥Clique et drag avec ta souris pour t'orienter.
+					➥Clique et drag avec ta souris pour t'orienter. (bouton droit pour "tourner", bouton gauche pour "glisser")
 					<br/>
 					➥Pour te déplacer, 
 					utilise ton clavier, la molette de ta souris,
@@ -888,41 +991,16 @@
 					<br/>
 					➥Glisse ton doigt pour t'orienter.
 					<br/>
-					➥Pour intéragir avec un objet, appuie dessus.
+					➥Pour intéragir avec un objet, tape dessus.
 					<br/>
 					➥Le passage entre mode "Portait" et le mode "Paysage" doit ajuster la scene
 					à ton écran.
 					<br/>
 				{/if}
 			</div>
-			<div class="info">
-				Je vais mesurer les performances de ton équipement pendant ton passage à la Porte de l'Ortho-temps.
-				{#if "getBattery" in navigator}
-					{#await navigator.getBattery() }
-						<div>Je récupère les informations de ta batterie...</div>
-					{:then battery}
-						{@const batLvl=Math.floor((battery.level*100))}
-						{#if batLvl<70 || !battery.charging}
-							<div class="blinkMsg" style="color: red">
-								🛑Tu devrais recharger ton équipement (batterie à {batLvl}%).
-							</div>
-						{:else}
-							<div style="color: lightgreen">
-								✅Ton équipement est sur secteur, suffisamment chargé ou en charge.
-							</div>
-						{/if}
-					{:catch}
-						<div class="blinkMsg">
-							⚠️Tu n'as pas autorisé l'accès aux informations de batterie.
-						</div>
-					{/await}
-				{:else}
-					<div class="blinkMsg">
-						⚠️Je n'ai pas accès à l'état de la batterie de ton équipement.
-					</div>
-				{/if}
-				<div>
-				</div>
+			<div class="adminCadre info">
+				<div>Quelques informations de Métacache (optimisation des téléchargements)</div>
+				<Common t="checklist3D" />
 			</div>
 			<Btn bind:refStep={epiqStep} step=65 val="Visiter la porte de l'Ortho-Temps" />
 			<div style="clear:both" class="br"></div>
@@ -931,41 +1009,12 @@
 	{#if epiqStep==65}
 		<div class="reveal" use:scrollPageToTop>
 			<div {@attach start3D} id="kikiFullArea">
-				{#if dspBabParam}
-					<div style="position: absolute" class="popupCadre papier">
-							<div class="close" onclick={()=>dspBabParam=null} role="button">X</div>
-							<div class="popupZone">
-								Paramètres/actions:
-								<div class="popupContent" style="font-size:0.8em">
-									<input type="button" value="Retour à l'entrée" onclick={()=>babylonHome()} />
-									<hr/>
-									<input type="button" value="Mode PC/SM" onclick={()=>babylonSetOption("IHM")} />
-									<input type="button" value="Molette▲▼" onclick={()=>babylonSetOption("wheelDir")} />
-									<hr/>
-									<input type="button" value="Fullscreen" onclick={()=>babylonSetOption("fullscreen",true)} />
-									<input type="button" value="Normal" onclick={()=>babylonSetOption("fullscreen",false)} />
-									<hr/>
-									<input type="button" value="Debug" onclick={()=>babylonSetOption("debug")} />
-									<input type="button" value="Perf" onclick={()=>babylonSetOption("perf")} />
-								</div>
-							</div>
-					</div>
-				{/if}
-				{#if babMessage}
-					<Info bind:dspInfo={babMessage} />
-				{/if}
 				<div>
-					<span role="button" class="simpleLink" onclick={()=>babMessage=helpCoord()} >
-						🔮X:{babIHM.x?.toFixed(1)} Y:{babIHM.y?.toFixed(1)} Z:{babIHM.z?.toFixed(1)} 
-						{#if babIHM.debug}
-							🔮:	rX:{babIHM.rx?.toFixed(1)} rY:{babIHM.ry?.toFixed(1)} rZ:{babIHM.rz?.toFixed(1)} 
-						{/if}
-					</span>
-					<span role="button" class="simpleLink" onclick={()=>babMessage="Vitesse de déplacement dans l'Ortho-Temps"}>🏃</span>
-					<input type="range" min=1 max=5 step=1 style="width:20%"
-						bind:value={saisies.sensibilite3D}
-						onchange={(e)=>babylonSetOption("sensibilite",e.srcElement.value)} />
-					<span role="button" style="cursor:pointer" onclick={()=>dspBabParam=!dspBabParam}>⚙️</span>
+					<BabHeader
+						bind:dspBabParam={dspBabParam}
+						bind:babIHM={babIHM}
+						bind:saisies={saisies}
+						pseudo={pseudo}  />
 				</div>
 				<div>
 					<canvas class="babylon" id="render-canvas-3D" onevent3d={event3d}></canvas>
@@ -1006,25 +1055,25 @@
 				</div>
 			{/if}
 			J'espère que tu as bien exploré la Porte de l'Ortho-Temps.
-			Si tu n'as pas découvert toutes les options de déplacement, d'intéraction
+			Si tu n'as pas découvert toutes les options de déplacement, d'intéraction,
 			de personnalisation ou que le test de performance n'est pas satisfaisant,
 			tu peux
 			<Btn bind:refStep={epiqStep} step=65 val="l'explorer à nouveau" />
 			<div class="br"></div>
 			<div class="br"></div>
 			Il me reste à vérifier avec toi quelques points.
-			Le premier est que tu peux facilement te TP vers les maisons de Kikiadoc en étant
-			ami{G(pseudoGenre,"","e")} IG avec lui
+			Le premier est que tu peux facilement te TP vers les maisons de Kikiadoc 
+			<u>en étant ami{G(pseudoGenre,"","e")} IG avec lui</u>
 			<span class="info">(Kikiadoc Lepetiot @ Moogle)</span>.
 			<div class="br"></div>
-			<Btn bind:refStep={epiqStep} step=72 val="Je vais lui demander"
+			<Btn bind:refStep={epiqStep} step=75 val="Je vais lui demander"
 				msg="N'oublie pas, ce sera très pratique pour les TPs.
 						Tu peux MP Kikiadoc sur Discord s'il n'est pas connecté"/>
-			<Btn bind:refStep={epiqStep} step=72 val="Je suis déjà ami{G(pseudoGenre,"","e")} IG avec Kikiadoc" />
+			<Btn bind:refStep={epiqStep} step=75 val="Je suis déjà ami{G(pseudoGenre,"","e")} IG avec Kikiadoc" />
 			<div style="clear:both" class="br"></div>
 		</div>
 	{/if}
-	
+<!--	
 	{#if epiqStep==72}
 		<div class="reveal" use:scrollPageToTop>
 			<img class="parchemin" src={urlCdn+"multijoueurs.jpg"} style="width:30%; float:right" alt="" />
@@ -1035,15 +1084,15 @@
 			<div style="clear:both" class="br"></div>
 		</div>
 	{/if}
-	
-	{#if epiqStep==78}
+-->	
+	{#if epiqStep==75}
 		<div class="reveal" use:scrollPageToTop>
 			<img class="parchemin" src={urlCdn+"deepAI/ref-cl.png"} style="width:30%; float:right" alt="" />
 			Fais maintenant un TP vers la maison de CL de Kikiadoc
 			(Moogle, Brumée, secteur 19, slot 5). 
 			Si ton perso n'est pas sur Moogle ou si tu dois te rendre sur d'autres monde, tu peux utiliser
 			l'éthérite d'une capitale pour changer gratuitement de monde (mode baroud{G(pseudoGenre,"eur","euse")}).
-			<a href="https://fr.finalfantasyxiv.com/lodestone/playguide/contentsguide/worldvisit/" alt="" target="_blank">
+			<a href="https://fr.finalfantasyxiv.com/lodestone/playguide/contentsguide/worldvisit/" alt="" target="gpHelp">
 				Voir le tuto du jeu pour de tels voyages.
 			</a>
 			<div class="br"></div>
@@ -1054,51 +1103,15 @@
 		</div>
 	{/if}
 
-	<!--
-			<div class="info">
-				Cette étape semble chiante, mais
-				<span class="infoLink" gpHelp="Voir en bas de page">c'est justifié</span>.
-			</div>
-			et faire un screen où les noms des servants ou pnjs sont lisibles.
-			<div class="info">
-				Lors de cet entrainement, ton screen ne sera pas réellement stocké sur le serveur,
-				mais son format, sa taille et ses métadonnées seront vérifiées.
-				N'en profite pas pour mettre une
-				<span class="videoLink" gpVideo="ff-7/photocopie-fesses">
-					photocopie de tes fesses!
-				</span>
-					{:else if !saisies.imageDataRaw}
-						<span style="color:red">Screen non défini</span>
-			<div class="info">
-				Cette étape d'entrainement peut sembler très chiante,
-				mais c'est lié aux difficultés rencontrées lors de précédents événements:
-				Dans certains cas, des "assistants à la saisie"
-				peuvent perturber la saisie de valeurs numériques ou un upload.
-				Exemple: la "locale" n'est pas "fr-FR" (français de france),
-				un clavier "custom" est utilisé sur smartphone etc...
-				<br/>
-				<br/>
-				N.B: Contrairement à Google, Discord, FesseLivre, Tiktoké, X-Fake etc.. 
-				je n'utilise pas les "métadatas" de tes images sur le serveur
-				(style tes coordonnées GPS, le nom de ton équipement etc...).
-				Le filtrage pour ne garder que l'image est réalisé localement par ton équipement et
-				le serveur n'accepte que des données "brutes".
-				<br/>
-				<br/>
-				Pour t'éviter un souci au milieu d'un challenge, je préfère faire un
-				test dès maintenant en espérant que j'ai traité tous les cas rencontrés précédemment.
-				<td style="vertical-align: top; width: 50%">
-					<Upload cbImageRaw={(raw)=>saisies.imageDataRaw=raw} />
-				</td>
-	-->
 	{#if epiqStep==80}
 		{@const X=8.7}
 		{@const Y=11.8}
 		<div class="reveal" use:scrollPageToTop>
-			<img class="parchemin" src={urlCdn+"X-initiatique/testJardin.png"} style="width:50%; float:right" alt="" />
 			Maintenant que tu es dans le jardin de la maison de CL de Kikiadoc,
-			tu es à proximité du servant Kikiadoc Lebogosse. (voir l'image)
+			tu peux te placer à proximité du servant Kikiadoc Lebogosse. (voir l'image ci-dessous)
 			<div class="br" />
+			<img class="parchemin" src={urlCdn+"X-initiatique/testJardin.png"} style="width:90%" alt="" />
+			<br/>
 			Positionne toi juste à côté de lui.
 			Tu auras de multiples cas où ta position est importante pour réussir,
 			alors rapproches-toi toujours au maximum.
@@ -1112,7 +1125,7 @@
 			{#if saisies.X!=X || saisies.Y!=Y}
 				<span style="color:red">??</span>
 			{:else}
-				<Btn style="color:green" bind:refStep={epiqStep} step=90 val="➤" />
+				<Btn style="color:green" bind:refStep={epiqStep} step=85 val="➤" />
 			{/if}
 			<div class="info">
 				Ce petit test permet de vérifier que tu n'as pas de pertubateur de saisies
@@ -1122,18 +1135,106 @@
 			<div style="clear:both" class="br"></div>
 		</div>
 	{/if}
+	{#if epiqStep==85}
+		<div class="reveal" use:scrollPageToTop>
+			<img class="parchemin" src={urlCdn+"commons/cagnotte.png"} style="width:50%; float:right" alt="" />
+			<div>
+				Il me reste à t'expliquer quelques nouvelles mécaniques générales de cet Evénement.
+				<br/>
+				➥La Cagnotte de l'Evénement
+				<br/>
+				➥La Contribution
+				<br/>
+				➥La Cagnotte de Challenge
+				<div class="br" />
+				La Cagnotte de l'événement est la somme totale qui sera répartie lors de l'événement.
+				Elle peut dépasser plus de 400 millions de Gils en fonction du niveau de coopération de tous.
+				<div class="br" />
+				La Contribution reflête l'implication personnelle de chacun au profit de tous
+				et, réciproquement, l'implication de tous au profit de chacun.
+				Pour chaque challenge, elle commence à 0 et peut atteindre la valeur maximale de
+				{GBLCONST.EQUILIBRAGE.NB}.
+				<br/>
+				Elle détermine alors la Cagnotte de Challenge, mais attention, ce n'est
+				pas du tout linéaire, c'est une exponentielle.
+				<br/>
+				La Cagnotte de challenge est la somme qui sera répartie lors d'un challenge
+				selon la Contribution et tes résultats personnels.
+				Son montant maximum est une partie de la cagnotte de l'événement
+				(environ 50 millions de gils par challenge).
+				<div class="br" />
+				C'est pourquoi il faut TOUJOURS maximiser la Contribution lors d'un challenge.
+				<div class="blinkMsg">
+					Il est souvent préférable d'aider une personne n'ayant pas encore réussi à contribuer
+					que de le faire soi-même: Tu peux lui expliquer comment faire ou lui donner la solution!
+				</div>
+				Tu peux à tout moment cliquer sur le bouton "Résultats", 
+				le résultat et le calcul de la Contribution seront alors indiqués.
+			</div>
+			<Btn style="color:green" bind:refStep={epiqStep} step=86 val="Un exemple?" />
+			<div style="clear:both" class="br"></div>
+		</div>
+	{/if}
+	{#if epiqStep==86}
+		<div class="reveal" use:scrollPageToTop>
+			<img class="parchemin" src={urlCdn+"commons/cagnotte.png"} style="width:50%; float:right" alt="" />
+			La meilleure stratégie est:
+			<br/>
+			➥Collaborer pour maximiser la Contribution.
+			<br/>
+			➥Puis augmenter ton mérite personnel.
+			<br/>
+			Tu peux <u>simuler le calcul de ton gain personnel</u> en positionnant les différents curseurs
+			ci-dessous.
+			<div class="adminCadre">
+				<div>
+					Gain maximum du challenge:
+					<input type="range" min=40 max=70 step=10 bind:value={saisies.simulBaton}>
+					{saisies.simulBaton}M
+				</div>
+				<hr/>
+				<div>
+					Contributions:
+					<input type="range" min=1 max={GBLCONST.EQUILIBRAGE.NB} step=1
+						bind:value={saisies.simulContrib} oninput={ ()=> {
+							saisies.simulMax =
+							(saisies.simulContrib<=1)? 100:
+							(saisies.simulContrib<=4)? 90:
+							(saisies.simulContrib<=7)? 70:
+							(saisies.simulContrib<=9)? 40:	30
+							if (saisies.simulRatio>saisies.simulMax) saisies.simulRatio=saisies.simulMax
+						}}>
+					{saisies.simulContrib}
+				</div>
+				<hr/>
+				<div>
+					Mérite personnel:
+					<input type="range" min=0 max={saisies.simulMax} step=5 bind:value={saisies.simulRatio}>
+					{saisies.simulRatio}%
+				</div>
+				<hr/>
+				<div>
+					Gain personnel:
+					{(saisies.simulRatio*calcCagnotte(saisies.simulContrib,saisies.simulBaton)/100).toFixed(1)}M
+				</div>
+			</div>
+			<Btn style="color:green" bind:refStep={epiqStep} step=90 val="J'ai compris" />
+			<div style="clear:both" class="br"></div>
+		</div>
+	{/if}
 	
 	{#if epiqStep==90}
 		<div class="reveal" use:scrollPageToTop>
 			<img class="parchemin" src={urlCdn+"ff-7/livre-correspondance.png"} style="width:50%; float:right" alt="" />
 			Ton initiation touche à sa fin.
 			<br/>
-			Entre dans la maison de CL de Kikiadoc et consulte le message du propriétaire sur le livre de correspondance.
-			Suis alors les consignes.
+			Entre dans la maison de CL de Kikiadoc et consulte le livre de correspondance.
+			Ecris alors un message.
 			<div class="br"></div>
 			<Btn val="Explique moi pour le livre de correspondance"
 				msg="Le livre se trouve dans la maison, près de l'entrée et à gauche en entrant, sur une demi-cloison. Clic sur l'icon 🠟 au dessus du livre. Lis alors le message du propriétaire et laisse un message selon la consigne en cliquant sur l'icon crayon 🖉" />
-			<Btn bind:refStep={epiqStep} step=99 val="J'ai écrit le message demandé sur le livre" ifFct={()=>addNovice()} />
+			<Btn bind:refStep={epiqStep} step=99 bind:refPageDone={pageDone} pageDone={pageDesc.n} 
+				val="J'ai écrit le message demandé sur le livre" ifFct={()=>addNovice()} />
 			<div style="clear:both" class="br"></div>
 		</div>
 	{/if}
@@ -1154,7 +1255,7 @@
 			en cliquant sur <i>{pageDesc.texte}</i>.
 			Tu pourras alors la revoir en cliquant sur "Revoir le Lore" en haut de cette page.
 			<div class="br"></div>
-			<Btn bind:refPageDone={pageDone} pageDone={pageDesc.n} bind:refPage={page} page=0 val="Merci Grande Peluche"  />
+			<Btn bind:refPage={page} page=0 val="Merci Grande Peluche"  />
 			<div style="clear:both" class="br"></div>
 		</div>
 	{/if}
@@ -1181,6 +1282,12 @@
 					{/each}
 					<hr/>
 					<div>{novices.nb} participants</div>
+				</div>
+				<div class="info">
+					Il n'y a pas de contribution ni de gains pour ce challenge Initiatique,
+					mais ta participation permet de finaliser l'équilibrage de l'événement.
+					<br/>
+					Tous les participants à cette Initiatique gagne 1 millions de Gils.
 				</div>
 			</div>
 		</div>

@@ -10,10 +10,13 @@ const WebSocket = require('ws');
 
 const discordUrlPrefix="https://discord.com/api/v10"
 const discordHeaders = {
-			"User-Agent": "DiscordBot (https://ff14.adhoc.click], 1.0.1)",
+			"User-Agent": "DiscordBot (https://ff14.adhoc.click), 1.0.1)",
 			"Content-Type": "application/json; charset=UTF-8",
 			"Authorization": 'Bot ' + vault.get('discord_token') 
 };
+
+const DISCORDKICK = 3600*1000	// delai pour accepter
+
 const mpKikiadoc = "<@289493566278074368>"
 const idKikiadoc = '289493566278074368'
 const idGrandePeluche='1188482855026839583';
@@ -27,9 +30,11 @@ const gpProd={
 	guildId: '934449346655715378', // discord kiki's event
 	linkSite: true, // discord lié au site
 	discordName: "Kiki's Event",
+	siteName: "https://ff14.adhoc.click/enjoy",
 	introductionMsgId : '1193712182010060860',	// message d'intoduction
 	roleId: '1193328520416477294', // role aventurier
 	testChanId:	"1039491017017143356",	// KIKIPROD
+	infoChanId:	"1491928340679102535",	// Kiki's event, canal info a lire
 	annoncesChanId:	"1151925290570874951",	// Kiki's event, canal public annonces
 	discussionChanId:	"1143946654270111785",  // discussion
 	checksecChanId:	"1280101334586097795",  // checksec
@@ -39,6 +44,8 @@ const gpProd={
 	metropolisChanId: '1347534666453745725', // channel de métropolis de prod
 	expansionChanId: '1384125294717435916', 
 	expansionRoleId: '1384125351604649984',
+	preludeRapiditeChanId: '1476916819036999872', // channel de prod
+	bienvenueRoleId: '1476961182739857489', // role de bienvenue de prod
 	discordTrailer: "\n-\nSigné: *Hildiscord, assistant Discord de la Grande Peluche et porte parole de Kikiadoc*" + 
 									"\nGrande Peluche: <https://ff14.adhoc.click/enjoy>"+
 									"\nDiscussion: <#1143946654270111785>"+
@@ -48,9 +55,11 @@ const gpStaging={
 	guildId: '573082763641618432', // discord kiki's perso
 	linkSite: true, // discord lié au site
 	discordName: "Kiki's Perso",
+	siteName: "https://ff14.adhoc.click/enjoyTest",
 	introductionMsgId : '1278263907156492409', // '1193157704714289222',
 	roleId: '1193326340250808330', // role aventurier
 	testChanId:	"1039491017017143356",	// KIKITEST
+	infoChanId:	"1279857314261766214",	// Kiki's perso, canal info a lire = annonces
 	annoncesChanId:	"1279857314261766214",	// KIKITEST
 	discussionChanId:	"1279859331386314793",  // discussion
 	checksecChanId:	"1280101334586097795",  // checksec
@@ -60,8 +69,10 @@ const gpStaging={
 	metropolisChanId: '1347535273281458216', // channel de métropolis de test
 	expansionChanId: '1384128315056722001', 
 	expansionRoleId: '1384128358039683132',
+	preludeRapiditeChanId: '1039491017017143356', // channel de test
+	bienvenueRoleId: '1476952656755953857', // role de bienvenue de test
 	discordTrailer: "\n-\nSigné: *(STAGING) Hildiscord, assistant Discord de la Grande Peluche et porte parole de Kikiadoc*" + 
-									"\nGrande Peluche: <https://ff14.adhoc.click/enjoy>"+
+									"\nGrande Peluche: <https://ff14.adhoc.click/enjoyTest>"+
 									"\nDiscussion: <#1143946654270111785>"+
 									"\nSoucis? MP "+mpKikiadoc
 }
@@ -85,6 +96,19 @@ const tblCtxStaging= {
 	// '1378777976929517649': clTrankill,
 }
 
+////////////////////////////////////////////
+// Escape un texte pour discord
+////////////////////////////////////////////
+function escapeText(t) {
+	return t.
+		replaceAll("*"," ").
+		replaceAll("_"," ").
+		replaceAll("|"," ").
+		replaceAll("("," ").
+		replaceAll(")"," ").
+		replaceAll("["," ").
+		replaceAll("]"," ")
+}
 ////////////////////////////////////////////
 // contexte d'execution 
 // selection la description à utiliser
@@ -159,18 +183,21 @@ async function deleteDiscordPseudo(guildId,usrId) {
 	const e = getDiscordPseudoByGuildUsr(guildId,usrId)
 	const ff14Id = e?.ff14Id
 	console.log('DeleteDiscordPseudo: (guildId,usrId,ff14Id)',guildId,usrId,ff14Id)
-	if (!ff14Id) return null
-	// supprime le FF4Id
-	delete discordPseudos[guildId][ff14Id]
-	collections.save(discordPseudos);
+	if (ff14Id) {
+		// supprime le FF4Id
+		delete discordPseudos[guildId][ff14Id]
+		collections.save(discordPseudos);
+	}
 	// supprime le pseudo du site si besoin
 	if (runCtx.linkSite) {
 		const delSite = pseudos.deletePseudoByFf14Id(ff14Id)
 	}
+	/*
 	await discordPostPrive(usrId,
 		"Coucou!\nJ'ai noté que tu as quitté le discord **" + runCtx.discordName + "**" +
 		"\nSi tu souhaites te reinscrire, suis la procédure sur le canal de bienvenue"
 	);
+	*/
 }
 
 ////////////////////////////////////////////
@@ -189,23 +216,28 @@ async function discordGetGuildDesc(guildId) {
 ////////////////////////////////////////////
 // postMessage sur un channel nommé de discord (test si le chan est un autorisé)
 ////////////////////////////////////////////
-async function discordPostMessage(runCtx,chan,texte,everyone,ttsReq) {
+async function discordPostMessage(runCtx,chan,texte,everyone,type) {
 	let channelId = runCtx[chan+"ChanId"];
 	if (!channelId ) gbl.exception("discord bad chan",400);
 	const discordUrl=discordUrlPrefix+"/channels/"+channelId+"/messages"
-	const postBody = (ttsReq)?
-		{ content:	texte, tts: true }
-		:
-		{ content:	((everyone)? ".@everyone\n" : ".\n" ) + texte + runCtx.discordTrailer, tts: false }
+	let	postBody = { content:	((everyone)? ".@everyone\n" : ".\n" ) +texte, tts: false }
+	switch (type) {
+		case "tts": postBody.tts = true
+			break;
+		case "noTrailer":
+			break;
+		default: postBody.content += runCtx.discordTrailer
+			break;
+	}
 	console.log("discordPostMessage:",discordUrl,'POST','body:',postBody,'headers:',discordHeaders);
 	let ret = await gbl.apiCall(discordUrl,'POST',postBody,discordHeaders);
 	// console.log("discordPostMessage ret=:",ret);
 	return ret.id;
 }
 // fonction exportée
-async function exportDiscordPostMessage(chan,texte,everyone,ttsReq) {
+async function exportDiscordPostMessage(chan,texte,everyone,type) {
 	try {
-		discordPostMessage(getRunCtx(null),chan,texte,everyone,ttsReq)
+		await discordPostMessage(getRunCtx(null),chan,texte,everyone,type)
 	}
 	catch(e) {
 		console.error("exportDiscordPostMessage Exception:",e)
@@ -279,6 +311,7 @@ async function addRole(runCtx,usrId,roleId) {
 	// PUT /guilds/{guild.id}/members/{user.id}/roles/{role.id}
 	const guildId = runCtx.guildId
 	const discordUrl=discordUrlPrefix+"/guilds/"+guildId+"/members/"+usrId+"/roles/"+roleId
+	console.log("Discord : addRole", discordUrl);
 	// usage de apiCallExtern car pas de json résultat.
 	let ret = await gbl.apiCallExtern(discordUrl,'PUT',null,discordHeaders);
 	if (ret.status != 204) console.log("discordAddRole ERROR url:",discordUrl,"ret:",ret);
@@ -291,10 +324,25 @@ async function removeRole(runCtx,usrId,roleId) {
 	// DELETE /guilds/{guild.id}/members/{user.id}/roles/{role.id}
 	const guildId = runCtx.guilId
 	const discordUrl=discordUrlPrefix+"/guilds/"+guidId+"/members/"+usrId+"/roles/"+roleId
+	console.log("Discord : removeRole", discordUrl);
 	// usage de apiCallExtern car pas de json résultat.
 	let ret = await gbl.apiCallExtern(discordUrl,'DELETE',null,discordHeaders);
 	if (ret.status != 204) console.log("discordRemoveRole ERROR url:",discordUrl,"ret:",ret);
 	return ret
+}
+////////////////////////////////////////////
+// update discord apres inscription sur le site
+// return true/false
+////////////////////////////////////////////
+async function newSiteUser(pseudo) {
+	const runCtx = getRunCtx(null)
+	const desc = getDiscordByPseudo(pseudo)
+	if (!desc) return false
+	await addRole(runCtx,desc.usrId,runCtx.roleId)
+	await discordPostPrive(desc.usrId,
+		"### C'est cool, tu as terminé ton inscription"+
+		"\n## Profite du challenge de bienvenue sur le site, tu pourras gagner jusque 2.5 Millions de Gils en regardant des vidéos"+
+		"\nTu as maintenant accès au Discord "+runCtx.discordName+", clique sur <#"+runCtx.infoChanId+">")
 }
 
 
@@ -378,6 +426,7 @@ async function discordProcessSetupPseudo(usrId,tblMots) {
 	}
 	// poste le message d'attente
 	let msgDesc = await discordPostPrive(usrId,"**Patiente un peu**,\nJe vérifie ton pseudo FF14 sur le lodestone et si tu es déjà connu de la Grande Peluche");
+	if (!msgDesc) return console.error("Erreur discordPostPrive dans discordProcessSetupPseudo") , null
 	// msgDesc: { msgId: ret.id, chanId: chanId }
 	// recup depuis le lodestone
 	let ff14Id = await lodestone.getFF14Id(prenom,nom,monde);
@@ -410,13 +459,14 @@ async function discordProcessSetupPseudo(usrId,tblMots) {
 	let nick = prenom+" "+nom+" @"+monde 
 	if (nick.length > 32) nick = nick.substring(0,30) + ".."
 	const discordUrl=discordUrlPrefix+"/guilds/"+reqId.guildId+"/members/"+usrId
-	const discordBody= { nick: nick , roles: [runCtx.roleId] }
+	// avant webauthn const discordBody= { nick: nick , roles: [runCtx.roleId] }
+	const discordBody= { nick: nick , roles: [] } // modif du pseudo et raz de permissions
 	console.log("PATCH:",discordUrl,"body:",discordBody);
 	let ret = await gbl.apiCall(discordUrl,'PATCH',discordBody,discordHeaders);
 	if (ret.status != 200) {
 		console.log("***** Erreur discord:",ret);
 		await discordPostPrive(usrId,"J'ai un soucis technique avec Discord pour honorer ta requête ("+ret.status+"/"+ret.code+"), refais ta tentative et si cela se reproduit, MP "+mpKikiadoc)
-		return;
+		if (tblMots[5]!="skip") return;
 	}
 
 	// efface le requete en cours
@@ -428,10 +478,8 @@ async function discordProcessSetupPseudo(usrId,tblMots) {
 	// Message de confirmation que tout est OK
 	await discordUpdateMessage(runCtx,msgDesc.chanId,msgDesc.msgId,
 		"J'ai eu confirmation du Lodestone de FF14 de l'existance de ton perso (FF14ID="+ff14Id+").\n"+
-		"Je t'ai attribué le pseudo **"+nick+"** sur le discord **"+reqId.guildDesc.name+"** "+
-		"et nommé Aventurier, afin que tu puisses accéder à l'ensemble du discord.i\n"+
-		((runCtx.linkSite)? "**__Tu peux, si tu le souhaites, t'inscrire sur le site de la Grande Peluche__**\n<https://ff14.adhoc.click/enjoy>\n":"")  +
-		"Clic <#"+runCtx.welcomeId+"> pour retourner directement sur le discord."
+		"Je t'ai attribué le pseudo **"+nick+"** sur le discord **"+reqId.guildDesc.name+"**, mais sans aucun accès\n"+
+		((runCtx.linkSite)? "## Tu dois maintenant t'inscrire sur le site de la Grande Peluche <https://ff14.adhoc.click/enjoy>\n":"")
 	)
 }
 
@@ -466,13 +514,13 @@ async function discordProcessMessagePrive(msg) {
 // generique, gestion d'un message public
 ////////////////////////////////////////////
 async function discordProcessMessagePublic(msg) {
-	console.log("Discord MessagePublic non traité id:", msg.d.id, " chan:",msg.d.channel_id);
+	// console.log("Discord MessagePublic non traité id:", msg.d.id, " chan:",msg.d.channel_id);
 }
 ////////////////////////////////////////////
 // generique, gestion d'un message d'accueil
 ////////////////////////////////////////////
 async function discordProcessMessageBienvenue(msg) {
-	console.log("Discord MessageBienvenue non traitée");
+	// console.log("Discord MessageBienvenue non traitée");
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -501,13 +549,13 @@ async function discordProcessMessageCreate(msg) {
 			discordProcessMessageBienvenue(msg);
 			return;
 	}
-	console.log("Discord MessageCreate non traitée",msg.d.id);
+	// console.log("Discord MessageCreate non traitée",msg.d.id);
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Gestion d'un update de message
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 async function discordProcessMessageUpdate(msg) {
-	console.log("Discord MessageUpdate non traitée",msg.d.id);
+	// console.log("Discord MessageUpdate non traitée",msg.d.id);
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Gestion d'un reaction sur un message
@@ -527,13 +575,13 @@ async function discordProcessMessageReactionAdd(msg) {
 				setTransaction(msg.d.user_id,"reqIdentificationMessage", { msgId: msg.d.message_id, guildId: msg.d.guild_id, guildDesc: guildDesc } )
 				// blabla
 				await discordPostPrive(msg.d.user_id,
-						"Coucou!\nIndique moi ton pseudo COMPLET dans FF14 par un message dans ce canal de MP entre nous deux " +
-						"sous la forme *jesuis __prénom__ __nom__ __monde__* (exemple: jesuis Kikiadoc Lepetiot Moogle) " +  
-						"afin que je t'autorise l'accès complet du discord **" + guildDesc.name +"**"
+						"## Lis attentivement\nCoucou!\nIndique moi ton pseudo COMPLET dans FF14 par un message dans ce canal de MP entre nous deux " +
+						"sous la forme **je suis *prénom* *nom* *monde* ** (exemple: je suis Kikiadoc Lepetiot Moogle, n'oublie pas le '__je suis__') " +  
+						"afin que je t'autorise l'accès au discord **" + guildDesc.name +"**"
 				);
 				return;
 	}
-	console.log("Discord ReactionAdd non traitée:",msg);
+	// console.log("Discord ReactionAdd non traitée:",msg);
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Gestion d'un delete reaction sur un message
@@ -548,24 +596,36 @@ async function discordProcessMessageReactionDelete(msg) {
 			// Retrait réaction sur un message de verif et promotion
 			case runCtx.introductionMsgId : 
 				// PATCH /guilds/{guild.id}/members/{user.id} {nick: xxx, roles:[idrole]}
+				/*
 				const discordUrl=discordUrlPrefix+"/guilds/"+msg.d.guild_id+"/members/"+msg.d.user_id
 				const discordBody= { nick: "RefusConditions@"+Date.now(), roles: [] }
 				console.log("PATCH:",discordUrl,"body:",discordBody);
 				let ret = await gbl.apiCall(discordUrl,'PATCH',discordBody,discordHeaders);
 				if (ret.status != 200) console.log("***** Erreur discord:",ret);
+				*/
 				await deleteDiscordPseudo(msg.d.guild_id,msg.d.user_id)
+				await kick(msg.d.guild_id,msg.d.user_id)
 				return;
 	}
-	console.log("Discord ReactionDelete non traitée",msg);
+	// console.log("Discord ReactionDelete non traitée",msg);
+}
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// gestion arrive d'un user sur discord
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+async function discordMemberAdd(msg) {
+	const runCtx = getRunCtx(msg.d.guild_id)
+	addRole(runCtx,msg.d.user.id,runCtx.bienvenueRoleId)
+	console.log("discordMemberAdd",msg.d.user.id,msg.d.user.global_name)
+
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Reception d'une notification discord
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 async function discordDispatch(msg) {
 	try {
+		console.log("Discord Dispatch: ",msg.t);
 		switch(msg.t) {
 			case "READY": // Confirmation de connexion
-				console.log("Discord READY notif:",msg);
 				ctx.gatewayUrl = msg.d.resume_gateway_url
 				ctx.sessionId = msg.d.session_id
 				ctx.canResume = true;
@@ -586,8 +646,11 @@ async function discordDispatch(msg) {
 			case "GUILD_MEMBER_REMOVE": // user quitte le discord
 				await deleteDiscordPseudo(msg.d.guild_id,msg.d.user.id)
 				break;
+			case "GUILD_MEMBER_ADD": // Nouvel usere discord
+				await discordMemberAdd(msg)
+				break;
 			default: // notif non traitées
-				console.log("Discord notif non traitée:",msg);
+				console.log("Discord notif non traitée:");
 		}
 	}
 	catch (e) {
@@ -818,6 +881,45 @@ function discordActionsDelete(id) {
 	discordActionsProcessQueue();
 }
 
+////////////////////////////////////////////
+////////////////////////////////////////////
+// Ménage périodique du discord
+////////////////////////////////////////////
+////////////////////////////////////////////
+async function kick(guildId,userId) {
+	// DELETE /guilds/{guild.id}/members/{user.id}
+  console.log("Discord: KICK", guildId, userId)
+  const discordUrl=discordUrlPrefix+"/guilds/"+guildId+"/members/"+userId
+  const ret = await gbl.apiCallExtern(discordUrl,'DELETE',null,discordHeaders)
+  if (ret.status != 204)
+    console.log("discord menageNicks KICK ERROR",ret)
+  else
+    console.log("discord menageNicks KICK OK",ret)
+	return ret.status
+}
+
+
+async function menageNicks(guildId) {
+	// recupere la liste des membres
+	// /guilds/{guild.id}/members
+	console.log("Discord: Menage nicks démarré",guildId)
+	const discordUrl=discordUrlPrefix+"/guilds/"+guildId+"/members?limit=999"
+	const ret = await gbl.apiCall(discordUrl,'GET',null,discordHeaders);
+	if (ret.status != 200) { console.log("discord menageNicks ERROR ret=",ret); return null }
+	const now = Date.now()
+	ret.forEach( async (e) => {
+		const dth = new Date(e.joined_at).getTime()
+		if ( !e.roles.length && (now-dth > DISCORDKICK) ) {
+			const nom = e.user.global_name || e.user.username
+			console.log("Discord: nick KO",nom,e.user.id,e.joined_at)
+			await kick(guildId,e.user.id)
+		}
+		else
+			console.log("Discord: nick OK",e.nick || e.user.global_name || e.user.username,e.user.id,e.joined_at)
+	})
+	console.log("Discord: Menage nick terminé",guildId)
+	return "ok"
+}
 
 ////////////////////////////////////////////
 ////////////////////////////////////////////
@@ -825,10 +927,10 @@ function discordActionsDelete(id) {
 ////////////////////////////////////////////
 ////////////////////////////////////////////
 exports.httpCallback = async (req, res, method, reqPaths, body, pseudo, pwd) => {
-	pseudos.check(pseudo,pwd); // check pseudo
 	const runCtx = getRunCtx(null)
 	switch (method) {
 		case "OPTIONS":
+			pseudos.check(pseudo,pwd); // check pseudo
 			res.setHeader('Access-Control-Allow-Methods', 'PUT, DELETE');
 			gbl.exception("AllowedCORS",200);
 		case 'GET':
@@ -848,6 +950,7 @@ exports.httpCallback = async (req, res, method, reqPaths, body, pseudo, pwd) => 
 			}
 			gbl.exception("bad op",400);
 		case 'PUT':
+			pseudos.check(pseudo,pwd); // check pseudo
 			switch(reqPaths[2]) {
 				case "reqGrant":
 					// demande d'un grant discord par le pseudo actuel depuis le site
@@ -869,6 +972,7 @@ exports.httpCallback = async (req, res, method, reqPaths, body, pseudo, pwd) => 
 			}
 			gbl.exception("bad op",400);
 		case 'POST':
+			pseudos.check(pseudo,pwd); // check pseudo
 			switch(reqPaths[2]) {
 				case "admActions":
 					pseudos.check(pseudo,pwd,true); // req admin
@@ -885,16 +989,21 @@ exports.httpCallback = async (req, res, method, reqPaths, body, pseudo, pwd) => 
 			}
 			gbl.exception("bad op/post",400);
 		case 'DELETE':
-			pseudos.check(pseudo,pwd,true); // req admin
 			switch(reqPaths[2]) {
 				case "admActions":
+					pseudos.check(pseudo,pwd,true) // req admin 
 					discordActionsDelete(parseInt(reqPaths[3],10));
 					gbl.exception(discordActions,200);
 				case "ff14Id":
+					pseudos.check(pseudo,pwd,true) // req admin 
 					const guildId = runCtx.guildId
 					const e = getDiscordPseudoByGuidFf14(guildId,parseInt(reqPaths[3],10)) 
 					deleteDiscordPseudo(e.guildId,e.usrId) 
 					gbl.exception(e,200);
+				case "menageNicks":
+					if (pseudo || pwd) gbl.exception( "Not local admin" ,400)
+					await menageNicks(runCtx.guildId)
+					gbl.exception("ok",200)
 			}
 			gbl.exception("bad op/delete",400);
 	}
@@ -902,11 +1011,15 @@ exports.httpCallback = async (req, res, method, reqPaths, body, pseudo, pwd) => 
 }
 
 
+exports.headers = discordHeaders
 exports.mpKiki = discordMpKiki
 exports.mpPseudo = discordMpPseudo
 exports.postMessage = exportDiscordPostMessage;
 exports.getDiscordByFf14Id = getDiscordByFf14Id
 exports.getDiscordByPseudo = getDiscordByPseudo
+exports.escapeText = escapeText
+exports.newSiteUser = newSiteUser
+exports.urlPrefix=discordUrlPrefix
 
 exports.start = async (callback) => {
 	wsCallback = callback

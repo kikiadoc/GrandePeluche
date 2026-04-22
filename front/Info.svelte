@@ -6,7 +6,8 @@
 	// tempate: snippet de formattage du texte
 	// DSPINFO: {}
 	// dspInfo.back : class de background
-	// dspInfo.img : url dans le CDN
+	// dspInfo.img : url dans le CDN pour image du début
+	// dspInfo.imgBot : url dans le CDN pour image à placer a la fin
 	// dspInfo.imgClass : img50 || img100 || custom global
 	// dspInfo.titre : texte de titre
 	// dspInfo.trailer : texte de trailer
@@ -24,6 +25,7 @@
 </script>
 
 <style>
+	.img25 { width: 25%; float: right }
 	.img50 { width: 50%; float: right }
 	.img100 { width: 100% }
 </style>
@@ -38,7 +40,7 @@
 		<div class="popupContent">
 			{#if dspInfo.img}
 				<img gpLink={dspInfo.url} onclick={markClick} src={urlCdn+dspInfo.img}
-					class={ dspInfo.imgClass || "img50"} alt="" />
+					class={ dspInfo.imgClass || "parchemin img25"} alt="" />
 			{/if}
 			<div class="info">{dspInfo.titre || 'Information'}</div>
 			{#each (dspInfo.body || [dspInfo]) as l,i}
@@ -48,7 +50,7 @@
 					{#if template}{@render template(l)}{:else}<div>{l}</div>{/if}
 				{:else if l.cb}
 					<div class="{l.cls}" role="button" style="cursor:pointer" onclick={(e)=>l.cb(l,i,e)}>
-						{#if template}👉{@render template(l)}{:else}👉{l.txt}{/if}
+						{#if template}{@render template(l)}{:else}{l.txt}{/if}
 					</div>
 				{:else}
 					<div class="{l.cls}">
@@ -56,6 +58,10 @@
 					</div>
 				{/if}
 			{/each}
+			{#if dspInfo.imgBot}
+				<img gpLink={dspInfo.url} onclick={markClick} src={urlCdn+dspInfo.imgBot}
+					class={ dspInfo.imgClass || "img100"} alt="" />
+			{/if}
 			<div style="clear:both"></div>
 		</div>
 		<div class="info">

@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "@aws-sdk/client-polly": "^3.651.1",
+    "@aws-sdk/client-polly": "^3.893.0",
     "ws": "^8.16.0"
   }
 }

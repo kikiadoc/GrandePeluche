@@ -9,22 +9,33 @@ const pCloud = require('../infraback/pCloudTools.js');
 // < a class="entry__link" href="/lodestone/character/ff14id/"> .... </a>
 // dans contenu :
 // <p class="entry__name">PRENON NOM</p>
-function lodestoneParse(sTexte,fullName) {
-	// debug affiche les <p class="entry__name">
-	const dbgIndex = sTexte.indexOf('<p class="entry__name">')
-	console.log("debug:", sTexte.substring(dbgIndex,dbgIndex+50) )
+function lodestoneParse(sTexte,fullName,monde) {
+	console.log("lodestoneParse:",fullName,monde)
+	
+	// caracères spéciaux des pseudos
 	let texte = sTexte.replaceAll('&#39;',"'");
 
   const sEntry='<p class="entry__name">'+fullName+'</p>'
-  const sChar='href="/lodestone/character/'
+	const sMonde='</i>'+monde+' ['
+  const sFF14Id='href="/lodestone/character/'
+
   const k = texte.indexOf(sEntry)
-  if (k<0) return null; // Aucune correspondance
-  const s = texte.substring(k-500,k);
-  const c = s.lastIndexOf(sChar)
-  if (c<0) return null; // pas de FF14ID
-  const f = c+sChar.length
-  const ff14Id = parseInt(s.substring(f,f+20),10);
-  console.log("Search:",fullName,"--> ff14Id:",ff14Id);
+  if (k<0) { console.log("lodestoneParse missing:",sEntry); return null; } // Aucune correspondance du fullname
+
+	console.log("lodestoneParse Debug:",texte.substring(k-400,k+200))
+
+	const lMonde = texte.substring(k,k+200) // zone ou doit se trouver le monde
+	const mi = lMonde.indexOf(sMonde)
+  if (mi<0) { console.log("lodestoneParse missing:",sMonde); return null; } // Aucune correspondance du monde
+
+  const lFF14Id = texte.substring(Math.max(k-400,0),k) // zone ou doit se trouver le FF14ID
+  const fi = lFF14Id.lastIndexOf(sFF14Id) // recherche du ff14ID
+  if (fi<0) { console.log("lodestoneParse missing:",sFF14Id); return null; } // pas de FF14ID
+
+	// parse le FF14ID
+  const f = fi+sFF14Id.length
+  const ff14Id = parseInt(lFF14Id.substring(f,f+20),10);
+  console.log("Search:",fullName,monde,"--> ff14Id:",ff14Id);
   return ff14Id
 }
 
@@ -40,7 +51,7 @@ async function getFF14Id(prenom,nom,monde) {
 	console.log("getFF14Id",url);
 	const ret = await gbl.apiCallExtern(url,null,null,null)
 	if (ret.status!=200) { console.log("****ERREUR LODESTONE**",ret.status, ret, url); return null;  }
-	return lodestoneParse(ret.text,fullName)
+	return lodestoneParse(ret.text,fullName,monde)
 }
 
 // recupere l'icone du personnage et le publie vers le cdn
@@ -50,7 +61,7 @@ async function publishFace(pseudo,test) {
 	const SCLS = 'class="frame__chara__face"'
 	const SIMG = 'img src="'
 	const ff14Id = pseudos.get(pseudo)?.ff14Id
-	if (!ff14Id) gbl.exception("ERREUR SERVER COHERENCE PSEUDO",500)
+	if (!ff14Id) gbl.exception("ERREUR publishFace SERVER COHERENCE PSEUDO" + pseudo,500)
 	const url = "https://fr.finalfantasyxiv.com/lodestone/character/"+ff14Id
 	let ret = await gbl.apiCallExtern(url,null,null,null)
 	if (ret.status!=200) { console.log("****ERREUR LODESTONE**",ret.status, ret, url); return null;  }
@@ -85,7 +96,7 @@ async function publishFace(pseudo,test) {
 // lodestone check: 200 { ff41Id: } si ok, 202 si introuvable
 async function httpCallback(req, res, method, reqPaths, body, pseudo, pwd) {
 	// pas de verif complete, l'acces doit être fait avec un user="" (dummy)
-	if (pseudo!="nondefini") gbl.exception("bad user need nondefini dans la requete",400);
+	// if (pseudo!="nondefini") gbl.exception("bad user need nondefini dans la requete",400);
 	switch (method) {
 		case "GET":
 			switch(reqPaths[2]) {

@@ -45,7 +45,6 @@ export const AUDIODESCS = {
 	"FrontTitles": {mp3: "FrontTitles.mp3#t=00:00:12", vol: 0.8, repeat: 1 },
 	"Extravaganza": {mp3: "Extravaganza.mp3#t=00:00:00", vol: 1.0, repeat: 1 },
 	"MythsSword": {mp3: "MythsSword.mp3#t=00:00:00", vol: 1.1, repeat: 1 },
-	"Applaudissements": {mp3: "Applaudissements.mp3#t=00:00:00", vol: 1.0, repeat: 0 },
 	"SonOfSon": {mp3: "Argy, Son Of Son - Faust.mp3#t=00:00:00", vol: 1.0, repeat: 1 },
 	"LOTR-connaissances": {mp3: "LOTR-connaissances.mp3#t=00:00:00", vol: 3.0, repeat: 1 },
 	"KanAnErer": {mp3: "ff-7/KanAnErer-extrait.mp3#t=00:00:00", vol: 1.0, repeat: 1 },
@@ -74,12 +73,23 @@ export const AUDIODESCS = {
 	"dolmen": { mp3: "ff-10/dolmen.mp3", vol: 0.5, repeat: 1 },
 	"mercredi": { mp3: "ff-10/mercredi.mp3", vol: 1.0, repeat: 1 },
 	"derniere-seance": { mp3: "ff-10/derniere-seance.mp3", vol: 0.7, repeat: 1 },
-	"pharao-secrets": { mp3: "ff-10/pharao-secrets.mp3", vol: 0.7, repeat: 1 },
 	"Memoire-qui-flanche": { mp3: "Memoire-qui-flanche.mp3", vol: 1.2, repeat: 0 },
 	"plus-pres-des-etoiles": { mp3: "ff-10/plus-pres-des-etoiles.mp3", vol: 0.3, repeat: 1 },
+	"Applaudissements": {mp3: "commons/Applaudissements.mp3#t=00:00:00", vol: 1.0, repeat: 0 },
+	"X-longwayhome": {mp3: "X-barathym/longwayhome.mp3#t=00:04:10", vol: 1.0, repeat: 0, ifDingPause:true },
+	"X-scifi": {mp3: "X-barathym/sci-fi-alarm.mp3", vol: 1.0, repeat: 0, ifDingPause:true },
+	"X-good-morning": {mp3: "X-barathym/good-morning.mp3", vol: 1.0, repeat: 0, ifDingPause:true },
+	"X-depasse-temps": {mp3: "X-tranquilite/nuit-incolore-depasse.mp3", vol: 1.0, repeat: 1 },
+	"X-ventesPrivees/osez-josephine": { mp3: "X-ventesPrivees/osez-josephine.mp3", vol: 0.7, repeat: 1},
+	"X-ventesPrivees/Marche-de-noel": { mp3: "X-ventesPrivees/Marche-de-noel.mp3", vol: 1.0, repeat: 1},
+	"X-initiatique/secrets": { mp3: "X-initiatique/secrets.mp3", vol: 0.7, repeat: 1},
+	"X-prelude-rapidite/elcondorpasa": { mp3: "X-prelude-rapidite/elcondorpasa.mp3#t=00:00:40", vol: 1, repeat: 1},
+	"X-prelude-rapidite/cezanne-peint": { mp3: "X-prelude-rapidite/cezanne-peint.mp3#t=00:00:03", vol: 1.5},
+	"X-cherchezlelala/Cherchez-le-garcon": { mp3: "X-cherchezlelala/Cherchez-le-garcon.mp3", vol: 1.1, repeat: 1},
+	"S-privilege-music": { mp3: "commons/Beyond the Night - Rachel Luttrell.mp3", vol: 1, repeat: 1},
 };
 ///////////////////////////////////////////////////////////////////////////////////////
-// GESTION DE LA VIDEO
+// GESTION DE LA VIDEO 
 ///////////////////////////////////////////////////////////////////////////////////////
 export const VIDEODESCS = {
 	"ff-3-rendez-vous": { mp4: "ff-3-rendez-vous", vol: 1.2},
@@ -118,12 +128,27 @@ export const VIDEODESCS = {
 	"ff-10/ff-10-metro-trailer": { mp4: "ff-10/ff-10-metro-trailer", vol: 2},
 	"ff-10/IPA-BNF": { mp4: "ff-10/IPA-BNF", vol: 4},
 	"ff-10/ff-10-sans-video": { mp4: "ff-10/ff-10-sans-video", vol: 4},
+	"commons/voyage-orthotemps": { mp4: "commons/voyage-orthotemps", vol: 1},
 	"X-pharao/pharao1": { mp4: "X-pharao/pharao1", vol: 3.5},
 	"X-pharao/pharao2": { mp4: "X-pharao/pharao2", vol: 2.5},
-	"X-lesbases/lesbases-1": { mp4: "X-lesbases/lesbases-1", vol: 1},
+	"X-lesbases/lesbases-1": { mp4: "X-lesbases/lesbases-1", vol: 1.5},
 	"X-lesbases/lesbases-2": { mp4: "X-lesbases/lesbases-2", vol: 1},
 	"X-lesbases/lesbases-3": { mp4: "X-lesbases/lesbases-3", vol: 1},
 	"X-lesbases/lesbases-4": { mp4: "X-lesbases/lesbases-4", vol: 1},
+	"X-tranquilite/gp-bravo": { mp4: "X-tranquilite/gp-bravo", vol: 1},
+	"X-tranquilite/gp-zut": { mp4: "X-tranquilite/gp-zut", vol: 1},
+	"X-tranquilite/tranquilite-final": { mp4: "X-tranquilite/tranquilite-final", vol: 1.8},
+	"X-orthocomposants/orthocomposants-1": { mp4: "X-orthocomposants/orthocomposants-1", vol: 1.1},
+	"X-orthocomposants/orthocomposants-2": { mp4: "X-orthocomposants/orthocomposants-2", vol: 1.1},
+	"X-lesfailles/lesfailles-f": { mp4: "X-lesfailles/lesfailles-f", vol: 1.8},
+	"X-ventes-privees/ventes-privees-t": { mp4: "X-ventesPrivees/ventes-privees", vol: 1.9},
+	"X-ventes-privees/ventes-privees-f": { mp4: "X-ventesPrivees/ventes-privees-2", vol: 1.9},
+	"X-prelude-rapidite/remix-robin": { mp4: "X-prelude-rapidite/remix-robin", vol: 1.0},
+	"hildiscord-bravo": { mp4: "commons/hildiscord-bravo", vol: 1.8},
+	"hildiscord-non": { mp4: "commons/hildiscord-non", vol: 1.8},
+	"X-ipa/cabaret": { mp4: "X-ipa/cabaret", vol: 4.0},
 }
+
+
 
 
