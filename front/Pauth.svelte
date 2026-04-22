@@ -2,7 +2,7 @@
 	import { onMount, onDestroy  } from 'svelte';
 	import { scrollPageToTop, capitalizeFirstLetter, isPseudoValid, // crypoCreateKeyPair,
 					 addNotification, apiCall, storeIt, loadIt, removeIt, cryptoNewElliptic,
-					 displayInfo, 
+					 displayInfo, displayObject,
 					 u8ElipticSign, markClick, countDownInit, disconnectFromServer,
 					 b64_b64u, b64u_b64, u8_b64u, b64u_u8, b64u_str, str_b64u, str_u8
 				 } from './common.js'
@@ -99,6 +99,7 @@
 			}
 		}
 		catch (e) {
+			console.log("webAuthVaultCreate EXCEPTION",e)
 			displayInfo({titre:"Erreur lors de la création de clef privée enfouie",
 									 body:[
 										 "Je n'ai pas pu créer une clef privée enfouie dans ton coffre cryptographique, clef permettant de sécuriser ta connexion.",
@@ -127,7 +128,7 @@
 					allowCredentials: [ { id: b64u_u8(b64uRawId), type: "public-key" }, ],
 				  challenge: str_u8(challenge) ,
 					rpId: rpId,
-					userVerification: "discouraged", // "required",
+					userVerification: "required",
 					timeout: 30000,
 				}
 			}
