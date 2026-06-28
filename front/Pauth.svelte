@@ -16,7 +16,11 @@
 		webAuth=$bindable(),
 		CLIENTVERSION
 	} = $props()
-
+	
+	const	MONDES= [
+		"Cerberus","Louisoix","Moogle","Omega","Phantom","Ragnarok","Sagittarius","Spriggan",
+		"Alpha","Lich","Odin","Phoenix","Raiden","Shiva","Twintania","Zodiark"
+	]
 	const PAGESAISIESLBL="Pauth_saisies"
 	let saisies = $state(loadIt(PAGESAISIESLBL,{}))
 	$effect(()=>storeIt(PAGESAISIESLBL,saisies))
@@ -120,7 +124,7 @@
 			return null
 		}
 	}
-	async function webAuthVaultGet(rpId,b64uRawId,challenge) {
+	async function webAuthVaultGet(rpId,b64uRawId,challenge) { 
 		try {
 			addNotification("Signature cryptographique...","lightgreen",3)
 			const publicKeyGet = {
@@ -169,6 +173,16 @@
 	// Webauthn UPGRADE avec la veille eliptic
 	////////////////////////////////////////////////////////////////////
 	async function webAuthUpgrade(webAuth,oldEs,newEs,ff14Id) {
+		// Si pas d'oldEs, upgrade impossible
+		if (!oldEs || oldEs.jwkPublicKey) {
+			displayInfo({titre: "Données manquantes", back:"rouge", ding:"explosion",
+									 body:["Le processus de passage en sécurité webAuthn est impossible",
+												 "Ton ancienne clef elliptique n'est pas disponible",
+												],
+									 trailer: "Relance une fois, et si toujours en erreur, contacte Kikiadoc" 
+									})
+			return
+		}
 		// addNotification("Upgrade sécurité vers webauthn","lightgreen",3)
 		let create = await webAuthVaultCreate(webAuth.rpId,webAuth.rpName,
 																		webAuth.prenom+' '+webAuth.nom+' @'+webAuth.monde,
@@ -291,6 +305,7 @@
 			displayInfo({titre: "Inscription refusée", back:"papier", ding:"explosion",
 									 body:["La Grande Peluche ne te fais pas confiance",
 												 "Les raisons probables de ce refus sont:",
+												 "* Tu es déjà enregistré",
 												 "* Tu as utilisé précédemment un autre équipement pour te connecter",
 												 "Info: "+ret.msg
 												],
@@ -399,8 +414,9 @@
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore element_invalid_self_closing_tag) -->
 <div use:scrollPageToTop>
-	<p>Bienvenue,</p> 
-	<p>Je suis la Grande Peluche Oracle des Savoirs.</p>
+	<div>Bienvenue,</div> 
+	<div>je suis la Grande Peluche Oracle des Savoirs.</div>
+	<br/>
 	<!-- 
 	<div gpHelp="Cette opération utilise un challenge éphémère de sécurité valide quelques minutes. Pas de panique, il sera renouvellé automatiquement si tu mets trop de temps."
 			 style="cursor: pointer" onclick={markClick} role="button" tabindex=0>
@@ -413,12 +429,26 @@
 	-->
 	<div class="adminCadre papier {flagDisable}">
 		<div>Indique moi ton prénom, nom et monde InGame:</div>
-		<input bind:value={saisies.prenom} type="text" placeholder="prénomIG" maxlength=15>
-		<input bind:value={saisies.nom} type="text" placeholder="nomIG" maxlength=15>
-		<select bind:value={saisies.monde} >
-			{#each GBLCONST.MONDES as m}<option>{m}</option>{/each}
-		</select>
-		<input type="button" value="Valider ►" id="enregistrerPseudo" onclick={webauthnRegister}>
+		<div>
+			<input bind:value={saisies.prenom} type="text" placeholder="prénomIG" maxlength=15>
+			<input bind:value={saisies.nom} type="text" placeholder="nomIG" maxlength=15>
+			<select bind:value={saisies.monde} >
+				{#each MONDES as m}<option>{m}</option>{/each}
+			</select>
+			<input type="button" value="Valider ►" id="enregistrerPseudo" onclick={webauthnRegister}>
+		</div>
+		{#if webAuth?.etat=="renew"}
+			<div class="petit">
+				Le règlement
+				<a href="https://eur-lex.europa.eu/legal-content/FR/TXT/PDF/?uri=OJ:L_202401183" target="gpHelp">
+					eIDAS 2024 (authentification numérique)
+				</a>
+				stipule que ton authentification doit être vérifiée périodiquement.
+				<br/>
+				Une vérification tous les 9 jours depuis ton coffre numérique est suffisante et
+				correspond à un usage standard du site.
+			</div>
+		{/if}
 	</div>
 	<div class="info">
 		<div><label><input type="checkbox" bind:checked={saisies.flagDebug}>Afficher les infos techniques</label></div>

@@ -12,17 +12,21 @@
 		p={}, // parametre divers
 		pageDesc = null,
 		refStep = $bindable(null),
+		localCtx = $bindable({})
 		// epiqStepChangeDth= $bindable(null)
 	} = $props();
 
 	let ttsTexte=$state(null)
 
+	// Message standard de demande d'aide
 	async function aideDemande() {
 		apiCall('/tts/aideDemande/','POST');
 	}
+	// Saisie de TTS
 	async function aideMessage() {
-		if (ttsTexte)
+		if (ttsTexte) {
 			apiCall('/tts/aideMessage/','POST',{message: ttsTexte})
+		}
 		else {
 			displayInfo({titre:"Message en synthèse vocale",
 									 body: ["Indique dans la zone message un petit texte,",
@@ -31,7 +35,12 @@
 												 ],
 									})
 		}
-		ttsTexte=""
+		ttsTexte=null
+	}
+	async function aideMessageClick() {
+		if (localCtx.ttsTextHelp) return
+		localCtx.ttsTextHelp = true
+		await aideMessage()
 	}
 	
 </script>
@@ -68,7 +77,6 @@ progress::-moz-progress-bar { border-radius: 10em; background: var(--color); }
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_interactive_supports_focus -->
 {#if t=="headerPage"}
-	{#if !isEquipementPC()}<br/>{/if}
 	{#if pageDesc?.delaiDebut}
 		{@const challengeDebutDth = (isProd)? pageDesc.start+getEpsilon()+(pageDesc?.delaiDebut || 1) *60000 : Date.now()+3000}
 		<span style="cursor:pointer" role="button" oncdTimeout={(e)=>e.currentTarget.remove()}
@@ -78,13 +86,14 @@ progress::-moz-progress-bar { border-radius: 10em; background: var(--color); }
 	{/if}
 	<span>
 		<span role="button" style="font-size:0.8em; cursor:pointer" onclick={aideMessage}>📢</span>
-		<input type="text" placeholder="message..." bind:value={ttsTexte}
+		<input type="text" placeholder="message..." bind:value={ttsTexte} onclick={aideMessageClick}
 			onkeypress={(e) => e.key=="Enter" && aideMessage()}
 			maxlength=60 />
 	</span>
+	{#if !isEquipementPC()}<br/>{/if}
 	
 {:else if t=="waitDebutChallenge"}
-	{@const challengeDebutDth = (isProd)? pageDesc.start+getEpsilon()+pageDesc.delaiDebut*60000 : Date.now()+4000}
+	{@const challengeDebutDth = (isProd && pageDesc.delaiDebut)? pageDesc.start+getEpsilon()+pageDesc.delaiDebut*60000 : Date.now()+4000}
 	<div>
 		<input type="button" value="Revoir le Lore" onclick={()=> refStep=0} />
 		<input type="button" value={p.txt || "Go!"} onclick={()=> {
@@ -119,6 +128,9 @@ progress::-moz-progress-bar { border-radius: 10em; background: var(--color); }
 		{:else}
 			<div class="redPointer blinkMsg">
 				🛑Métacache n'est pas active.
+				Tes téléchargements ne sont pas optimisés et
+				solliciteront de façon intensive ta connexion internet.
+				C'est NORMAL si tu es en navigation privée.
 				Recharge la page et si cela ne suffit pas, 
 				ferme TOUS les onglets sur le site, puis FERME TON NAVIGATEUR et
 				reviens visiter le site.

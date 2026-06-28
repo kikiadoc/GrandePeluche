@@ -1,7 +1,14 @@
 ////////////////////////////////////////////////////////////
 // Varaible constante globales et variables à state globales
 ////////////////////////////////////////////////////////////
-import {urlCdn} from "./common.js"
+import {urlCdn, loadIt} from "./common.js"
+// skin par defaut
+console.log("window.location.host",window.location.host)
+let skin= ( (window.location.host=="ffxivfr.adhoc.click") && "FF" ) ||
+					( (window.location.host=="ff14.adhoc.click") && "FF"  ) ||
+					"GP" 
+let isPublic = window.location.host=="ffxivfr.adhoc.click"
+
 export const GBLSTATE = $state({
 	swcReady: false, // etat du service worker
 	audioVolume: 30,
@@ -10,9 +17,21 @@ export const GBLSTATE = $state({
 	audioAmbiance: true,
 });
 
+const SKINELTFF = {
+	titreLbl: "Final Fantasy XIV - France",
+}
+const SKINELTGP = {
+	titreLbl: "La Grande Peluche",
+}
 export const GBLCONST = {
+	SKINCONST: "SKIN"+skin, // peut etre modfier pour changement de skin
+	SKINELT: (isPublic)? SKINELTFF : SKINELTGP,
+	public: isPublic,
+	URLPUBLIC: "https://ffxivfr.adhoc.click/bienvenue",
+	URLPRIVE: "https://ff14.adhoc.click/enjoy",
+	PAGEASSISTANCE: "https://help.adhoc.click/HELP/index.html",
 	EQUILIBRAGE: {
-		NB: 10, // nombre de joueurs
+		NB: 10, // nombre de joueurs 
 		EVENTGILS: 400, // nombre de gils de l'événement
 		COEFPOW: 50 // Coef d'exponentielle de la cagnotte
 	},
@@ -22,14 +41,14 @@ export const GBLCONST = {
 		{val:"F", lbl:"Féminin", notif: "Je vais accorder mon discours au féminin"},
 		{val:"N", lbl:"Non-binaire", notif: "Je vais accorder mon discours au masculin ou au féminin, selon ma propre humeur"}
 	],
-	MONDES: [
-		"Cerberus","Louisoix","Moogle","Omega","Phantom","Ragnarok","Sagittarius","Spriggan",
-		"Alpha","Lich","Odin","Phoenix","Raiden","Shiva","Twintania","Zodiark"
+	SKINS: [
+		{val:"SKIN"+skin, lbl:"Par défaut", notif: null},
+		{val:"SKINGP", lbl:"Historique", notif: null},
+		{val:"SKINFF", lbl:"Modernisé", notif: null},
 	],
-	PAGEASSISTANCE: "https://help.adhoc.click/HELP/index.html"
 };
 
-// calcul cagnotte: 
+// calcul cagnotte:
 // curNb : nombre de contributions primaires
 // maxGils: nom de gils total
 // secNb: nombre de contributions secondaires (ou null)
@@ -49,12 +68,11 @@ export function calcCagnotteNb(curNb,secNb,eqNb) {
 	return Math.floor(Math.min(curNb,secNb,eqNb))
 }
 
-
-
+/*
 // debug
 for (let i=0; i<= GBLCONST.EQUILIBRAGE.NB; i++)
 	console.log("***calcCagnotte",i,calcCagnotte(i,100) )
-
-console.log("Chargé: ground.svelte.js")
+*/
+console.log("Chargé: ground.svelte.js SKIN=",skin)
 
 // ground.svelte.js 

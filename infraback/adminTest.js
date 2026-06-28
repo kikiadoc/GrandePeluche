@@ -64,8 +64,8 @@ function admDiscordReport() {
 }
 async function checkSecAlert1() {
 	const message = "# C'est CHECKSEC, je vous informe avoir enclenché une procédure de mise en sécurité du serveur de la Grande Peluche\n"+
-									"Raison: Saturation de l'analyseur temps réel des requêtes invalides.\n"+
-									"Action: blocage de tous les acces par vérouillage du firewall externe, arret du proxy interne, purge des files d'attente de traitement\n"+
+									"Raison: Saturation de l'analyseur temps réel des requêtes.\n"+
+									"Action: blocage de tous les acces et purge des files d'attente de traitement\n"+
 									"Kikiadoc vous informera sur Discord\n"
 	discord.postMessage( "annonces",message,true)
 }

@@ -23,7 +23,7 @@
 	import BabHeader from './BabHeader.svelte'
 	
 	let {
-		GBLCTX,
+		localCtx = $bindable({}),
 		wsCallComponents,
 		pageDesc = null,
 		pseudo,
@@ -1233,7 +1233,7 @@
 			<div class="br"></div>
 			<Btn val="Explique moi pour le livre de correspondance"
 				msg="Le livre se trouve dans la maison, près de l'entrée et à gauche en entrant, sur une demi-cloison. Clic sur l'icon 🠟 au dessus du livre. Lis alors le message du propriétaire et laisse un message selon la consigne en cliquant sur l'icon crayon 🖉" />
-			<Btn bind:refStep={epiqStep} step=99 bind:refPageDone={pageDone} pageDone={pageDesc.n} 
+			<Btn bind:refStep={epiqStep} step=99 bind:refCtx={localCtx} pageDone={pageDesc.n} 
 				val="J'ai écrit le message demandé sur le livre" ifFct={()=>addNovice()} />
 			<div style="clear:both" class="br"></div>
 		</div>

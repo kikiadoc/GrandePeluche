@@ -1,7 +1,9 @@
 // Ce module regroupe les fonctions sensibles en terme de RGPD
 // cela inclu le tracking console car peut remonter des trucs style extension du nav
-import {displayInfo, getDynMetro, getLatence, playDing} from "./common.js"
-import {GBLSTATE } from "./ground.svelte.js"
+import {
+	displayInfo, getDynMetro, getLatence, playDing, isEquipementPC, isAndroid, isPWA 
+} from "./common.js"
+import { GBLCONST, GBLSTATE } from "./ground.svelte.js"
 
 //////////////////////////////////////////
 // retourne le m ou f selon le genre
@@ -17,7 +19,7 @@ export function G(g,m,f) {
 //////////////////////////////////////////
 // Gestion de la console et report d'erreur sur smartphone
 //////////////////////////////////////////
-let logStatements = {errors:[],global:{}, reseau:{}, perf:{}, old: [], cur: [] }
+let logStatements = {errors:[],global:{}, reseau:{}, perf:{}, contexte:{}, old: [], cur: [] }
 function cPush(o) {
 	if (logStatements.cur.lenght > 100) {
 		logStatements.old = logStatements.cur
@@ -50,15 +52,14 @@ export function addReportError(value) {
 function gUpdate() {
 	logStatements.global.deepCheckSec= window.crossOriginIsolated
 	logStatements.global.metacache= GBLSTATE.swcReady
-	logStatements.global.audioBlaster = {
-		audioVolume: GBLSTATE.audioVolume,
-		audioBack: GBLSTATE.audioBack,
-		audioTTS: GBLSTATE.audioTTS,
-		audioAmbiance: GBLSTATE.audioAmbiance
-	}
 	logStatements.global.babylonVersion=(typeof BABYLON=="object")? BABYLON?.Engine?.Version : null
 	logStatements.reseau.dynMetro = getDynMetro()
 	logStatements.reseau.latence = getLatence()
+	logStatements.global.isEquipementPC = isEquipementPC()
+	logStatements.global.isAndroid = isAndroid()
+	logStatements.global.isPWA = isPWA()
+	logStatements.contexte.GBLCONST = GBLCONST
+	logStatements.contexte.GBLSTATE = GBLSTATE
 }
 let cNew = null , cOld = null
 export function patchConsole() {
@@ -91,7 +92,7 @@ export function unpatchConsole() {
 
 export function getConsole() {
 	gUpdate()
-	return window.structuredClone(logStatements)
+	return logStatements
 }
 export async function reportConsole() {
 	if (window.showSaveFilePicker) {

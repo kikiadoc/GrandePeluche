@@ -229,7 +229,7 @@ async function discordPostMessage(runCtx,chan,texte,everyone,type) {
 		default: postBody.content += runCtx.discordTrailer
 			break;
 	}
-	console.log("discordPostMessage:",discordUrl,'POST','body:',postBody,'headers:',discordHeaders);
+	console.log("discordPostMessage:",discordUrl,'POST','body:',postBody);
 	let ret = await gbl.apiCall(discordUrl,'POST',postBody,discordHeaders);
 	// console.log("discordPostMessage ret=:",ret);
 	return ret.id;

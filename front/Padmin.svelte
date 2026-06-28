@@ -4,7 +4,10 @@
 					 playDing, displayObject, playMusic,
 					 storeIt, removeIt } from "./common.js"
 
-	let { webAuth, wsCallComponents } = $props();
+	let { webAuth,
+				wsCallComponents,
+				GBLCONST
+			} = $props();
 
 	onMount(() => {if (wsCallComponents) wsCallComponents.add(myWsCallback); init() });
 	onDestroy(() => {if (wsCallComponents) wsCallComponents.delete(myWsCallback) });
@@ -17,6 +20,7 @@
 	}
 
 	let saisies = {} // generique non sauvegardées 
+	let showTitre=$state(true)
 	let showAdmin=$state(false)
 	let showMusiques=$state(false)
 	let enumMusiques=$state(false)
@@ -86,12 +90,15 @@
 <style>
 	input {font-size: 0.7em}
 </style>
-<div class="adminCadre" style="font-size: 0.8em">
-	Admin:
-	<input type="button" value="show/hide Admin" onclick={() => showAdmin=!showAdmin} />
-	<input type="button" value="show/hide Musiques" onclick={() => showMusiques=!showMusiques} />
-	<input type="button" value="test handler d'erreur" onclick={() => ceciEstUnTestDuHandlerErreur()} />
-</div>
+{#if showTitre}
+	<div class="adminCadre" style="font-size: 0.8em">
+		Admin:
+		<input type="button" value="show/hide Admin" onclick={() => showAdmin=!showAdmin} />
+		<input type="button" value="show/hide Musiques" onclick={() => showMusiques=!showMusiques} />
+		<input type="button" value="test handler d'erreur" onclick={() => ceciEstUnTestDuHandlerErreur()} />
+		<input type="button" value="Masquer Admin" onclick={() => showTitre=false} />
+	</div>
+{/if}
 {#if showAdmin}
 	<!-- svelte-ignore binding_property_non_reactive -->
 	<div style="font-size: 0.7em">
@@ -102,9 +109,11 @@
 		</div>
 		<div class="adminCadre">
 			<input bind:value={saisies.admPseudo} type="text" placeholder="pseudo" />
+			<!-- obsolete
 			<input type="button" value="ClearServer/pseudo"
 				onclick={async ()=> confirm('Delete pseudo?'+saisies.admPseudo) && displayObject(await apiCall("/pseudos/"+saisies.admPseudo,"DELETE"))}
 			/>
+			-->
 			<input bind:value={saisies.admPrivilege} type="number" min=0 max=65535 placeholder="privilege">
 			<input type="button" value="SetPriv"
 				onclick={async ()=> confirm('privelege pseudo?'+saisies.admPseudo) && displayObject(await apiCall("/adminTest/privilege/"+saisies.admPseudo+"/"+saisies.admPrivilege,'PATCH'))}
@@ -210,17 +219,28 @@
 										<td>IG</td>
 										<td>FF14Id</td>
 									</tr>
-									{#each dspPseudo as p}
+									{#each dspPseudo as p,i}
 										<tr>
-											<td>{p[0]}</td>
-											<td>{p[1].ip}</td>
-											<td>{jjmmhhmmss(p[1].lastLogin)}</td>
-											<td>{p[1].prenom} {p[1].nom} @{p[1].monde}</td>
-											<td>{p[1].ff14Id}</td>
-											<td style="color:red">{(p[1].fullName)? "notNormalized":""}</td>
-											<td style="color:red">{(p[1].jwkPublicKey)? "":"No eliptic key"}</td>
-											<td ><input type="button" value="détail" onclick={async ()=> {displayObject(p)}} /></td>
-											<td ><input type="button" value="discord" onclick={async ()=> {let ret = await apiCall('/discord/admGetByFf14Id/'+p[1].ff14Id); if (ret.status==200) displayObject(ret.o) }} /></td>
+											{#if p}
+												<td>{p[0]}</td>
+												<td>{p[1].ip}</td>
+												<td>{jjmmhhmmss(p[1].lastLogin)}</td>
+												<td>{p[1].prenom} {p[1].nom} @{p[1].monde}</td>
+												<td>{p[1].ff14Id}</td>
+												<td style="color:red">{(p[1].fullName)? "notNormalized":""}</td>
+												<td style="color:red">{(p[1].jwkPublicKey)? "":"No eliptic key"}</td>
+												<td style="color:red">{(p[1].b64uRawId)? "":"No webAuthn RawId"}</td>
+												<td ><input type="button" value="détail" onclick={async ()=> {displayObject(p)}} /></td>
+												<td ><input type="button" value="discord" onclick={async ()=> {let ret = await apiCall('/discord/admGetByFf14Id/'+p[1].ff14Id); if (ret.status==200) displayObject(ret.o) }} /></td>
+												<td ><input type="button" value="DELETE" onclick={ async ()=> {
+													if (confirm("SUPPRIMER PSEUDO: "+p[0])) {
+														let ret = await apiCall('/pseudos/'+p[0],'DELETE')
+														if (ret.status==200) dspPseudo[i]=null
+													}
+												}}/></td>
+											{:else}
+												<td>Supprimé</td>
+											{/if}
 										</tr>
 									{/each}
 								</tbody>

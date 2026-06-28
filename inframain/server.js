@@ -53,6 +53,8 @@ const dessins = require('../inframain/X-dessins.js');
 // inutile const webAuth = require('../infraback/webAuth.js');
 // Elements pour les privilieges
 const codex = require('../inframain/S-codex.js');
+const codexChallenge = require('../inframain/S-codex-challenge.js');
+const lieuxJolis = require('../inframain/S-lieux-jolis.js');
 // Elements pour des tests
 const clientConfig = require('../inframain/clientConfig.js');
 const rubans = require('../inframain/rubans.js');
@@ -83,6 +85,7 @@ async function httpCallback(req, res, method, reqPaths, body, pseudo, pwd) {
 		case "X-ventesprivees": await ventesprivees.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
 		case "X-prelude": await prelude.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
 		case "X-cherchezlelala": await cherchezlelala.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
+		case "S-lieux-jolis": await lieuxJolis.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
 		// eleents liés aux evenements
 		case "X-pharao": await pharao.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
 		case "X-lesbases": await lesbases.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
@@ -102,6 +105,7 @@ async function httpCallback(req, res, method, reqPaths, body, pseudo, pwd) {
 	 	// case "spartaci": await spartaci.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
 	 	// case "omega": await omega.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
 		case "S-codex": await codex.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
+		case "S-codex-challenge": await codexChallenge.httpCallback(req, res, method, reqPaths, body, pseudo, pwd); break;
 	}
 	gbl.exception( { m: method, rp: reqPaths, body: body, pseudo: pseudo, pwd: pwd  } ,400);
 }
@@ -134,9 +138,13 @@ async function checkBeforeStart() {
 		const ff14Id = await lodestone.getFF14Id("Kikiadoc","Lepetiot","Moogle")
 		const ff14ImgId = await lodestone.publishFace("Kikiadoc",true)
 		if (ff14Id != 12945273 || ff14ImgId != 12945273)
-			discord.mpKiki("serveur restart, lodetsone issue (idKiki=12945273) found ff14id="+ff14Id+", ff14ImgId="+ff14ImgId)
-		else
+			discord.postMessage( "checksec","check intégrité lodestone, synchro invalide (idKiki=12945273 requis) found ff14id="+ff14Id+", ff14ImgId="+ff14ImgId,true)
+		else {
 			console.log('***** Pas de modif struture du lodestone, PARSEUR OK')
+			console.log('***************************************************')
+			console.log('**** checkBeforeStart : Serveur UP AND RUNNING ****')
+			console.log('***************************************************')
+		}
 	}
 	catch(e) {
 		console.log('***** CHECKBEFORESTART ***',e)
@@ -173,6 +181,17 @@ function diagnostic() {
 	diagnosticMemory()
 }
 setInterval(diagnostic,1000)
+
+/////////////
+// Error handling et system signal
+/////////////
+function arreteTout(signal) {
+	console.log("SIGNAL RECU:",signal)
+	wsserver.closeAll(signal)
+	process.exit(1)
+}
+process.on('SIGINT',arreteTout)
+process.on('SIGTERM',arreteTout)
 
 /////////////
 // Start service

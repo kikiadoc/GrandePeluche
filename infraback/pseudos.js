@@ -265,7 +265,7 @@ function verifyPrecond(pseudoDesc,clientJson,authenticator,reqType) {
 	if (!isValidRpidHash(authenticator.b64uRpIdHash)) gbl.exception('Mauvais RpIdHash:'+authenticator.b64uRpidHash,400)
 	if (!isValidOrigin(clientJson.origin)) gbl.exception('Mauvaise origine:'+clientJson.origin,400)
 	if (!authenticator.flags.userPresent) gbl.exception("Pas d'intération utilisateur pour valider (present)",400)
-	if (!authenticator.flags.userVerified) gbl.exception("Pas d'intération utilisateur pour valider (verified)",400)
+	// if (!authenticator.flags.userVerified) gbl.exception("Pas d'intération utilisateur pour valider (verified)",400)
 }
 // verification des données d'enregistrement dans le vault
 function verifyVaultRegistration(pseudoDesc,p) {
@@ -588,6 +588,12 @@ async function httpCallback(req, res, method, reqPaths, body, pseudo, pwd) {
 	else
 	if (method=="PATCH") {
 		checkPseudo(pseudo,pwd,true);
+		/*
+		switch (reqPaths[2]) {
+			case 'kickPseudo' : {
+			}
+		}
+		*/
 		/* OBSOLETE
 		Object.keys(pseudos).forEach( (pseudo) => {
 			let pseudoDesc = pseudos[pseudo]
@@ -625,6 +631,7 @@ exports.verifyElipticSignature = verifyElipticSignature
 exports.verifyElipticEcheance = verifyElipticEcheance
 exports.setPrivilege = setPrivilege
 exports.PRIVCODEX = 1 // doit être un bit uniquement
+exports.PRIVLIEUX = 2 // doit être un bit uniquement
 
 console.log("Pseudos loaded");
 

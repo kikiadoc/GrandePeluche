@@ -102,7 +102,7 @@
 	}
 	async function reponse(i) {
 		// alert("reponse:"+i+"Val="+saisies.reponses[i])
-		// evite le click vide 
+		// evite le click vide
 		// vérification des caractères spéciaux (blanc,point,virgule,slash)
 		if (!checkTemplate(saisies.reponses[i],etat.etapes[i].ph))
 			return displayInfo({titre:"Mauvais format de réponse", 
@@ -172,6 +172,7 @@
 		<div>
 			<input type="button" value="Revoir le Lore" onclick={() => epiqStep=0}  />
 			<input type="button" value="Résultats" onclick={calcResultats} />
+			<Common t="headerPage" pageDesc={pageDesc} />
 			<label class="petit"><input type="checkbox" bind:checked={saisies.afficherTout} />Voir tout</label>
 		</div>
 	{/if}
@@ -183,12 +184,15 @@
 			<div>
 				Mon assistant Hildiscord va publier
 				{CONFIG.QUESTIONSNB} questions sur Discord
-				à partir du {jjmmhhmmss(CONFIG.TIPDTH[0],true)}.
-				Elles seront toutes publiées dans le canal "Prélude à la Rapidité" entre 19h et 21h (heure de paris)
+				à partir du {jjmmhhmmss(CONFIG.TIPDTH[0],true)}
+				<sup>(<countdown dth={CONFIG.TIPDTH[0]} txtTimeout="en cours" />)</sup>
+				.
+				Elles seront toutes publiées dans le canal "Prélude de la Rapidité"
+				entre 19h00 et 20h45 (heure de Paris)
 				à raison de quelques-unes par jour.
 			</div>
 			<div>
-				Les questions sont de diverses natures, les réponses se trouvent In Game ou ailleurs...
+				Les questions sont de diverses natures, les réponses se trouvent souvent In Game, parfois ailleurs...
 			</div>
 			<div>
 				Si tu es {G(pseudoGenre,"le","la")} plus rapide à répondre à une question,
@@ -208,12 +212,11 @@
 				A chaque notification d'Hildiscord,
 				tu devras trouver la réponse le plus vite possible et l'indiquer ici, sur le site.
 				<br/>
-				Certaines sont très simples, d'autres plus compliquées.
-				Les deux premières sont des tutos d'utilisation du site.
+				Les deux premières sont très simples: pas même besoin d'aller IG.
 				<br/>
 				Pour être dans les meilleurs conditions pour ce challenge:
 				<br/>
-				👉Vérifie que tes notifications sont activées pour le Discord des Kiki's Events.
+				👉Vérifie que tes notifications sont activées pour le salon Discord Prélude de la Rapidité.
 				<br/>
 				👉N'hésite pas à devenir {G(pseudoGenre,"ami","amie")} IG avec Kikiadoc Lepetiot @Moogle pour faciliter tes téléportations.
 			</div>	
@@ -225,21 +228,26 @@
 
 	{#if epiqStep==90 && etat}
 		<div use:scrollPageToTop>
-			<div class="br"/>
+			{#if etat.challengeTermine}
+				<div class="blinkMsg">Le challenge est terminé</div>
+			{/if}
 			{#each etat.etapes as e,i}
 				<div class="papier">
 					{#if e.q}
 						{#if e.gagnant}
 							{#if !etat.etapes[i+1]?.gagnant || saisies.afficherTout}
+								<div class="br"/>
 								<div class="petit" style="color: lightgray; border: 2px solid white">
 									✅{e.q}
 									<div style="font-style: italic">
 										{jjmmhhmmss(e.gagnant.dth)}, {e.gagnant.p} a répondu "{e.gagnant.r.toLowerCase()}" 
+										et gagné {e.gils}M gils
 									</div>
 									<div>{e.c}</div>
 								</div>
 							{/if}
 						{:else}
+							<div class="br"/>
 							<div style="background-color: green; border: 2px solid white">
 								<div>{e.q}</div>
 								<div class="info">
@@ -285,7 +293,7 @@
 									</div>
 								{:else if Date.now() < saisies.nextReponseDth }
 									<div style="cursor: help; color:red" onclick={markClick}
-										gpHelp="Temps restant avant de pouvoir proposer une nouvelle réponse">
+										gpHelp="Tu as récemment répondu à une question. Tu dois attendre un peu avant de pouvoir proposer une nouvelle réponse">
 										⏳<countdown dth={saisies.nextReponseDth} oncdTimeout={resetReponseDth} />
 									</div>
 								{:else}
@@ -299,6 +307,7 @@
 							</div>
 						{/if}
 					{:else if (i==0 && !e.dth) || (i>0 && etat.etapes[i-1].dth) || saisies.afficherTout}
+						<div class="br"/>
 						<div class="petit" style="color: red; border: 2px solid white">
 							<img src={urlCdnSTATIC+"delai-anim.gif"} style="float:left; width: 5em" alt="" />
 							Pas de panique,
@@ -315,9 +324,6 @@
 					{/if}
 				</div>
 			{/each}
-			{#if etat.challengeTermine}
-				<div class="blinkMsg">Le challenge est terminé</div>
-			{/if}
 		</div>
 	{/if}
 

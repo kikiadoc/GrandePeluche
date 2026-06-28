@@ -1,12 +1,12 @@
 <script>
 	import { onMount, onDestroy } from 'svelte'
-	import { urlCdn, markClick, playDing } from './common.js'
+	import { urlCdn, markClick, playDing, playMusic } from './common.js'
 
 	let {	dspInfo=$bindable(), template=null	} = $props()
 	// tempate: snippet de formattage du texte
 	// DSPINFO: {}
 	// dspInfo.back : class de background
-	// dspInfo.img : url dans le CDN pour image du début
+	// dspInfo.img : url dans le CDN pour image du début ou url absolue
 	// dspInfo.imgBot : url dans le CDN pour image à placer a la fin
 	// dspInfo.imgClass : img50 || img100 || custom global
 	// dspInfo.titre : texte de titre
@@ -14,12 +14,17 @@
 	// dspInfo.autoClose : nombre de secondes avant autoclose
 	// dspInfo.url : url a utiliser pour les liens
 	// dspInfo.ding : nom du ding
+	// dspInfo.music : nom du music
 	// dspInfo.body : TABLEAU des elements a afficher
 	// Tableau dspInfo.body[i]:
 	// dspInfo.body[i].txt : texte
 	// dspInfo.body[i].cb : callback sur click (l,i,e) l=ligne body, i=#ligne, e=eventClick
 
-	onMount(() => { if (dspInfo.ding) playDing(dspInfo.ding) })
+	onMount(() => {
+		// console.log("Info******",dspInfo)
+		if (dspInfo.ding) playDing(dspInfo.ding) 
+		if (dspInfo.music) playMusic(dspInfo.music)
+	})
 	onDestroy(() => {  })
 
 </script>
@@ -39,7 +44,8 @@
 	<div class="popupZone">
 		<div class="popupContent">
 			{#if dspInfo.img}
-				<img gpLink={dspInfo.url} onclick={markClick} src={urlCdn+dspInfo.img}
+				<img gpLink={dspInfo.url} onclick={markClick}
+					src={(dspInfo.img.startsWith("https://")) ? dspInfo.img: urlCdn+dspInfo.img}
 					class={ dspInfo.imgClass || "parchemin img25"} alt="" />
 			{/if}
 			<div class="info">{dspInfo.titre || 'Information'}</div>

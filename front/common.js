@@ -29,6 +29,7 @@ function p3(v) { return (v>999)? v.toString() :"000".concat(v).slice(-3) }
 
 export function isPseudoValid(str) { return /^['\-A-Za-z]+$/g.test(str); }
 export function isLowerNumeric(str) { return /^[a-z0-9]+$/g.test(str); }
+export function isNumeric(str) { return /^[0-9]+$/g.test(str); }
 export function alphanum2placer(str) { return (str)? str.replace(/[a-z0-9]/g,"﹇") : str; } 
 export function capitalizeFirstLetter(str) { return str.charAt(0).toUpperCase() + str.slice(1); }
 export function lowerFirstLetter(str) { return str.charAt(0).toLowerCase() + str.slice(1); }
@@ -43,7 +44,7 @@ function checkNbCharInTemplate(ch,str1,str2) {
 	return nb1==nb2
 }
 export function checkTemplate(str,template) {
-	if (!str || !template || str.length!=template.length) return false
+	if (!str || !template) return false
 	if (!checkNbCharInTemplate(" ",template,str)) return false
 	if (!checkNbCharInTemplate("'",template,str)) return false
 	if (!checkNbCharInTemplate(".",template,str)) return false
@@ -237,6 +238,27 @@ export function intCountBits(n) {
   }
   return bits
 }
+///////////////////////////////////////////////////////////////
+// Fonction replacer/reviver pour parse des map dans un json
+///////////////////////////////////////////////////////////////
+export function replacer(key, value) {
+  if(value instanceof Map) {
+    return {
+      dataType: 'Map',
+      value: Array.from(value.entries()), // or with spread: value: [...value]
+    };
+  } else {
+    return value;
+  }
+}
+export function reviver(key, value) {
+  if(typeof value === 'object' && value !== null) {
+    if (value.dataType === 'Map') {
+      return new Map(value.value);
+    }
+  }
+  return value;
+}
 
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -265,24 +287,31 @@ export function isPWA() {
 }
 export function isAdmin(pseudo) {
 	// pas de soucis de cybersecu, le serveur fera la différence si besoin
-	return (pseudo?.startsWith('Kikiadoc') || pseudo?.startsWith('Althea') )
+	return pseudo.startsWith('Kikiadoc') || pseudo=='Eleana' || pseudo=='Althea'
+}
+export function isAdminServer(pseudo) {
+	// pas de soucis de cybersecu, le serveur fera la différence si besoin
+	return pseudo.startsWith('Kikiadoc')
+}
+export function isPrivilege(webAuth,privNum) {
+	// pas de soucis de cybersecu, le serveur fera la différence si besoin
+	return webAuth?.pseudo?.startsWith('Kikiadoc') || (webAuth?.privilege & (privNum || 0))
 }
 ///////////////////////////////////////////////////////////////////////////////////////
 // AFFICHAGE
 ///////////////////////////////////////////////////////////////////////////////////////
 // scroll a au debut/fin d'un node (usage avec use:)
 export function scrollPageToTop(node) {
-	// console.log("scroll Page top:",node && node.nodeName)
-	// node.scroll({ top: 0, left:0, behavior: 'smooth' })
-	setTimeout(()=>document.getElementById("contenu").scroll({top:0, left:0, behavior:'smooth'}), 200);
+	setTimeout(()=>document.getElementById("scrollTopPage").scroll({top:0, left:0, behavior:'smooth'}), 200)
 }
-export function scrollNodeToTop(node) {
-	console.log("scroll node Tot:",node.nodeName)
-	node.scroll({ top: 0, left:0, behavior: 'smooth' })
+export function scrollNodeToTop(node) { 
+	setTimeout(()=>node.scrollIntoView({ behavior:"smooth", block:"top", container:"nearest" }),200)
+}
+export function scrollNodeToMiddle(node) { 
+	setTimeout(()=>node.scrollIntoView({ behavior:"smooth", block:"center", container:"nearest" }),200)
 }
 export function scrollNodeToBottom(node) {
-	console.log("scroll Node Bot:",node.nodeName)
-	node.scroll({ top: node.scrollHeight, left:0, behavior: 'smooth' })
+	setTimeout(()=>node.scroll({ top: node.scrollHeight, left:0, behavior: 'smooth' }),200)
 }
 ///////////////////////////////////////////////////////////////////////////////////////
 // notificationn, affichage debug object et displayInfo
@@ -466,15 +495,27 @@ export async function connectToServer(cbStatus, cbMessage,clientVersion,webAuth)
 		console.log("WS close (id,code,msg):",wsId,wsLastClose,ev);
 		clearTimeout(wsTimerPing)
 		cbStatus(wsStatus=0);
-		// Si la connexion est perdu...
+		// Si la connexion est perdu... 
 		displayInfo({
 			titre:"Déconnecté du server multijoueurs "+wsUrl+ " (code:"+wsLastClose+")",
 			body: [
 				"Tu as été déconnecté de façon autoritaire par SyncServer, le serveur de synchronisation multi-joueurs de la Grande Peluche",
 				"Raison: "+ ev.code + " ("+ (ev.reason || "sans libellé")+")" ,
-				{ cls:"petit", txt: "Il faut recharger la page ou fermer/ouvrir la fenêtre de ton navigateur. "+
-						"Ce message peut-être normal si tu t'es connecté depuis une autre fenêtre "+
-						"ou si ton équipement passe en veille profonde." }
+				(ev.code==4000)?
+					{ cls:"blinkMsg", cb: ()=>window.open("https://ff14.adhoc.click/enjoy/menage.html","_self") ,
+						txt: "Si tu as changé d'équipement, clique ici puis ménage intégral"}
+				:
+				(ev.code==4999)?
+					{ cls:"blinkMsg", 
+						txt: "Le server va redémarrer (mise à jour, upgrade système, patch de sécurité urgent...). Recharge ta fenêtre dans quelques secondes"}
+				: ""
+				,
+				{ cls:"petit", txt:
+						"Recharge la fenêtre. Si cela ne sufit pas, "+
+						"il faut fermer toutes les fenêtres et onglets de ton navigateur. "+
+						"Si cette erreur se reproduit, contacte Kikiadoc sur Discord. "+
+						"Au pire, clique en haut à gauche de ton écran, "+
+						"puis 'assistance technique' dans le menu puis 'faire le ménage'" }
 			],
 			trailer: "Si cela se reproduit, contacte Kikiadoc sur discord"
 		});
@@ -507,7 +548,9 @@ export async function apiCallExtern(url,method,body,quiet)
 				addNotification("Erreur sur "+url+ ": ("+ res.status+ ") -- contactez Kikiadoc sur discord", "red", 60);
 			return null
 		}
-	  return await res.json()
+		let r = await res.json()
+		r.status = res.status
+	  return r
 	}
 	catch(e) {
 		console.log(e);
@@ -542,14 +585,14 @@ export async function apiCall(url,method, body, noWaitWs, forcePseudo)
 		dynMetro.cliReq = performance.now()
 		const res = await fetch(urlApi+url+"?u="+user+"&p="+pwd, {
 			method: method? method: 'GET', mode: "cors", cache: "no-store",
-			body: (body)? JSON.stringify(body) : null
+			body: (body)? JSON.stringify(body) : null 
 		});
 
 		dynMetro.cliRes = performance.now()
 		dynMetro.cliDth = Date.now()
-	  let json = await res.json() // parse reponse serveur
+	  let json = JSON.parse(await res.text(),reviver) // parse reponse serveur - usge de text pour json avec reviver
 		// gestion du cas ou l'objet est déjà sérilisé dans le message 
-		if (json.msgIsJson && json.o==null) json.o = JSON.parse(json.msg)
+		if (json.msgIsJson && json.o==null) json.o = JSON.parse(json.msg,reviver)
 		// metrologie depuis le serveur
 		dynMetro.srv = json.tr || {load: 1.0, run:1.0, dth:Date.now() } // load: lecture requete, run: exécution requete, dth: timestamp serveur
 		// calcul ecart temporel dynamique - disponible par import getEpsilon() ou getMetro()
@@ -653,16 +696,16 @@ async function cryptoClearKey() {
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
-// GESTION DU STOCKAGE 
+// GESTION DU STOCKAGE
 ///////////////////////////////////////////////////////////////////////////////////////
 export function loadIt(cle,defaut)
 {
-	// console.log("loadIt:", cle)
+	// console.log("loadIt:", cle,defaut)
 	let valeur = localStorage.getItem(cle)
 	if (valeur==null) return defaut
 	try { return JSON.parse(valeur) }
 	catch(e) {
-		console.log("loadIt erreur: ",cle,e)
+		console.log("loadIt erreur: ",cle,defaut,e)
 		return defaut
 	}
 }
@@ -813,18 +856,19 @@ export function stopCountDown() {
 // changement de l'orientation (pour smarphone)
 //////////////////////////////////////////////
 export function orientationChange(e) {
-	let orientation = e?.target?.type
-	if (orientation?.startsWith("portrait")) {	exitFullScreen() }
-	if (orientation?.startsWith("landscape")) {	enterFullScreen()	}
+	let type = e?.target?.type
+	let angle = e?.target?.angle
+	console.log("orientationChange",type,angle)
+	// if (type?.startsWith("portrait")) {	exitFullScreen() }
+	// if (type?.startsWith("landscape")) {	enterFullScreen()	}
 }
 export function enterFullScreen() {
 	let divVideo = document.getElementById("divVideo")
 	let divFull = document.getElementById("kikiFullArea")
-	// si tout n'est pas dispo, laisse faire en standard
-	if (!divVideo || !divFull) return
-	let dsp = window.getComputedStyle(divVideo).getPropertyValue("display")
-	// si pas de video et zone fullscreen
-	if (dsp=="none" && divFull)	divFull.requestFullscreen().then(nop).catch(nop)
+	if (divFull)
+		divFull.requestFullscreen().then(nop).catch(nop)
+	else if (window.getComputedStyle(divVideo).getPropertyValue("display") != "none")
+		divVideo.requestFullscreen().then(nop).catch(nop)
 }
 export function exitFullScreen() {
 	document.exitFullscreen().then(nop).catch(nop)	
@@ -1019,11 +1063,11 @@ export function mediaPlay(dom,resume) {
 				return
 			}
 			if (msg.indexOf('NotSupportedError')>=0) {
-				// erreur de media
+				// erreur de media 
 			}
 			displayError({
 				titre:'FAIT UN SCREEN ET CONTACTE KIKIADOC',trailer:'Fais un screen et contacte Kikiadoc',
-				back:'rouge', ding:'explosion',
+				back:'rouge', ding:'explosion', 
 				body:[
 					'Erreur media imprevue dans mediaPlay().catch:',
 					msg,

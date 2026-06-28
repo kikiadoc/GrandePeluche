@@ -1,5 +1,5 @@
 
-const http = require('http');
+const http = require('node:http');
 const process = require('process');
 
 const gbl = require('../infraback/gbl.js');
@@ -46,7 +46,7 @@ function listenerFct(req, res) {
           if (e.code && e.msg) {
 						e.tr=tr
 						res.statusCode=e.code;
-           	res.end(JSON.stringify(e));
+           	res.end(JSON.stringify(e))
 						jsonTime = Number(process.hrtime.bigint()-endDth)/1000000
 	  				console.log("<--Ret",req.method,req.url,e.code, "load/run/json en ms:", tr.load, tr.run, jsonTime);
           }

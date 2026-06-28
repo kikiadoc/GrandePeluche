@@ -10,6 +10,15 @@ const clients = new Map();
 // reponse au ping/pong avec la version client
 let clientPong = null
 
+// retourne le tableau des pseudo connectés
+function getPseudoList() {
+  let pseudoList = [];
+  clients.forEach( (meta,ws) => {
+	 	if (meta.pseudo) pseudoList.push(meta.pseudo);
+	});
+	return pseudoList
+}
+exports.getPseudoList = getPseudoList
 // admin force la version client depuis le filesystem (utilisé par les scripts de commit client)
 exports.forceClientVersion = () => {
 	const v = collections.loadSimpleObject("clientVersion").version
@@ -41,6 +50,7 @@ function broadcastClient(o) {
 
 // verification périodique (10 sec) sur la base ping/pong technique WS
 function broadcastPing() {
+  console.log("broadcastPingCheckWS",clients.size);
   clients.forEach((meta,ws) => {
 		if (ws.estVivant) {
 			ws.estVivant = false;
@@ -57,11 +67,7 @@ function broadcastPing() {
 setInterval(broadcastPing, 10000);
 
 function broadcastPseudoList () {
-  let pseudoList = [];
-  clients.forEach( (meta,ws) => {
-	 	pseudoList.push(meta.pseudo);
-	});
-	broadcastClient({op : "pseudoList", pseudoList : pseudoList , dth: Date.now()});
+	broadcastClient({op : "pseudoList", pseudoList : getPseudoList() , dth: Date.now()});
 }
 
 exports.sendToPseudo = (pseudo,o) => {
@@ -179,14 +185,14 @@ exports.start = (wsCallback, port) => {
 						// console.log("IAM pseudoDesc",pseudoDesc)
 						if (!pseudoDesc) {
 							ws.send(JSON.stringify( { op: "erreur", texte:"Pas de pseudoDesc, contacte Kikiadoc" } ))
-							ws.close()
+							ws.close(4001,"Erreur de prenom/nom/monde")
 							break
 						}
 						pseudos.verifyElipticEcheance(pseudoDesc)	 // exception si erreur
 						let isOk = await pseudos.verifyElipticSignature(metadata.id,pseudoDesc.jwkPublicKey,jMsg.b64uSignature)
 						if (!isOk) {
 							ws.send(JSON.stringify( { op: "erreur", texte:"WSIAM: Erreur signature elliptique, contacte Kikiadoc" } ))
-							ws.close()
+							ws.close(4002,"Signature elliptique invalide" )
 							break
 						}
 						metadata.pseudo = pseudoDesc.pseudo;
@@ -196,7 +202,7 @@ exports.start = (wsCallback, port) => {
   					clients.forEach( (metaScan,wsScan) => {
 							if (metaScan.pseudo == jMsg.pseudo && wsScan != ws)  {
 								wsScan.send(JSON.stringify({op : "erreur", texte: "Une autre connexion est activée, fermeture de cette connexion"}));
-								wsScan.close();
+								wsScan.close(4003,"Une seule connexion autorisée");
 							}
 						});
 						exports.broadcastNotification(jMsg.pseudo+ " s'est connecté");
@@ -211,7 +217,7 @@ exports.start = (wsCallback, port) => {
 					default:
 						if (!metadata.pseudo) {
 							ws.send(JSON.stringify( { op: "bad sequence" } ))
-							ws.close()
+							ws.close(4004,"Sequence non identifiée")
 						}
 						else
 							wsCallback(metadata.pseudo,jMsg);
@@ -221,7 +227,7 @@ exports.start = (wsCallback, port) => {
 			catch(ev) {
 				console.log("WS INBOUND msg:", m?.toString(), "exception:" , ev);
 				ws?.send(JSON.stringify({op : "erreur", refOp: jMsg?.op , code: ev.code, msg: ev.msg, o: ev.o, name : ev.name }));
-				ws?.close(3000,ev.msg || "voir log server");
+				ws?.close(4000,ev.msg || "voir log server");
 			}
     });
 
@@ -255,6 +261,12 @@ exports.start = (wsCallback, port) => {
 
 };
 
+// Fermeture des WS par exemple avant shutdown/restart du server
+exports.closeAll = (txt) => {
+	clients.forEach((meta,ws) => {
+		ws?.close(4999,txt)
+	})
+}
 
 exports.forceClientVersion()
 console.log('wsserver loaded');

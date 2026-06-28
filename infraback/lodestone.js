@@ -22,7 +22,7 @@ function lodestoneParse(sTexte,fullName,monde) {
   const k = texte.indexOf(sEntry)
   if (k<0) { console.log("lodestoneParse missing:",sEntry); return null; } // Aucune correspondance du fullname
 
-	console.log("lodestoneParse Debug:",texte.substring(k-400,k+200))
+	// console.log("lodestoneParse Debug:",texte.substring(k-400,k+200))
 
 	const lMonde = texte.substring(k,k+200) // zone ou doit se trouver le monde
 	const mi = lMonde.indexOf(sMonde)

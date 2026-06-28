@@ -67,6 +67,8 @@ registered["metaCacheClear"] = async (client,m) => {
 // Gestion du méta-cache
 self.addEventListener("fetch", (event) => {
 
+  // console.log("(serviceWorker) Url:", event.request.url)
+
 	// Si pas dans un */useLocalCache/* traitement standard du navigateur
 	if (!event.request.url.startsWith(URLPREFIX)) return // standard processing...
 

@@ -1,12 +1,14 @@
 <script>
 	import {
-		displayInfo, setHautFait, playDing, playVideo, countDownInit, getPseudoFromStorage, isAdmin
+		displayInfo, setHautFait, playDing, playVideo, playMusic,
+		countDownInit, getPseudoFromStorage, isAdmin
 	} from "./common.js"
 	
 	let {
 		refStep = $bindable(null),
 		refPage = $bindable(0),
-		refPageDone = $bindable([]),
+		// refPageDone = $bindable([]),
+		refCtx = $bindable(null),
 		refDth=0,
 		delai=0,
 		id = null,
@@ -16,6 +18,7 @@
 		koMsg = null,
 		ding = null,
 		video = null,
+		music = null,
 		koVideo = null,
 		hautFait = null,
 		page = null,
@@ -30,10 +33,11 @@
 		let ok = (ifFct)? ifFct() : true
 		if (ok) {
 			if (msg) displayInfo({titre:titre, body:[msg], trailer:trailer, ding:ding, back: back});
+			if (music) playMusic(music)
 			if (video) playVideo(video)
 			if (hautFait) setHautFait(hautFait,3)
-			if (pageDone && refPageDone && ( refPageDone.find((e) => e==pageDone) == undefined) )
-				refPageDone.push(pageDone)
+			if (refCtx?.page && refCtx?.page[pageDone])
+				refCtx.page[pageDone].pageDone=true
 			if (step!==null) refStep=step
 			if (page!==null) refPage=page
 		}

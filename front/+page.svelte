@@ -2,6 +2,7 @@
 	const SVELTEVERSION=null // SERA MODIFIE LORS DU COMMIT EN STAGING OU PROD ne pas changer
 	const CLIENTVERSION=null  // SERA MODIFIE LORS DU COMMIT EN STAGING OU PROD ne pas changer
 	const VITEVERSION=null  // SERA MODIFIE LORS DU COMMIT EN STAGING OU PROD ne pas changer
+	const WEBPATH=null  // SERA MODIFIE LORS DU COMMIT EN STAGING OU PROD ne pas changer
 	const GLOBALSTARTDTH=Date.now() // dth de démarrage des traitements 
 	console.log('******** CLIENT START dthid:',GLOBALSTARTDTH)
 	// divers caractères pour copier/coller : ⚙️🔊🔇⁜➤▲⏸◀▶▼⏬🔎📽❓✅🆘⚠️⬇️✅➥📷εΔ⛭⎵
@@ -9,18 +10,18 @@
 	// ne fonctionne pas sur android 🛈 utiliser (ℹ)
 
 	//////////////////////////////////////////
-	// Imports
+	// Imports 
 	//////////////////////////////////////////
 	import { onMount, onDestroy } from 'svelte'
 	import {
 		loadIt, storeIt, isProd, swcSetup, urlCdn, urlRaw,urlCdnAI,
 		addNotification, displayInfo, displayError,
-		startCountDown, stopCountDown, scrollNodeToBottom, 
+		startCountDown, stopCountDown, scrollNodeToBottom, scrollNodeToMiddle,
 		connectToServer, disconnectFromServer, apiCall,	getDynMetro, getEpsilon,
 		hhmmss, hhmmssms, geUtcMsFrom,
 		orientationChange, visibilityChange, startBlinkGlobal, markClick, firstClick,
 		playMusic, playDing, playVideo, closeVideo, audioInit, audioSetup, wsMedia,
-		tts, tryTTS,
+		tts, tryTTS, reviver, replacer,
 		securitypolicyviolation, generateSecurityAlert,
 		metaCacheList, metaCacheClear, swcGetWaitingIds,
 		isAdmin, isSM, isEquipementPC, isPWA, isAndroid
@@ -35,9 +36,6 @@
 	addReport("global","clientStartDth",GLOBALSTARTDTH)
 	addReport("global","clientVersion",CLIENTVERSION)
 	addReport("global","svelteVersion",SVELTEVERSION)
-	addReport("global","isEquipementPC",isEquipementPC())
-	addReport("global","isPWA",isPWA())
-	addReport("global","isAndroid",isAndroid())
 
 	import Info from './Info.svelte'
 	import Radio from './Radio.svelte'
@@ -47,8 +45,13 @@
 	import Pipa from './Pipa.svelte'
 	import Common from './Common.svelte'
 	import Pcodex from './Pcodex.svelte'
-	import Kikitest from './Kikitest.svelte'
-	
+	// import Kikitest from './Kikitest.svelte'
+	// import Pff14France from './Pff14France.svelte'
+
+	import P100 from './P100.svelte' // FF14 - Codex
+	import P102 from './P102.svelte' // FF14 - Codex
+	import P103 from './P103.svelte' // FF14 - Codex
+	import P104 from './P104.svelte' // FF14 - Lieu-Joli
 	// import P400 from './P400.svelte' // metropolis
 	// import P401 from './P401.svelte' // Kiki's Event X - le bug bounty
 	import P402 from './P402.svelte' // Kiki's Event X - Ventes privées
@@ -65,7 +68,7 @@
 	import P480 from './P480.svelte' // Kiki's Event X - Dessins
 
 	//////////////////////////////////////////
-	// Gestion de la sécurité
+	// Gestion de la sécurité 
 	//////////////////////////////////////////
 	let pseudo = $state(loadIt('pseudo',""))
 	$effect(() => storeIt('pseudo',pseudo))
@@ -73,6 +76,7 @@
 	$effect(() => {
 		console.log("***** Effect webAuth",webAuth.etat)
 		if (webAuth.etat=="reload") { initWebAuth();  }
+		if (webAuth.etat=="ok") { init(); }
 	})
 	//////////////////////////////////////////
 	// Gestion du cycle de vie
@@ -91,10 +95,10 @@
 		window.screen?.orientation?.addEventListener("change", orientationChange);
 		visibilityChange()
 		startCountDown()
-		GBLSTATE.swcReady = swcSetup() // init le dialogue avec le service worker controller 
+		GBLSTATE.swcReady = swcSetup() // init le dialogue avec le service worker controller
 		// si la page n'est pas dans la desription, reset la page a 0
 		if (page!=0 && !pageList.find( (e) => { return (e.n == page) } ) ) page=0
-		await	initWebAuth()
+		webAuth.etat="reload" // init webauth
 		console.log('** Mount Fin ** id=',GLOBALSTARTDTH)
 	});
 	onDestroy(() => {
@@ -119,8 +123,7 @@
 		// Uniquement avec le pseudo, le serveur fait le reste 
 		let ret = await apiCall("/pseudos/webauthn","GET",null,true )
 		if (ret.status == 200) {
-			webAuth = ret.o
-			if (webAuth.etat=="ok") { await init(); }
+			webAuth = ret.o // Si ok, l'init sera lancé par l'effect
 		}
 		else
 			displayInfo({titre:"Erreur d'init cybersécurité", back:"rouge",
@@ -129,7 +132,7 @@
 									})
 	}
 
-	// le webAuth est ok, in
+	// le webAuth est ok, in 
 	async function init() {
 		// acces direct au pseudo
 		pseudo = webAuth.pseudo
@@ -137,29 +140,42 @@
 		connectToServer(wsCbStatus, wsCbMessage,CLIENTVERSION,webAuth)
 	}
 	async function initAfterKeyValidation() {
-		// Maj contexte client
+		// Maj contexte client si non ok
+		if (! localCtx.ttsLodeStone) {
+			localCtx.ttsLodeStone=true
+			let ret = await apiCall('/clientConfig/ttsLodestoneRefresh')
+		}
 		// OBSOLETE
 		// let ret= await apiCall('/clientConfig/getContext')
 		// if (ret.status==200) ...
 	}
 
-	///////////////////////////////////////////////////////////////////// 
+	/////////////////////////////////////////////////////////////////////
 	// Configuration générale
 	//
-	let localCtx = $state(loadIt('localCtx',{pseudoOpen:false}))
+	function localCtxNormalize(c) {
+		// Positionne le SKIN depuis le SKINCONST
+		// svelte-ignore state_referenced_locally
+		c.skinName ??= GBLCONST.SKINCONST
+		c.page ??= {} // Liste des pages (index par le numero de page)
+		return c
+	}
+	let localCtx = $state(localCtxNormalize(loadIt('localCtx',{})))
 	$effect(() => storeIt('localCtx',localCtx))
 	let page = $state(loadIt('page',0))
 	$effect(() => storeIt('page',page))
 	$effect(() => pageChange(page))
+	/*
 	let pageDone = $state(loadIt('pageDone',[]))
 	$effect(() => storeIt('pageDone',pageDone))
+	*/
 	let PageComponent = $state(null); // Attention, contient un SVELTE COMPONENT si non null
 	let pageDesc = $state(null)
 	let pseudoList=$state([]) //chargement par WS
 	let pseudoGenre = $state(loadIt('pseudoGenre',null))
 	$effect(() => storeIt('pseudoGenre',pseudoGenre))
 
-	// flags locaux
+	// flags locaux 
 	let flags = $state({})
 	// affichage popup	
 	let dspPseudo=$state(null) // affichage Popup pseudo
@@ -184,28 +200,198 @@
 	//
 	// Liste des pages de jeu 
 	// (page list n'est pas const pour permettre le refresh)
-	// always: true indique qu'il faut toujours afficher
-	// beta: true inidique que c'est disponible en avant premiere
-	// prereq: nnn element prérequis (doit être dans pageDone) 
 	let pageList = $state([
-		{n: 9, texte: "Codex Master",
-		 music: "S-privilege-music",
-		 start: 0,
-		 end: 0,
-		 always: true,
-		 privilege: 1,
-		 rootName: "S-codex",
-		 component: Pcodex,
+		{n: 0, texte: "Home",
+		 music: null, // la musique ne change pas
+		 component: Phome,
+		 start: -Infinity,
+		 end: Infinity,
+		 beta: Infinity, // pas de beta
+		 rootName: "home",
 		},
 		{n: 10, texte: "Découvrir l'Institut Peluchique de l'Audiovisuel",
 		 music: "derniere-seance",
-		 start: 0,
-		 end: 0,
-		 always: true,
-		 rootName: "ipa",
 		 component: Pipa,
-		 resetDth: geUtcMsFrom(2026,4,1,19,0,0)
+		 start: -Infinity,
+		 end: Infinity,
+		 beta: Infinity, // pas de beta
+		 help: "Challenge de Bienvenue",
+		 rootName: "ipa",
+		 resetDth: geUtcMsFrom(2026,4,1,19,0,0) // heure de reset serveur du challenge
 		},
+		{n: 403, texte: "Le Prélude de la Rapidité",
+		 music: "X-prelude-rapidite/elcondorpasa",
+		 component: P403,
+		 start: geUtcMsFrom(2026,6,1,17,0,0), // geUtcMsFrom(2026,5,13,17,0,0),
+		 end: geUtcMsFrom(2026,6,5,21,0,0),
+		 beta: geUtcMsFrom(2026,5,14,23,0,0), // Beta
+		 rootName: "X-prelude",
+		 inscription: 20,  // nombre max de participants 
+		 after: true,
+		},
+		{n: 404, texte: "Cherchez le lala",
+		 music: "X-cherchezlelala/Cherchez-le-garcon",
+		 component: P404,
+		 start: geUtcMsFrom(2025,5,16,17,0,0), // Infinity, // pas enore disponible
+		 end: geUtcMsFrom(2026,5,14,17,0,0), // Infinity,
+		 beta: Infinity, // pas de beta
+		 rootName: "X-cherchezlelala",
+		 tip: {idx:2, txt: "Bientôt, chercher le Lala et trouver la base secrète de la Grande Peluche, tu devras."}
+		},
+		{n: 100, texte: "Le Codex",
+		 icon: "Codex_Logo2.webp",
+		 music: "S-codex-music",
+		 public: true,
+		 // privilege: 1,
+		 component: P100,
+		 start: geUtcMsFrom(2026,9,1,17,0,0),
+		 end: Infinity,
+		 beta: geUtcMsFrom(2026,6,17,18,0,0), // beta
+		 rootName: "S-codex",
+		},
+		{n: 102, texte: "Les feuillets oubliés",
+		 // ATTENTION uniquement sur public
+		 icon: "Codex_Logo2.webp",
+		 music: "carol-bell",
+		 public: true,
+		 pasPrive: true,
+		 start: Infinity, // pa ouvert
+		 end: Infinity,
+		 beta: Infinity, // pas de beta
+		 rootName: "S-codex",
+		 component: P102
+		},
+		{n: 103, texte: "Les feuillets oubliés",
+		 icon: "Codex_Logo2.webp",
+		 music: "carol-bell",
+		 component: P103,
+		 start: Infinity, //geUtcMsFrom(2026,5,16,17,0,0), //, // pas enore disponible
+		 end: Infinity,
+		 beta: Infinity, // pas de beta
+		 rootName: "S-codex-challenge",
+		},
+		{n: 104, texte: "Les Lieux-Jolis",
+		 music: "carol-bell",
+		 component: P104,
+		 start: Infinity,
+		 end: Infinity,
+		 beta: Infinity, // pas de beta
+		 rootName: "S-lieux-jolis",
+		 
+		},
+		{n: 405, texte: "L'Initiatique (Kiki's Event X)",
+		 music: "X-initiatique/secrets",
+		 component: P405,
+		 start: Infinity, // pas enore disponible
+		 end: Infinity,
+		 beta: -Infinity, // pas de beta
+		 rootName: null, // A VERIFIER SI BESOIN
+		},
+		{n: 408, texte: "Le Temps des Fleurs",
+		 music: "X-depasse-temps",
+		 component: P408,
+		 start: Infinity, // pas enore disponible
+		 end: Infinity,
+		 beta: Infinity, // pas de beta
+		 rootName: "X-tranquilite",
+		 delaiDebut: 6,
+		 prereq: 405,
+		},
+		{n: 410, texte: "Pharao",
+		 music: "plus-pres-des-etoiles",
+		 component: P410,
+		 start: Infinity, // pas enore disponible
+		 end: Infinity,
+		 beta: Infinity, // pas de beta
+		 rootName: "X-pharao",
+		 delaiDebut: 4,
+		 prereq: 405,
+		},
+		{n: 420, texte: "Les Bases",
+		 music: "dolmen",
+		 component: P420,
+		 start: Infinity, // pas enore disponible
+		 end: Infinity,
+		 beta: Infinity, // pas de beta
+		 rootName: "X-lesbases",
+		 delaiDebut: 5,
+		 prereq: 405,
+		},
+		{n: 425, texte: "Les Failles",
+		 music: "dolmen",
+		 component: P425,
+		 start: Infinity, // pas enore disponible
+		 end: Infinity,
+		 beta: Infinity, // pas de beta
+		 rootName: "X-barathym",
+		 delaiDebut: 20,
+		 prereq: 405,
+		},
+		{n: 440, texte: "Les Composants",
+		 music: "mercredi",
+		 component: P440,
+		 start: Infinity, // pas enore disponible
+		 end: Infinity,
+		 beta: Infinity, // pas de beta
+		 rootName: "X-orthocomposants",
+		 delaiDebut: 20,
+		 prereq: 405,
+		},
+		{n: 460, texte: "Les Dissonances",
+		 music: "mercredi",
+		 component: P460,
+		 start: Infinity, // pas enore disponible
+		 end: Infinity,
+		 beta: Infinity, // pas de beta
+		 rootName: "X-dissonances",
+		 delaiDebut: 20,
+		 prereq: 405,
+		},
+		{n: 480, texte: "Retour à L'Orthogonalité",
+		 music: "dolmen",
+		 component: P480,
+		 start: Infinity, // pas enore disponible
+		 end: Infinity,
+		 beta: Infinity, // pas de beta
+		 rootName: "X-dessins",
+		 delaiDebut: 20,
+		 prereq: 405,
+		},
+		 ///////////////////////////////////
+		 // Passé mais encore consultables 
+		 ///////////////////////////////////
+		{n: 402, texte: "Le Marché de Noël", music: "X-ventesPrivees/Marche-de-noel",
+		 start: geUtcMsFrom(2025,12,13,20,15,0),
+		 end: geUtcMsFrom(2026,1,19,20,0,0),
+		 beta: Infinity, // pas de beta
+		 rootName: "X-ventesprivees",
+		 component: P402,
+		 after: true,
+		},
+		 ///////////////////////////////////
+		 // ADMIN ou cross ref 
+		 ///////////////////////////////////
+		{n: 50, texte: "Codex Master",
+		 icon: "Codex_Logo2.webp",
+		 music: "S-codex-music",
+		 privilege: 1,
+		 component: Pcodex,
+		 start: -Infinity,
+		 end: Infinity,
+		 beta: Infinity, // pas de beta
+		 rootName: "S-codex",
+		},
+		 ///////////////////////////////////
+		 ///////////////////////////////////
+		 ///////////////////////////////////
+		/*
+		{n: 400, texte: "Métropolis", music: "le-jeu",
+		 start: (isProd)? geUtcMsFrom(2025, 3, 21, 19, 0, 0) : geUtcMsFrom(2025, 3, 18, 19, 0, 0),
+		 end:  geUtcMsFrom(2025, 3, 25, 8, 0, 0),
+		 beta: true,
+		 component: P400
+		},
+		*/
 		/*
 		{n: 400, texte: "Métropolis", music: "le-jeu",
 		 start: geUtcMsFrom(2025,3,21,19,0,0),
@@ -219,156 +405,6 @@
 		 component: P401,
 		}, 
 		*/
-		{n: 402, texte: "Le Marché de Noël", music: "X-ventesPrivees/Marche-de-noel",
-		 start: geUtcMsFrom(2025,12,13,20,15,0),
-		 end: geUtcMsFrom(2026,1,19,20,0,0),
-		 rootName: "X-ventesprivees",
-		 component: P402,
-		 after: true,
-		 // beta: true 
-		},
-		{n: 403, texte: "Le Prélude de la Rapidité", music: "X-prelude-rapidite/elcondorpasa",
-		 start: 0, // geUtcMsFrom(2026,4,20,17,0,0),
-		 end: 0, // geUtcMsFrom(2026,4,24,20,0,0),
-		 rootName: "X-prelude",
-		 component: P403,
-		 after: true,
-		 inscription: 20,
-		 // beta: true 
-		},
-		{n: 404, texte: "Cherchez le lala", music: "X-cherchezlelala/Cherchez-le-garcon",
-		 start: 0,//geUtcMsFrom(2026,4,30,19,0,0),
-		 end: 0, //geUtcMsFrom(2026,5,5,20,0,0),
-		 rootName: "X-cherchezlelala",
-		 component: P404,
-		 after: true,
-		 // beta: true 
-		},
-		{n: 405, texte: "L'Initiatique (Kiki's Event X)", music: "X-initiatique/secrets",
-		 start: 0, // geUtcMsFrom(2027,0,1,20,0,0),
-		 end: 0,
-		 component: P405,
-		 beta: true
-		},
-		{n: 408, texte: "Le Temps des Fleurs", music: "X-depasse-temps",
-		 start: 0,  // geUtcMsFrom(2025,11,11,20,0,0),
-		 end: 0,  // geUtcMsFrom(2025,11,17,20,0,0),
-		 rootName: "X-tranquilite",
-		 component: P408,
-		 delaiDebut: 6,
-		 prereq: 405,
-		 // beta: true
-		},
-		/*
-		{n: 408, texte: "Rendez-vous intertemporels", music: "pharao-secrets",
-		 start: 0,
-		 end: 0,
-		 component: null,
-		 // beta: true
-		},
-		*/
-		{n: 410, texte: "Pharao", music: "plus-pres-des-etoiles",
-		 start: 0,  // geUtcMsFrom(2025,11,12,20,0,0),
-		 end: 0,  // geUtcMsFrom(2025,11,17,20,0,0),
-		 rootName: "X-pharao",
-		 delaiDebut: 4,
-		 prereq: 405,
-		 component: P410
-		},
-		{n: 420, texte: "Les Bases", music: "dolmen",
-		 start: 0,  // geUtcMsFrom(2025,11,13,20,0,0),
-		 end: 0,  // geUtcMsFrom(2025,11,17,20,0,0),
-		 rootName: "X-lesbases",
-		 delaiDebut: 5,
-		 prereq: 405,
-		 component: P420
-		},
-		{n: 425, texte: "Les Failles", music: "dolmen",
-		 start: 0,  // geUtcMsFrom(2025,11,14,20,0,0),
-		 end: 0,  // geUtcMsFrom(2025,11,17,20,0,0),
-		 rootName: "X-barathym",
-		 delaiDebut: 20,
-		 prereq: 405,
-		 component: P425
-		},
-		/*
-		{n: 430, texte: "(TBD)", music: "dolmen",
-		 start: 0,
-		 end: 0,
-		 rootName: "X-xxx",
-		 delaiDebut: 20,
-		 prereq: 405,
-		 component: P430
-		},
-		*/
-		{n: 440, texte: "Les Composants", music: "mercredi",
-		 start: 0,  // geUtcMsFrom(2025,11,15,20,0,0),
-		 end: 0,  // geUtcMsFrom(2025,11,17,20,0,0),
-		 rootName: "X-orthocomposants",
-		 delaiDebut: 20,
-		 prereq: 405,
-		 component: P440
-		},
-		{n: 460, texte: "Les Dissonances", music: "mercredi",
-		 start: 0,  // geUtcMsFrom(2025,11,16,20,0,0),
-		 end: 0,  // geUtcMsFrom(2025,11,17,20,0,0),
-		 rootName: "X-dissonances",
-		 delaiDebut: 20,
-		 prereq: 405,
-		 component: P460
-		},
-		{n: 480, texte: "Retour à L'Orthogonalité", music: "dolmen",
-		 start: 0,  // geUtcMsFrom(2025,11,17,20,0,0),
-		 end: 0,  // geUtcMsFrom(2025,11,18,20,0,0),
-		 rootName: "X-dessins",
-		 delaiDebut: 20,
-		 prereq: 405,
-		 component: P480
-		},
-		/*
-		{n: 400, texte: "Métropolis", music: "le-jeu",
-		 start: (isProd)? geUtcMsFrom(2025, 3, 21, 19, 0, 0) : geUtcMsFrom(2025, 3, 18, 19, 0, 0),
-		 end:  geUtcMsFrom(2025, 3, 25, 8, 0, 0),
-		 beta: true,
-		 component: P400
-		},
-		*/
-		/*
-		{n: 490, texte: "Kiki's Event X, épilogue", music: "BlindingLights",
-		 start: 0,
-		 end: 0,
-		 // beta: true,
-		 // component: Psample
-		},
-		*/
-		 // component: Pxxx
-		 // explication du projet pharao sur terre
-		 // 
-		 // idée: trouver les lieux propices pour des horloges 
-		 // upgrade du chronogyre avec un pupitre de commande
-		 // idée: construire el cadmos dans l'hypertemps
-		 // idée: une horreur a modifie le poèms 
-		 // idée: des fantomes popent a différents endroits
-		 // idée: construire el cadmos dans l'hypertemps
-		 // il permettent de trouver l'album de la comtesse
-		 ///////////////////////////////////
-			// challenge n collaboration tempreel
-			// base sur les musique
-			// tout le monde se co 
-			// X musque à découvrir
-			 // un "élu" doit repondre dans les X minutes, les autres doient aider
-			 // les musiques sont partagées et diffusée (usage du # pour synchro??)
-	 		 ///////////////////////////////////
-			 // découvrir un monde grace a la descripiton du monde (monde ou descriptionou...) 
-			 // lore: ce n'est pas un mog blanc
-			 // --> devinette pour éliminer les mondes un a un
-			 // --> annonce du chgt du server
-			 // --> devniette sur la zone de logement
-			 // --> secteurs
-			 // -->
-			 // dans le lore on pose un truc inbittable, mais si tu cliques sur le livre
-			 // de correspondnce, tu as la "traduction"
-			 // 
 	])
 	
 
@@ -533,53 +569,90 @@
 	onerror={erreurGlobaleHandler}
 	onunhandledrejection={erreurGlobaleHandler}
 />
-
 <style>
-	.body {
-		position: fixed; color: white; background-color: transparent;
-		font-family: "Times New Roman", Times, serif;	font-size: 1.5em; 
-		top:0; left:0; right:0; bottom:0; margin:0;
-		width:100%;	height:100%;
-		text-shadow: 0px 0.10em 0.1em black, 0px -0.1em 0.1em black, 0px 0.20em 0.2em black, 0px -0.2em 0.2em black;
-	}
-	.contenu { position: fixed; top: 3em; left: 0; bottom: 0.1em; 
-							overflow: scroll; scrollbar-width: thin;
-							width: 100%; padding: 0 0 0 0; /* top | right | bottom | left */
-					 }
 	::-webkit-scrollbar { width: 9px;}
 	::-webkit-scrollbar-track { background: transparent;}
 	::-webkit-scrollbar-thumb { background: rgba(155, 155, 155, 0.5);  border-radius: 20px;  border: transparent; }							
-	
+
+	*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+	:root {
+		--v:    #7c3aed;
+		--vl:   #c4b5fd;
+		--b:    #2563eb;
+		--bl:   #93c5fd;
+		--t:    #0d9488;
+		--tl:   #5eead4;
+		--w:    #f0f4ff;
+		--bg:   #060810;
+		--bgc:  #0b0e1a;
+		--bgc2: #0d1120;
+		--bd:   rgba(140,150,255,0.12);
+		--bdh:  rgba(140,150,255,0.28);
+		--mu:   #3d4566;
+		--mu2:  #252c45;
+		--FfBgImg: none;
+		--GpImgParchemin: url("https://cdn.adhoc.click/STATIC/parchemin.png");
+		--GpImgPapier: url("https://cdn.adhoc.click/V10a/texture-papier-noir.jpg");
+		--GpImgRouge: url("https://cdn.adhoc.click/V10a/backRouge.gif");
+		--GpImgStars: url("https://cdn.adhoc.click/V10a/stars.gif");
+		--GpImgOracle: url("https://cdn.adhoc.click/V10a/Oracle.png");
+		--GpImgAlien: url("https://cdn.adhoc.click/V10a/commons/alien.gif");
+		--GpTitreHeight: 3.0em;
+		--FfTitreHeight: 2.5em;
+	}
+
 	/* PC */
 	@media (pointer: fine) and (max-width: 900px)  {
-		.body { font-size: 1.5em }
-		.contenu { width: 100%; padding: 0 0 0 0; }
+		.body { font-size: 1.4em; margin: var(--FfTitreHeight) 0 0 0  }
+		.contenu {  }
 	}
 	@media (pointer: fine) and (min-width: 900px) and (max-width: 1399px)  {
-		.body { font-size: 1.6em;  }
-		.contenu { width: 90%; padding: 0 5% 0 5% }
+		.body { font-size: 1.5em; margin: var(--FfTitreHeight) 5% 0 5%  }
+		.contenu {  }
 	}
 	@media (pointer: fine) and (min-width: 1400px) {
-		.body { font-size: 1.7em;  }
-		.contenu { width: 80%; padding: 0 10% 0 10% }
+		.body { font-size: 1.7em ; margin: var(--FfTitreHeight) 10% 0 10%}
+		.contenu {  }
 	}
 	/* smartphone portait */
 	@media (pointer: coarse) and (orientation: portrait) {
-		.body { font-size: 5.8vw; } /* 4.8 */
+		.body { font-size: 5.8vw; margin: var(--FfTitreHeight) 0% 0 0%  }
+		.contenu {  }
   }
 	/* smartphone landscape */
 	@media (pointer: coarse) and (orientation: landscape) {
-		.body { font-size: 5.8vh; } /* 4.8 */
+		.body { font-size: 2.8vw; margin: var(--FfTitreHeight) 0% 0 0%  }
+		.contenu {  }
   }
+
+	.skin {
+		text-shadow: 0px 0.10em 0.1em black, 0px -0.1em 0.1em black, 0px 0.20em 0.2em black, 0px -0.2em 0.2em black;
+		font-family: "Times New Roman", Times, serif;
+		position: fixed;
+		top:0; left:0; right:0; bottom:0;
+		background-color: black;
+		background-image: var(--GpImgOracle);
+		background-position: center;
+		background-size: cover;
+    display: flex;
+    flex-direction: column;
+		color: white;
+	}
+	.body {
+		overflow: scroll; scrollbar-width: none;
+	}
+	.contenu {
+	}
 	notifications {	top: 0px; right: 0px; position: fixed; z-index: 20000; width: 50%; }
 	
 	titre {
-		background: radial-gradient( ellipse farthest-corner at 0% 10%,  red , grey, grey	);
-		vertical-align: top; position: fixed;	left: 0; top: 0; width: 100%; height: 3em;
+		background: radial-gradient( ellipse at 0% 10%,  red 25% , grey 40% , #FFFFFF00 60%, #FFFFFF00 100%	);
+		vertical-align: top; position: fixed;	left: 0; top: 0; width: 100%; height: var(--GpTitreHeight);
 		cursor: pointer; font-size: 1em;
 		z-index:5000;
 	}
-	blinkGlobal {
+	blinkGlobal { 
 		display:none; position: fixed; left: 0; top: 0; width: 100%; height: 3em; z-index:9999;
 		animation-duration: 0.2s;
 		animation-name: blinkGlobalFrames;
@@ -593,18 +666,14 @@
 	}
 
 	audio { visibility: hidden }
-	
-	back {
-		background-image: url("https://cdn.adhoc.click/V10a/Oracle.png");
-		width: 100%; height: 100%; background-position: center; background-size: cover;
-		position: fixed; left: 0; top: 1.8em;	z-index: -1;
-		margin: 0; padding: 0; border:0; 
-	}
 
 	label { cursor: pointer; }
+	
+	hr { margin: 0.2em 0em}
 
 	/* entete */
-	.pseudo { top: 0px; right: 2em; height: 2em; background-size:cover;	position: fixed; z-index: 1000; cursor: pointer; }
+	.pseudo { top: 0px; right: 2em; height: 2em; background-size:cover;
+						position: fixed; z-index: 1000; cursor: pointer; }
 	.wsClass { top: 1.1em; right: 2em; height: 3%; position: fixed; z-index: 1000; cursor: pointer; }
 	.wsClass0 { color: yellow }
 	.wsClass1 { color: lightgreen }
@@ -619,7 +688,6 @@
 	.divVideo { display: none; z-index: 6000; position: fixed; top:0; left: 0;
 						height: 80%; max-height: 80%; width: 80%; max-width: 80%; transform: translate(10%,10%); }
 	.video { border: 0.2em solid white; height: 100%; max-height: 100%; width: 100%; max-width: 100%;  }
-
 
 	/* Styles partagé */
 	:global(input) {	font-family: "Times New Roman";	font-size: 0.8em; cursor: pointer	}
@@ -642,36 +710,39 @@
 	div :global(.cOrange) { color: orange}
 	div :global(.cYellow) { color: yellow}
 	div :global(.cRed) { color: red}
+	div :global(.cBlue) { color: blue}
 	
 	div :global(.papier) {
 		background-color: grey; background-position: center;
-		background-image: url("https://cdn.adhoc.click/V10a/texture-papier-noir.jpg");
+		background-image: var(--GpImgPapier);
 	}
 	div :global(.rouge) {
 		background-color: grey; background-position: center;
-		background-image: url("https://cdn.adhoc.click/V10a/backRouge.gif");
+		background-image: var(--GpImgRouge);
 	}
 	div :global(.stars)  {
 		background-color: grey; background-position: center;
-		background-image: url("https://cdn.adhoc.click/V10a/stars.gif");
+		background-image: var(--GpImgStars);
 	}
 	div :global(.alien)  {
 		background-color: grey; background-position: center;
 		background-size: cover;
-		background-image: url("https://cdn.adhoc.click/V10a/commons/alien.gif");
+		background-image: var(--GpImgAlien);
 		font-size:1.2em;
 	}
 	div :global(.popupCadre) {
 		position: fixed; top: 10%; left: 10%;
-		border: 2px outset red; border-radius: 10%; border-width: 5%;
+		border: 2px outset red; border-width: 5%; border-radius: 0.875em;
     transform: translate(-5%, 0%);
-		overflow: visible; z-index: 7000;
+		overflow: visible;
+		z-index: 7000;
+    padding: 0.5em 0.5em 0.5em 0.5em;
 	}
-	div :global(.popupZone) { padding: 1.5em 0.5em 1.0em 1.0em; 	}
+	div :global(.popupZone) { /* padding: 1.5em 0.5em 1.0em 1.0em;  */	}
 	div :global(.popupContent) {
 		max-height: 79vh; min-height: 4em; min-width: 10em;
 		scrollbar-color: white grey; scrollbar-width: thin; overflow: auto;
-		/* white-space: normal; word-break: break-all; */	}
+		white-space: normal; word-break: auto-phrase;	}
 	div :global(.close) {
 		display: block; overflow: visible; text-shadow: none; cursor: pointer;
 		position: absolute; right: -0.3em; top: -0.5em;
@@ -683,8 +754,16 @@
 		border: 0.1em solid white; padding: 0.2em; margin-top: 0.5em; color: white;
 		background-position: center; background-repeat: no-repeat; 
 		background-size: cover; background-color: black;
-		background-image: url('https://cdn.adhoc.click/V10a/texture-papier-noir.jpg');
+		background-image: var(--GpImgPapier);
 		animation-duration: 10s; animation-name: revealFrames; animation-iteration-count: 1;
+	}
+	div :global(.reveal2) {
+		border: 0.1em solid white; padding: 0.2em; margin-top: 0.5em; color: white;
+		background-position: center; background-repeat: no-repeat; 
+		background-size: cover; background-color: black;
+		background-image: var(--GpImgPapier);
+		animation-duration: 10s; animation-name: revealFrames; animation-iteration-count: 1;
+		opacity: 80%;
 	}
 	@keyframes revealFrames {
 	  from { color: black; }
@@ -743,414 +822,774 @@
 		/* white-space: normal; word-break: break-all; overflow-wrap: break-word;  */
 	}
 	:global(.resTd) { border: 1px solid white }
+	
+	.SKINFF :global {
+    .body {
+      /* background: var(--bg); */
+      font-family: 'Inter', -apple-system, sans-serif;
+      color: var(--w);
+    }
+		titre {
+			background: transparent;
+			height: var(--FfTitreHeight);
+		}
+		.contenu {
+			top: var(--FfTitreHeight);
+		}
+
+    /* ── HERO ── */
+    .hero-section {
+      padding: 1em 2em 1em;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-eyebrow {
+      font-size: 0.6875em;
+      font-weight: 500;
+      color: var(--tl);
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      margin-bottom: 0.875em;
+      position: relative;
+    }
+    .hero-title {
+      font-size: 2.625em;
+      font-weight: 300;
+      letter-spacing: -0.04em;
+      color: var(--w);
+      line-height: 1.1;
+      margin-bottom: 1em;
+      position: relative;
+    }
+    .hero-title strong { font-weight: 500; color: var(--vl); }
+
+    .hero-sub {
+      font-size: 0.7em;
+      color: var(--mu);
+      font-weight: 300;
+      line-height: 1.6;
+      /* max-width: 25em; */
+      /* margin: 0 auto 0.25em; */
+      position: relative;
+    }
+    .hero-actions {
+      display: flex;
+      gap: 1em;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+    }
+    .btn-primary {
+      background: var(--v);
+      color: #fff;
+      font-size: 0.875em;
+      font-weight: 400;
+      padding: 0.625em 1.5em;
+      border-radius: 61.25em;
+      cursor: pointer;
+      border: none;
+      font-family: inherit;
+      letter-spacing: -0.01em;
+      transition: background 0.2s;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+    }
+    .btn-primary:hover { background: #6d28d9; }
+
+    .btn-ghost {
+      color: var(--bl);
+      font-size: 0.875em;
+      font-weight: 400;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25em;
+      background: none;
+      border: none;
+      font-family: inherit;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .btn-ghost:hover { color: var(--vl); }
+
+    /* ── DIVIDER ── */
+    .divider { height: 0.03125em; background: var(--bd); margin: 0 2em; }
+
+    /* ── CARDS ── */
+    .cards-section { padding: 0.5em 0.5em; }
+
+    .cards-label {
+      font-size: 0.6875em;
+      font-weight: 500;
+      color: var(--mu);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 1.25em;
+    }
+    .cards-grid {
+      display: grid;
+      /* grid-template-columns: repeat(2, minmax(0, 1fr)); */
+      gap: 0.625em;
+      margin-bottom: 0.625em;
+    }
+    .card {
+      background: var(--bgc);
+      border-radius: 1em;
+      padding: 1.5em 1.375em;
+      cursor: pointer;
+      border: 0.03125em solid var(--bd);
+      transition: border-color 0.2s;
+      text-decoration: none;
+      /* display: block; */
+			display: flex	
+			
+    }
+    .card:hover { border-color: var(--bdh); }
+
+    .card-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 1em;
+    }
+    .card-icon { width: 2.75em; height: 3.25em; display: flex; align-items: center; }
+    .card-icon img { width: 2.25em; height: 2.75em; object-fit: contain; }
+
+    .card-badge {
+      font-size: 0.6875em;
+      font-weight: 500;
+      padding: 0.25em 0.625em;
+      border-radius: 61.25em;
+    }
+    .badge-teal { background: rgba(13,148,136,0.18); color: var(--tl); }
+    .badge-gray { background: rgba(255,255,255,0.04); color: var(--mu); }
+
+    .card-title {
+      font-size: 1em;
+      font-weight: 500;
+      color: var(--w);
+      letter-spacing: -0.02em;
+      margin-bottom: 0.375em;
+    }
+    .card-locked .card-title { color: var(--mu2); }
+    .card-locked .card-icon img { opacity: 0.15; filter: grayscale(1); }
+
+    .card-desc { font-size: 0.8125em; color: var(--mu); line-height: 1.6; font-weight: 300; }
+    .card-locked .card-desc { color: var(--mu2); }
+
+    .card-arrow {
+      display: flex;
+      align-items: center;
+      margin-top: 1em;
+      font-size: 0.8125em;
+      color: var(--vl);
+      gap: 0.25em;
+    }
+    .card-locked .card-arrow { color: var(--mu2); }
+
+    /* ── WIDE CARDS ── */
+    .card-wide {
+      background: var(--bgc);
+      border-radius: 0.875em;
+      padding: 1.125em 1.375em 1.125em 1.375em;
+      border: 0.03125em solid var(--bd);
+			/*
+      display: flex;
+      align-items: center;
+      gap: 1em;
+			*/
+      margin-bottom: 0.5em;
+      cursor: pointer;
+      transition: border-color 0.2s;
+      text-decoration: none;
+    }
+    .card-wide:hover { border-color: var(--bdh); }
+		/* NEW */
+    .card-wide-container {
+      display: flex;
+      align-items: center;
+      gap: 1em;
+		}
+
+    .card-wide-icon {
+      width: 2.375em;
+      height: 2.375em;
+      border-radius: 0.625em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 1.125em;
+    }
+    .icon-blue { background: rgba(37,99,235,0.15); color: var(--bl); }
+    .icon-teal { background: rgba(13,148,136,0.15); color: var(--tl); }
+
+    .card-wide-body { flex: 1; }
+    .card-wide-title { font-size: 0.875em; font-weight: 500; color: #c8d4f0; margin-bottom: 0.125em; letter-spacing: -0.01em; }
+    .card-wide-desc { font-size: 0.75em; color: var(--mu); font-weight: 300; }
+    .card-wide-chevron { color: var(--mu2); font-size: 0.9375em; }
+
+    /* ── PRIVACY ── */
+    .privacy-section {
+      /* margin: 0 2em 2.5em; */
+			margin: 0.5em;
+      background: var(--bgc2);
+      border-radius: 1em;
+      /* padding: 1.5em; */
+			padding: 0.5em 0.5em;
+      border: 0.03125em solid var(--bd);
+      font-size: 0.875em;
+    }
+    .privacy-title {
+      font-size: 0.875em;
+      font-weight: 500;
+      color: #c8d4f0;
+      margin-top: 0.3em;
+      /* margin-bottom: 1em; */
+      display: flex;
+      align-items: center;
+      gap: 0.5em;
+      letter-spacing: -0.01em;
+    }
+    .privacy-title i { color: var(--tl); font-size: 1em; }
+
+    .privacy-pills { display: flex; flex-wrap: wrap; gap: 0.5em; }
+    .pill {
+      display: flex;
+      align-items: center;
+      gap: 0.375em;
+      border-radius: 61.25em;
+      padding: 0.375em 0.875em;
+      font-size: 0.75em;
+      font-weight: 400;
+      border: 0.03125em solid;
+			cursor:pointer;
+    }
+    .pill i { font-size: 0.8125em; }
+    .pill-v { background: rgba(124,58,237,0.1); border-color: rgba(196,181,253,0.2); color: var(--vl); }
+    .pill-b { background: rgba(37,99,235,0.1);  border-color: rgba(147,197,253,0.2); color: var(--bl); }
+    .pill-t { background: rgba(13,148,136,0.1);  border-color: rgba(94,234,212,0.2);  color: var(--tl); }
+
+    /* ── FOOTER ── */
+    .footer {
+      margin-top: auto;
+      border-top: 0.03125em solid var(--bd);
+      padding: 1.125em 2em;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--bg);
+    }
+    .footer-copy { font-size: 0.75em; color: var(--mu2); }
+    .footer-links { display: flex; gap: 1.25em; list-style: none; }
+    .footer-links a { font-size: 0.75em; color: var(--mu); cursor: pointer; text-decoration: none; transition: color 0.2s; }
+    .footer-links a:hover { color: var(--vl); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 35em) {
+      .cards-grid { grid-template-columns: 1fr; }
+      .nav-links { display: none; }
+      .hero-title { font-size: 2em; }
+    }
+    @media ((min-width: 35em ) and (max-width: 70em)) {
+      .cards-grid { grid-template-columns: 1fr 1fr; }
+      .nav-links { display: none; }
+      .hero-title { font-size: 2em; }
+    }
+    @media ((min-width: 70em ) and (max-width: 105em)) {
+      .cards-grid { grid-template-columns: 1fr 1fr 1fr; }
+      .nav-links { display: none; }
+      .hero-title { font-size: 2em; }
+    }
+    @media ((min-width: 105em )) {
+      .cards-grid { grid-template-columns: 1fr 1fr 1fr; }
+      .nav-links { display: none; }
+      .hero-title { font-size: 2em; }
+    }
+
+		/* toggle uniquement sur SKINFF */
+		.skin {
+			background-image: var(--GpImgStars);
+			background-size: contain;
+			background-position: center;
+			background-repeat: repeat;
+			background-blend-mode: hard-light;
+		}
+		.privacy-section-legacy { display: none}
+		.card-gpIcon-gauche  { display: none }
+		.card-gpIcon-droite { margin-left: auto; vertical-align:top }
+		.card-gpIcon-droite img { width: 2em }
+    input[type=button] {
+      border-radius: 61.25em;
+      padding: 0.1em 0.4em;
+      font-size: 0.75em;
+      font-weight: 400;
+      border: 0.03125em solid;
+			cursor:pointer;
+    }
+	}
+	.SKINGP :global { 
+		.card { display: flex; cursor: pointer}
+		.card-wide-container {
+			display: flex;
+      align-items: center;
+	    gap: 1em;
+			color: lightgreen;
+			cursor: pointer;
+		} 
+		.card-wide-desc { display: none}
+		.privacy-section { display: none}
+		.card-gpIcon-gauche  { vertical-align: top }
+		.card-gpIcon-droite  { vertical-align: top }
+		.card-gpIcon-droite img { width: 2em }
+	}
+	
 </style> 
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
-<!-- svelte-ignore element_invalid_self_closing_tag -->
+<!-- svelte-ignore element_invalid_self_closing_tag --> 
 <!-- svelte-ignore a11y_interactive_supports_focus -->
 <!-- svelte-ignore a11y_media_has_caption -->
-
-<div class="body" id="topPage" role="none">
-	<back>&nbsp;</back>
-	<notifications id="notifications"></notifications>
-	<titre>
-		<div onclick={() => { page=0 }} role="button">
-			<div style="font-size: 1.0em">La Grande Peluche</div>
-			<div style="font-size: 0.6em">Enjoy ({CLIENTVERSION || 'DEV'})</div>
-		</div>
-		<div class="pseudo">
-			{#if wsStatus==1}
-				<span style="color: lightgreen" onclick={togglePseudo} role="button">
-					{pseudo}
-				</span>
-			{:else}
-				<span style="color: yellow;" onclick={togglePseudo} role="button">
-					{pseudo || "pseudo"} non validé
-				</span>
-			{/if}
-		</div>
-		<div class="wsClass wsClass{wsStatus}" id="syncStatus" onclick={() => {dspMultiPopup = true}} role="button" >
-			{#if chatFlag}<span class="blinkFlag">💬</span>{/if}
-			multijoueurs
-		</div>
-		<div class="audioToggle" onclick={()=>GBLSTATE.audioAmbiance= !GBLSTATE.audioAmbiance} role="button">
-			{#if GBLSTATE.audioAmbiance}🔊{:else}🔇{/if}
-		</div>
-	</titre>
-	<blinkGlobal id="blinkGlobal"/>
-
-	<audio id="ding"/>
-	<audio id="musique"/>
-	<audio id="tts" onended={()=>tryTTS(true)}></audio>
-	<div id="divVideo" class="divVideo">
-		<div class="close" onclick={closeVideo} role="button" tabindex=0>X</div>
-		<video id="video" class="video stars" width="1920" height="1080" controls />
-	</div>
-
-	<div id="contenu" class="contenu">
-		{#if isAdmin(pseudo)}
-			<Padmin webAuth={webAuth} wsCallComponents={wsCallComponents} />
-		{/if}
-		{#if !isProd}
-			<Kikitest CLIENTVERSION={CLIENTVERSION} bind:pseudo={pseudo} bind:webAuth={webAuth} />
-		{/if}
-
-		{#if webAuth?.etat=="ok" && webAuth?.existJwkPublicKey && pseudo && pseudo!=""}
-			{#if page==0}
-				<Phome pseudo={pseudo} pageDone={pageDone} pageList={pageList} webAuth={webAuth}
-					bind:page={page} bind:localCtx={localCtx} />
-			{:else if PageComponent !== null}
-				<div>
+<div class={localCtx.skinName}>
+	<div class="skin">
+		<div id="scrollTopPage" class="body" role="none">
+			<notifications id="notifications"></notifications>
+			<titre>
+				<div onclick={() => { page=0 }} role="button">
+					<div style="font-size: 1.0em">{GBLCONST.SKINELT.titreLbl}</div>
+					<div style="font-size: 0.6em">
+						{WEBPATH} ({localCtx.skinName}-{CLIENTVERSION || 'DEV'})
+					</div>
+				</div>
+				<div class="pseudo">
+					{#if wsStatus==1}
+						<span style="color: lightgreen" onclick={togglePseudo} role="button">
+							{pseudo}
+						</span>
+					{:else}
+						<span style="color: yellow;" onclick={togglePseudo} role="button">
+							{(GBLCONST.public)? "Accès public" : (pseudo)? pseudo+" non validé" : "pseudo non validé"}
+						</span>
+					{/if}
+				</div>
+				<div class="wsClass wsClass{wsStatus}" id="syncStatus" onclick={() => {dspMultiPopup = true}} role="button" >
+					{#if chatFlag}<span class="blinkFlag">💬</span>{/if}
+					multijoueurs
+				</div>
+				<div class="audioToggle" onclick={()=>GBLSTATE.audioAmbiance= !GBLSTATE.audioAmbiance} role="button">
+					{#if GBLSTATE.audioAmbiance}🔊{:else}🔇{/if}
+				</div>
+			</titre>
+			<blinkGlobal id="blinkGlobal"/>
+			<audio id="ding"/>
+			<audio id="musique"/>
+			<audio id="tts" onended={()=>tryTTS(true)}></audio>
+			<div id="divVideo" class="divVideo">
+				<div class="close" onclick={closeVideo} role="button" tabindex=0>X</div>
+				<video id="video" class="video stars" width="1920" height="1080" controls />
+			</div>
+		
+			<div id="contenu" class="contenu">
+				{#if isAdmin(pseudo)}
+					<Padmin webAuth={webAuth} wsCallComponents={wsCallComponents} GBLCONST={GBLCONST} />
+				{/if}
+				{#if wsStatus==1 || GBLCONST.public}
+					<!-- mode authentifié validé ou public -->
 					<PageComponent
+						webAuth={webAuth}
 						wsCallComponents={wsCallComponents}
 						pageDesc={Object.assign({}, pageDesc)}
 						pseudo={pseudo}
 						pseudoGenre={pseudoGenre}
 						pseudoList={pseudoList}
+						pageList={pageList}
 						bind:page={page}
-						bind:pageDone={pageDone}
 						bind:localCtx={localCtx}
 					/>
-				</div>
-			{:else}
-				<div>Le contenu de la page {page} n'est pas disponible dans cette configuration</div>
-			{/if}
-		{:else if webAuth?.etat!="initWebAuth"}
-			<Pauth bind:pseudo={pseudo} bind:webAuth={webAuth} CLIENTVERSION={CLIENTVERSION} />
-		{/if}
-	</div>
-
-	{#if dspMultiPopup}
-		<div class="popupCadre papier">
-			<div class="close" onclick={() => { dspMultiPopup = false; chatFlag=false}} role="button" tabindex=0>X</div>
-			<div class="popupZone">
-				<div class="popupContent">
-					<div class="pseudosList">
-						{pseudoList.length} connecté{#if pseudoList.length > 1}s{/if} :
-						{#each pseudoList as name, i}
-							{name} &nbsp;
-						{/each}
-					</div>
-					<div class="messagesList mScrollbar" use:scrollNodeToBottom>
-						{#each chatMsgList as o,i}
-							<div>{hhmmss(o.dth)} ({(o.fromPseudo)? o.fromPseudo : "Grande Peluche"}) {o.texte}</div>
-						{/each}
-					</div>
-					<div>
-						<input bind:value={chatInput.msg} type="text" maxlength="140"
-							onkeypress={(e) => e.key=="Enter" && chatSend()} />
-						<input type="button" value="►" onclick={()=>chatSend()} />
-						{#if isAdmin(pseudo)}
-							<label>Admin:<input type="checkbox" bind:checked={chatInput.msgAdm} /></label>
-						{/if}
-					</div>
-				</div>
+				{:else if webAuth.etat != "ok" && webAuth.etat != "initWebAuth"}
+					<!-- mode authentifié non validé et séquence de webauth commencée -->
+					<Pauth bind:pseudo={pseudo} bind:webAuth={webAuth} CLIENTVERSION={CLIENTVERSION} />
+				{/if}
+				<div style="height: 80vh" />
 			</div>
-		</div>
-	{/if}
-	
-	{#if dspPseudo}
-		{@const es= loadIt("elipticSecurity",{})}
-		{@const dynMetro= getDynMetro()}
-		<div class="popupCadre papier">
-			<div class="close" onclick={()=>dspPseudo=!dspPseudo} role="button">X</div>
-			<div class="popupZone">
-				<div class="popupContent">
-					<img class="parchemin" style="float:right; width: 4em" alt="" src={urlCdnAI+"pseudo-"+pseudo+".jpg"} />
-					<div>
-						Ton pseudo est {pseudo} ({webAuth.prenom} {webAuth.nom} @{webAuth.monde})
-					</div>
-					<div>
-						Ton
-						<span class="infoLink" gpHelp="C'est une information sensible, elle ne quittera pas ton appareil. Elle restera inconnue du serveur. Elle sera utilisée pour adapter nos intéractions lors des post-traitements sur ton appareil uniquement">
-							genre
-						</span>
-						est:
-						<br/>
-						<span role="none" onclick={markClick} gpColor="yellow" gpDing="Ding" gpTimeout="15" 
-							gpNotif="Cette information sensible restera sur ton appareil"						>
-							<Radio bind:value={pseudoGenre} nom="pseudoGenre" options={GBLCONST.GENRES} />
-						</span>
-					</div>
-					<hr/>
-					{#if ! GBLSTATE.audioAmbiance}
-						<div style="color:red">
-							Pour vérifier ou modifer les volumes sonores, active la musique d'ambiance
-							en cliquant sur 🔊 en haut à droite de ton écran.
-						</div>
-					{/if}
-					<div>
-						Mon volume audio général est actuellement de {GBLSTATE.audioVolume}% avant mixage par ton appareil.
-						{#if GBLSTATE.audioVolume < 10 || GBLSTATE.audioVolume > 80}
-							<span style="color:red">(conseillé entre 10% et 80%)</span>
-						{:else}
-							<span style="color:lightgreen">(conseillé entre 10% et 80%)</span>
-						{/if}
-					</div>
-					<div><input style="width:80%" bind:value={GBLSTATE.audioVolume} id="newVolumeAudio" type="range" min=0 max=100 /></div>
-					<div class="br">
-						Le volume audio de ma
-						<a href="https://fr.wikipedia.org/wiki/Synth%C3%A8se_vocale" target="gpHelp">
-							voix
-						</a>
-						est actuellement de {GBLSTATE.audioTTS}% avant mixage par ton appareil.
-						{#if GBLSTATE.audioTTS < 80}
-							<span style="color:red">(conseillé entre 80 et 100%)</span>
-						{:else}
-							<span style="color:lightgreen">(conseillé entre 80 et 100%)</span>
-						{/if}
-						<input type="button" value="Je veux tester ta voix" onclick={(e)=>tts({o:{statique:true, file:"mavoix.mp3"}})} />
-					</div>
-					<div><input style="width:80%" bind:value={GBLSTATE.audioTTS} id="newVolumeTTS" type="range" min=0 max=100 /></div>
-					<div>
-						<label>
-							<input bind:checked={GBLSTATE.audioBack} type="checkbox" />
-							le son continue même si la fenêtre est minimisée ou cachée
-						</label>
-						{#if !GBLSTATE.audioBack}
-							<div class="info">
-								AudioBlaster coupe le son si il détecte que la fenêtre de ton navigateur est masquée.
-								Cette détection automatique a des lacunes.
-								Pour couper l'ambiance, sur windows, minimise la fenêtre de ton navigateur, 
-								et sur smartphone, repasse sur l'écran d'accueil.
-							</div>
-						{:else}	
-							<div class="info">L'ambance sonore continuera même si ta fenêtre de navigateur est masquée</div>
-						{/if}
-					</div>
-					<div class="adminCadre petit">
-						<div class="blinkMsg cRed">
-							Les informations ci-dessous sont à utiliser selon les conseils de Kikiadoc
-						</div>
-						<hr />
-						<div>Sécurité</div>
-						<div class={(webAuth?.etat=="ok")?"cGreen":"blinkMsg cRed"}>
-							<label><input type="checkbox" bind:checked={flags.dspWebAuth} />Infos de sécurité webAuthn</label>
-						</div>
-						{#if flags.dspWebAuth}<pre>{JSON.stringify(webAuth,null,2)}</pre>{/if}
-						<div class={(es.jwkPrivateKey)?"cGreen":"blinkMsg cRed"}>
-							<label><input type="checkbox" bind:checked={flags.dspElliptic} />Clef publique racine elliptique</label>
-						</div>
-						{#if flags.dspElliptic}<pre>{JSON.stringify(es.jwkPublicKey,null,2)}</pre>{/if}
-						<div class={(wsStatus!=1)?"cRed":"cGreen"}>
-							<label><input type="checkbox" bind:checked={flags.dspCleSession} />Challenge éphémère de session temps réel</label>
-						</div>
-						{#if flags.dspCleSession}<pre>{loadIt("pseudoPwd","???")}</pre>{/if}
-						<hr/>
-						{#if dynMetro?.srv} 
-							{@const latence=Math.floor(1000*(( (dynMetro.cliRes - dynMetro.cliReq) - (dynMetro.srv.load + dynMetro.srv.run + 1.0) ) / 2.0))/1000}
-							<div>
-								<div>Synchro temps réel:
-									<input type="button" onclick={()=> dspObject=dynMetro} value="🛈" />
+		
+			{#if dspMultiPopup}
+				<div class="popupCadre papier">
+					<div class="close" onclick={() => { dspMultiPopup = false; chatFlag=false}} role="button" tabindex=0>X</div>
+					<div class="popupZone">
+						<div class="popupContent">
+							{#if wsStatus==1}
+								<div class="pseudosList">
+									{pseudoList.length} connecté{#if pseudoList.length > 1}s{/if} :
+									{#each pseudoList as name, i}
+										{name} &nbsp;
+									{/each}
 								</div>
-								<div style="color:{ (getEpsilon() > 500)? "red": (getEpsilon() > 100)? "yellow" : "lightgreen"}">
-									Correction temporelle (ε): {getEpsilon()}ms
+								<div class="messagesList mScrollbar" use:scrollNodeToBottom>
+									{#each chatMsgList as o,i}
+										<div>{hhmmss(o.dth)} ({(o.fromPseudo)? o.fromPseudo : "Grande Peluche"}) {o.texte}</div>
+									{/each}
 								</div>
-								<div style="color:{ (latence > 500)? "red": (latence > 100)? "yellow" : "lightgreen"}">
-									Latence réseau instantanée: {latence}ms
-								</div>
-								<div>Correction horloge (ε dynamique): {Math.floor(1000*dynMetro.epsilon)/1000}ms</div>
-								<div>Correction horloge (ε lissé): n/a</div>
-								<div>Horloge Serveur: {hhmmssms(dynMetro.srv.dth)}</div>
-								<div>Horloge Locale: {hhmmssms(dynMetro.cliDth)}</div>
-								<div>DeltaClient: {Math.floor(1000*(dynMetro.cliRes - dynMetro.cliReq))/1000} ms</div>
-								<div>DeltaServer: {Math.floor(1000*(dynMetro.srv.load + dynMetro.srv.run + 1.0))/1000} ms</div>
-							</div>
-						{:else}
-							<div style="color:yellow">
-								Je n'ai pas encoré vérifié la synchronisation temporelle entre ton équipement et le serveur.
-								Ce sera le cas lorsque je ferai une requête serveur permettant de la déterminer.
-							</div>
-						{/if}
-						<hr />
-						<div>DeepCheckSec (sécurité de ton navigateur)</div>
-						{#if window.crossOriginIsolated}
-							<div>
-								✅DeepCheckSec est <span style="color:lightGreen">active</span>. 
-								Cette page est isolée via 
-								<a target="gpHelp" href="https://developer.mozilla.org/fr/docs/Web/HTTP/CSP">
-									CSP
-								</a>,
-								<a target="gpHelp" href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cross-Origin-Opener-Policy">
-									COOP
-								</a>
-								et
-								<a target="gpHelp" href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cross-Origin-Embedder-Policy">
-									COEP
-								</a>
-							</div>
-						{:else}
-							<div class="redPointer blinkMsg">
-								🛑DeepCheckSec n'est pas active, pour ta sécurité, contacte immédiatement Kikiadoc
-							</div>
-						{/if}
-						{#if pseudo && isAdmin(pseudo)}
-							<div>
-								<div class="infoLink" role="button" onclick={markClick}
-									gpHelp="En cliquant sur un bouton 'Provoquer...',
-													je vais provoquer une vraie tentative de hack du site.
-													Cela doit déclencher DeepCheckSec.
-													Si il fonctionne correctement, tu verras un message d'alerte.
-													Evidemment, ces attaques sont réelles, mais sans risque.">
-									Tester le fonctionnement de DeepCheckSec
-								</div>
-								<input type="button" value="Provoquer script externe"
-									onclick={(e)=>generateSecurityAlert(1)} />
-								<input type="button" value="Provoquer script inline"
-									onclick={(e)=>generateSecurityAlert(2)} />
-								<input type="button" value="Provoquer media"
-									onclick={(e)=>generateSecurityAlert(3)} />
-							</div>
-						{/if}
-						<hr />
-						<div>Métacache (optimisation téléchargements)</div>
-						<div>
-							<Common t="checklist3D" />
-							{#if GBLSTATE.swcReady}
 								<div>
-									<input type="button" value="Liste" onclick={metaCacheList}/>
-									<input type="button" value="Vider" onclick={metaCacheClear}/>
-									<input type="button" value="En attente" onclick={() => dspObject= swcGetWaitingIds()}/>
+									<input bind:value={chatInput.msg} type="text" maxlength="140"
+										onkeypress={(e) => e.key=="Enter" && chatSend()} />
+									<input type="button" value="►" onclick={()=>chatSend()} />
+									{#if isAdmin(pseudo)}
+										<label>Admin:<input type="checkbox" bind:checked={chatInput.msgAdm} /></label>
+									{/if}
 								</div>
-							{/if}
-						</div>
-						<hr />
-						<div>
-							<div role="button" style="cursor: pointer" onclick={markClick} gpHelp="Ceci est la taille mémoire utilisable, limitée à 8Go">
-								Mémoire globale utilisable sur ton équipement: {navigator.deviceMemory} Go<sup>(i)</sup> (RAM ou SWAP)
-							</div>
-							{#if performance?.measureUserAgentSpecificMemory}
-								{#await performance.measureUserAgentSpecificMemory()}
-									<div>Analyse en cours...</div>
-								{:then e}
-									<div role="button" onclick={()=>dspObject=e} style="cursor: pointer">
-										Usage:
-										{(e.bytes/(1024*1024)).toFixed(2)}Mo
-										<sup>(i)</sup>
-									</div>
-								{:catch error}
-									<div style="color: red">{error.message}</div>
-								{/await}
 							{:else}
-								<div style="color:yellow">
-									Ton navigateur ne dispose pas de l'introspection mémoire par
-									<a href="https://developer.mozilla.org/en-US/docs/Web/API/Performance/measureUserAgentSpecificMemory"
-										target="gpHelp">
-										{#if isSM()}
-											measureUser...
-										{:else}
-											measureUserAgentSpecificMemory
-										{/if}
-									</a>
-									C'est une fonction récente qui n'est pas supportée par tous les navigateurs.
+								<div>
+									Tu es en accès sécurisé, mais public et non authentifié.
+									<br/>
+									Les infos multijoueurs, les challenges en compétition ou coopération
+									necessitent ton authentification forte.
 								</div>
 							{/if}
 						</div>
-						<hr/>
-						<div>
+					</div>
+				</div>
+			{/if}
+			
+			{#if dspPseudo}
+				{@const es= loadIt("elipticSecurity",{})}
+				{@const dynMetro= getDynMetro()}
+				<div class="popupCadre papier petit">
+					<div class="close" onclick={()=>dspPseudo=!dspPseudo} role="button">X</div>
+					<div class="popupZone">
+						<div class="popupContent">
+							<img class="parchemin" style="float:right; width: 6em" alt="" src={urlCdnAI+"pseudo-"+pseudo+".jpg"} />
 							<div>
-								Rapport technique de fonctionnement:
-							</div>
-							<div>
-								<input type="button" value="Capturer" onclick={()=>patchConsole()} />
-								<input type="button" value="Arreter" onclick={()=>unpatchConsole()} />
-								<input type="button" value="Afficher" onclick={()=>dspObject=getConsole()} />
-								<input type="button" value="Envoyer le rapport à Kikiadoc" onclick={()=>reportConsole()} />
-							</div>
-						</div>
-						<hr />
-						<div>
-							<div>
-								Resynchro lodestone, IA vocale etc...
-							</div>
-							<div>
-								<input type="button" value="Resynch config" onclick={async ()=>{dspObject={msg:"Attendre..."}; dspObject = await apiCall('/clientConfig/refresh')} } />
-							</div>
-						</div>
-						<hr />
-						<div style="font-size: 0.8em">
-							<div>
-								Version client: {CLIENTVERSION || 'DEV'}
-							</div>
-						</div>
-						<div style="font-size: 0.8em">
-							<div>
-								Build: <a href="https://vite.dev/" target="gpHelp">Vite</a>
-								{VITEVERSION || "DEV"}
-							</div>
-							<div>
-								Moteur HTML: <a href="https://svelte.dev/" target="gpHelp">Svelte</a>
-								{SVELTEVERSION || "DEV"}
-							</div>
-							<div>
-								Moteur 3D: <a href="https://www.babylonjs.com/" target="gpHelp">BabylonJS</a>
-								{#if typeof BABYLON == 'object'}
-									{BABYLON.Engine.Version}
+								{#if pseudo && pseudo!= ""}
+									Ton pseudo est {pseudo}<br/>({webAuth.prenom} {webAuth.nom} @{webAuth.monde})
 								{:else}
-									non chargé
+									Tu accèdes au site en mode sécurisé, non authentifié.
+								{/if}
+							</div>
+							<hr/>
+							<div>
+								<span class="infoLink" gpHelp="C'est une information sensible, elle ne quittera pas ton appareil.
+																							 Elle restera inconnue du serveur.
+																							 Elle sera utilisée pour adapter nos intéractions
+																							 lors des post-traitements sur ton appareil uniquement">
+									Ton genre est:
+								</span>
+								<br/>
+								<span role="none" onclick={markClick} gpColor="yellow" gpDing="Ding" gpTimeout="15" 
+									gpNotif="Cette information sensible restera sur ton appareil"						>
+									<Radio bind:value={pseudoGenre} nom="pseudoGenre" options={GBLCONST.GENRES} />
+								</span>
+								<hr/>
+								<span class="infoLink" gpHelp="Ceci définit l'aspect du site,
+									tu peux en changer à tout moment de façon temporaire ">
+									Le visuel du site est:
+								</span>
+								<br/>
+								<Radio bind:value={localCtx.skinName} nom="skinName" options={GBLCONST.SKINS} />
+							</div>
+							<hr/>
+							{#if ! GBLSTATE.audioAmbiance}
+								<div style="color:red">
+									Pour vérifier ou modifer les volumes sonores, active la musique d'ambiance
+									en cliquant sur 🔊 en haut à droite de ton écran.
+								</div>
+							{/if}
+							<div>
+								Mon volume audio général est actuellement de {GBLSTATE.audioVolume}% avant mixage par ton appareil.
+								{#if GBLSTATE.audioVolume < 10 || GBLSTATE.audioVolume > 80}
+									<span style="color:red">(conseillé entre 10% et 80%)</span>
+								{:else}
+									<span style="color:lightgreen">(conseillé entre 10% et 80%)</span>
+								{/if}
+							</div>
+							<div><input style="width:80%" bind:value={GBLSTATE.audioVolume} id="newVolumeAudio" type="range" min=0 max=100 /></div>
+							<div class="br">
+								Le volume audio de ma
+								<a href="https://fr.wikipedia.org/wiki/Synth%C3%A8se_vocale" target="gpHelp">
+									voix
+								</a>
+								est actuellement de {GBLSTATE.audioTTS}% avant mixage par ton appareil.
+								{#if GBLSTATE.audioTTS < 80}
+									<span style="color:red">(conseillé entre 80 et 100%)</span>
+								{:else}
+									<span style="color:lightgreen">(conseillé entre 80 et 100%)</span>
+								{/if}
+								<input type="button" value="Je veux tester ta voix" onclick={(e)=>tts({o:{statique:true, file:"mavoix.mp3"}})} />
+							</div>
+							<div><input style="width:80%" bind:value={GBLSTATE.audioTTS} id="newVolumeTTS" type="range" min=0 max=100 /></div>
+							<div>
+								<label>
+									<input bind:checked={GBLSTATE.audioBack} type="checkbox" />
+									le son continue même si la fenêtre est minimisée ou cachée
+								</label>
+								{#if !GBLSTATE.audioBack}
+									<div class="info">
+										Mon assistant AudioBlaster coupe l'ambiance sonore si il détecte que
+										la fenêtre de ton navigateur est masquée.
+										Cette détection automatique a des lacunes,
+										par exemple, si tu as plusieurs écrans ou utilise Chromecast sur ton smartphone.
+										Pour couper l'ambiance, tu peux aussi, sur windows ou smartphone, minimiser
+										la fenêtre de ton navigateur, 
+										ou repasser sur l'écran d'accueil sur ton smartphone.
+									</div>
+								{:else}	
+									<div class="info">L'ambance sonore continuera même si ta fenêtre de navigateur est masquée</div>
+								{/if}
+							</div>
+							<hr />
+							<div>
+								<div onclick={()=>localCtx.flagUserDetail = !localCtx.flagUserDetail} role="button">
+									{#if localCtx.flagUserDetail}
+										<div class="blinkMsg redPointer">
+											👇Les informations ci-dessous sont à utiliser selon les conseils de Kikiadoc
+										</div>
+									{:else}
+										<div class="yellowPointer">
+											👉Voir les éléments techniques (sur conseil de Kikiadoc)
+										</div>
+									{/if}
+								</div>
+								{#if localCtx.flagUserDetail}
+									<div class="adminCadre">
+										<div>
+											<div>
+												Version client: {CLIENTVERSION || 'DEV'}
+											</div>
+										</div>
+										<div>
+											<div>
+												Build: <a href="https://vite.dev/" target="gpHelp">Vite</a>
+												{VITEVERSION || "DEV"}
+											</div>
+											<div>
+												Moteur HTML: <a href="https://svelte.dev/" target="gpHelp">Svelte</a>
+												{SVELTEVERSION || "DEV"}
+											</div>
+											<div>
+												Moteur 3D: <a href="https://www.babylonjs.com/" target="gpHelp">BabylonJS</a>
+												{#if typeof BABYLON == 'object'}
+													{BABYLON.Engine.Version}
+												{:else}
+													non chargé
+												{/if}
+											</div>
+										</div>
+										<hr />
+										<div>Sécurité (Uniquement pour le mode authentifié)</div>
+										<div class={(webAuth?.etat=="ok")?"cGreen":"cRed"}>
+											<label><input type="checkbox" bind:checked={flags.dspWebAuth} />Infos de sécurité webAuthn</label>
+										</div>
+										{#if flags.dspWebAuth}<pre>{JSON.stringify(webAuth,null,2)}</pre>{/if}
+										<div class={(es.jwkPrivateKey)?"cGreen":"cRed"}>
+											<label><input type="checkbox" bind:checked={flags.dspElliptic} />Clef publique racine elliptique</label>
+										</div>
+										{#if flags.dspElliptic}<pre>{JSON.stringify(es.jwkPublicKey || "Indéfinie",null,2)}</pre>{/if}
+										<div class={(wsStatus!=1)?"cRed":"cGreen"}>
+											<label><input type="checkbox" bind:checked={flags.dspCleSession} />Challenge éphémère de session temps réel</label>
+										</div>
+										{#if flags.dspCleSession}<pre>{loadIt("pseudoPwd","Non défini")}</pre>{/if}
+										<hr/>
+										{#if dynMetro?.srv} 
+											{@const latence=Math.floor(1000*(( (dynMetro.cliRes - dynMetro.cliReq) - (dynMetro.srv.load + dynMetro.srv.run + 1.0) ) / 2.0))/1000}
+											<div>
+												<div>Synchro temps réel:
+													<input type="button" onclick={()=> dspObject=dynMetro} value="🛈" />
+												</div>
+												<div style="color:{ (getEpsilon() > 500)? "red": (getEpsilon() > 100)? "yellow" : "lightgreen"}">
+													Correction temporelle (ε): {getEpsilon()}ms
+												</div>
+												<div style="color:{ (latence > 500)? "red": (latence > 100)? "yellow" : "lightgreen"}">
+													Latence réseau instantanée: {latence}ms
+												</div>
+												<div>Correction horloge (ε dynamique): {Math.floor(1000*dynMetro.epsilon)/1000}ms</div>
+												<div>Correction horloge (ε lissé): n/a</div>
+												<div>Horloge Serveur: {hhmmssms(dynMetro.srv.dth)}</div>
+												<div>Horloge Locale: {hhmmssms(dynMetro.cliDth)}</div>
+												<div>DeltaClient: {Math.floor(1000*(dynMetro.cliRes - dynMetro.cliReq))/1000} ms</div>
+												<div>DeltaServer: {Math.floor(1000*(dynMetro.srv.load + dynMetro.srv.run + 1.0))/1000} ms</div>
+											</div>
+										{:else}
+											<div style="color:yellow">
+												Je n'ai pas encoré vérifié la synchronisation temporelle entre ton équipement et le serveur.
+												Ce sera le cas lorsque je ferai une requête serveur permettant de la déterminer.
+											</div>
+										{/if}
+										<hr />
+										<div>DeepCheckSec (sécurité de ton navigateur)</div>
+										{#if window.crossOriginIsolated}
+											<div>
+												✅DeepCheckSec est <span style="color:lightGreen">active</span>. 
+												Cette page est isolée via 
+												<a target="gpHelp" href="https://developer.mozilla.org/fr/docs/Web/HTTP/CSP">
+													CSP
+												</a>,
+												<a target="gpHelp" href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cross-Origin-Opener-Policy">
+													COOP
+												</a>
+												et
+												<a target="gpHelp" href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cross-Origin-Embedder-Policy">
+													COEP
+												</a>
+											</div>
+										{:else}
+											<div class="redPointer blinkMsg">
+												🛑DeepCheckSec n'est pas active, pour ta sécurité, contacte immédiatement Kikiadoc
+											</div>
+										{/if}
+										{#if pseudo && isAdmin(pseudo)}
+											<div>
+												<div class="infoLink" role="button" onclick={markClick}
+													gpHelp="En cliquant sur un bouton 'Provoquer...',
+																	je vais provoquer une vraie tentative de hack du site.
+																	Cela doit déclencher DeepCheckSec.
+																	Si il fonctionne correctement, tu verras un message d'alerte.
+																	Evidemment, ces attaques sont réelles, mais sans risque.">
+													Tester le fonctionnement de DeepCheckSec
+												</div>
+												<input type="button" value="Provoquer script externe"
+													onclick={(e)=>generateSecurityAlert(1)} />
+												<input type="button" value="Provoquer script inline"
+													onclick={(e)=>generateSecurityAlert(2)} />
+												<input type="button" value="Provoquer media"
+													onclick={(e)=>generateSecurityAlert(3)} />
+											</div>
+										{/if}
+										<hr />
+										<div>Métacache (optimisation téléchargements des scènes 3D)</div>
+										<div>
+											<Common t="checklist3D" />
+											{#if GBLSTATE.swcReady}
+												<div>
+													<input type="button" value="Liste" onclick={metaCacheList}/>
+													<input type="button" value="Vider" onclick={metaCacheClear}/>
+													<input type="button" value="En attente" onclick={() => dspObject= swcGetWaitingIds()}/>
+												</div>
+											{/if}
+										</div>
+										<hr />
+										<div>
+											<div role="button" style="cursor: pointer" onclick={markClick} gpHelp="Ceci est la taille mémoire utilisable, limitée à 8Go">
+												Mémoire globale utilisable sur ton équipement: {navigator.deviceMemory} Go<sup>(i)</sup> (RAM ou SWAP)
+											</div>
+											{#if performance?.measureUserAgentSpecificMemory}
+												{#await performance.measureUserAgentSpecificMemory()}
+													<div>Analyse en cours...</div>
+												{:then e}
+													<div role="button" onclick={()=>dspObject=e} style="cursor: pointer">
+														Usage:
+														{(e.bytes/(1024*1024)).toFixed(2)}Mo
+														<sup>(i)</sup>
+													</div>
+												{:catch error}
+													<div style="color: red">{error.message}</div>
+												{/await}
+											{:else}
+												<div style="color:yellow">
+													Ton navigateur ne dispose pas de l'introspection mémoire par
+													<a href="https://developer.mozilla.org/en-US/docs/Web/API/Performance/measureUserAgentSpecificMemory"
+														target="gpHelp">
+														{#if isSM()}
+															measureUser...
+														{:else}
+															measureUserAgentSpecificMemory
+														{/if}
+													</a>
+													C'est une fonction récente qui n'est pas supportée par tous les navigateurs.
+												</div>
+											{/if}
+										</div>
+										<hr/>
+										<div>
+											<div>
+												Rapport technique de fonctionnement:
+											</div>
+											<div>
+												<input type="button" value="Capturer" onclick={()=>patchConsole()} />
+												<input type="button" value="Arreter" onclick={()=>unpatchConsole()} />
+												<input type="button" value="Afficher" onclick={()=>dspObject=getConsole()} />
+												<input type="button" value="Envoyer le rapport à Kikiadoc" onclick={()=>reportConsole()} />
+											</div>
+										</div>
+										<hr />
+										<div>
+											<div>
+												Resynchro lodestone, IA vocale etc...
+											</div>
+											{#if wsStatus==1}
+												<div>
+													<input type="button" value="Resynch config" onclick={async ()=>{dspObject={msg:"Attendre..."}; dspObject = await apiCall('/clientConfig/ttsLodestoneRefresh')} } />
+												</div>
+											{:else}
+												<div class="cRed">
+													Indisponible (pas d'authentification forte).
+												</div>
+											{/if}
+										</div>
+									<!--
+									<hr />
+									<div style="font-size: 0.8em">
+										Métrologie technique:
+										<br/>
+										<input onclick={metrologieSend} type="button" value="Envoyer mes données" />
+										<input onclick={metrologieDisplay} type="button" value="Voir mes données" />
+										<input onclick={metrologieClear} type="button" value="Effacer mes données" />
+									</div>
+									-->
+								</div>
 								{/if}
 							</div>
 						</div>
-						<!--
-						<hr />
-						<div style="font-size: 0.8em">
-							Métrologie technique:
-							<br/>
-							<input onclick={metrologieSend} type="button" value="Envoyer mes données" />
-							<input onclick={metrologieDisplay} type="button" value="Voir mes données" />
-							<input onclick={metrologieClear} type="button" value="Effacer mes données" />
+					</div>
+				</div>
+			{/if}
+			
+			{#if dspInfo}
+				<Info bind:dspInfo={dspInfo} />
+			{/if}
+		
+			{#if dspObject}
+				<div class="popupCadre papier">
+					<div class="close" onclick={()=>dspObject=null} role="button">X</div>
+					<div class="popupZone">
+						<div class="popupContent" style="font-size:0.8em">
+							<div class="blinkMsg" style="color:red">
+								Diagnostic technique, ne pas utiliser sans Kikiadoc
+							</div>
+							<div>
+								loc: {hhmmssms(Date.now())} srv: {hhmmssms(Date.now()-getEpsilon())} loc=srv+ε({getEpsilon()}ms)
+							</div>
+							<div class="adminCadre">
+								<input bind:value={dspObject.dth2local} type="number" placeholder="dth" /> =
+								{hhmmssms(dspObject.dth2local)}
+								(<countdown dth={dspObject.dth2local || 0} txtTimeout="dépassé" />)
+								[{new Date(dspObject.dth2local).toLocaleDateString()}]
+							</div>
+							<div><pre style="white-space: pre-wrap; word-break: break-all;">{JSON.stringify(dspObject,replacer,2)}</pre></div>
 						</div>
-						-->
 					</div>
 				</div>
-			</div>
+			{/if}
+			
+			{#if dspError}
+				<Info bind:dspInfo={dspError}>
+					{#snippet template(t)}
+						<div style="word-break: break-all">{t}</div>
+					{/snippet}
+				</Info>
+			{/if}
+			
+			{#if dspAdminMsg}
+				<Info bind:dspInfo={dspAdminMsg}>
+					{#snippet template(t)}
+						<div class="blinkMsg" style="color:red; font-size:1.5em">{t}</div>
+					{/snippet}
+				</Info>
+			{/if}
 		</div>
-	{/if}
-	
-	{#if dspInfo}
-		<Info bind:dspInfo={dspInfo} />
-	{/if}
-
-	{#if dspObject}
-		<div class="popupCadre papier">
-			<div class="close" onclick={()=>dspObject=null} role="button">X</div>
-			<div class="popupZone">
-				<div class="popupContent" style="font-size:0.8em">
-					<div class="blinkMsg" style="color:red">
-						Diagnostic technique, ne pas utiliser sans Kikiadoc
-					</div>
-					<div>
-						loc: {hhmmssms(Date.now())} srv: {hhmmssms(Date.now()-getEpsilon())} loc=srv+ε({getEpsilon()}ms)
-					</div>
-					<div class="adminCadre">
-						<input bind:value={dspObject.dth2local} type="number" placeholder="dth" /> =
-						{hhmmssms(dspObject.dth2local)}
-						(<countdown dth={dspObject.dth2local || 0} txtTimeout="dépassé" />)
-					</div>
-					<div><pre style="white-space: pre-wrap; word-break: break-all;">{JSON.stringify(dspObject,null,2)}</pre></div>
-				</div>
-			</div>
-		</div>
-	{/if}
-	
-	{#if dspError}
-		<Info bind:dspInfo={dspError}>
-			{#snippet template(t)}
-				<div style="word-break: break-all">{t}</div>
-			{/snippet}
-		</Info>
-	{/if}
-	
-	{#if dspAdminMsg}
-		<Info bind:dspInfo={dspAdminMsg}>
-			{#snippet template(t)}
-				<div class="blinkMsg" style="color:red; font-size:1.5em">{t}</div>
-			{/snippet}
-		</Info>
-	{/if}
-
+	</div>
 </div>
+<!-- page +page svelte -->
 
 
-
-<!-- page +page.svelte -->

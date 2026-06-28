@@ -4,6 +4,7 @@ exports.grimoireFsPath="/var/www/static/grimoire/";
 exports.grimoireUrlPath= "https://ff14.adhoc.click/grimoire/"
 exports.pCloudUrl= "https://filedn.eu/lxYwBeV7fws8lvi48b3a3TH/"
 exports.cdnUrl= "https://cdn.adhoc.click/V10a/"
+exports.cdnUrlStatic= "https://cdn.adhoc.click/STATIC/"
 exports.vaultPath="/home/ec2-user/.vault.donotdelete";
 exports.ipAdmin="91.164.33.248" // adrese PC perso Kikiadoc
 
@@ -12,6 +13,7 @@ function padValue(v) { return "00".concat(v).slice(-2); } ;
 function padValue3(v) { return "000".concat(v).slice(-3); } ;
 
 exports.isLowerNumeric = str => /^[a-z0-9]+$/g.test(str);
+exports.isNumeric = str => /^[0-9]+$/g.test(str);
 exports.capitalizeFirstLetter = str => { return str.charAt(0).toUpperCase() + str.slice(1); } ;
 exports.lowerFirstLetter = str => { return str.charAt(0).toLowerCase() + str.slice(1); } ;
 exports.alphanum2placer = str => { return str.replace(/[a-z0-9]/g,"﹇") } ;
@@ -23,6 +25,15 @@ const flagProd = __filename.indexOf('/prod/') > 0
 exports.isProd = () => {
 	return flagProd
 }
+
+exports.MONDES = [
+		"Cerberus","Louisoix","Moogle","Omega","Phantom","Ragnarok","Sagittarius","Spriggan",
+		"Alpha","Lich","Odin","Phoenix","Raiden","Shiva","Twintania","Zodiark"
+]
+exports.HOUSING = [
+		"La Coupe", "Lavandière", "Brumée", "Shirogane", "Empyrée"
+]
+
 
 exports.countDownTo = (dth) => {
 	if (dth==null || dth==undefined)
@@ -177,6 +188,7 @@ exports.shuffle = (array) => {
   }
   return array;
 }
+
 
 exports.getImgSuffix = (contentType) => {
 	if ( !contentType.startsWith('image/') ) return null

@@ -689,7 +689,7 @@
 		// s.caracs ??= [] // exemple de normalized
 		// s.pipoVal ??= 0 // exemple de normalized
 		s.tri ??= false
-		s.notifs ??= [] // flags notif des niveaux
+		s.notifs ??= [] // flags notif des niveaux 
 		s.clsClickLvl ??= "blinkFlag"
 		return s
 	}
@@ -738,7 +738,7 @@
 	function calcScore() {
 		let s = 0 // score
 		let nb= 0 // nb de videos lues intégralement
-		console.log(videosStatus) 
+		// console.log(videosStatus) 
 		for (const e in videosStatus) {
 			if (videosStatus[e]?.score > 0) {
 				s+=videosStatus[e]?.score
@@ -772,7 +772,7 @@
 		if (total >= duree) { videosStatus[mp4].luDth = Date.now() }
 		calcScore()
 		addNotification("Ton score de cinéphile est de "+Math.floor(videosStatus.score/1000),"green",10)
-		console.log("videoEnd: optimisation de modif partielle à étudier")
+		console.log("videoEnd: optimisation de modif partielle à étudier",videosStatus)
 		let ret =	await apiCall("/contextes/ipa/"+pseudo,'POST',videosStatus)
 		if (ret.status==200) videosStatus = ret.o
 	}
@@ -806,30 +806,38 @@
 
 	// Afficahge des résulats
 	let dspResultat = $state(null)
-	async function affResultat() {
+	const LBLBYLBL = ["Novice","Emérite","Extraordinaire","Fantastique!"]
+	function getLblByLvl(l) {
+		return LBLBYLBL[l]
+	}
+	async function affResultat(ev,isRemb) {
 		let ret =	await apiCall("/contextes/ipa",'GET') // charge tous les contextes 
 		if (ret.status!=200) return
 		// balaye la liste des participants
 		let lstP = Object.keys(ret.o.pseudos)
 		let tDsp = []
-		lstP.forEach( (p) => tDsp.push({p:p, s:ret.o.pseudos[p].score||0, l:ret.o.pseudos[p].lvl||0, r:ret.o.pseudos[p].remb||0}))
-		console.log("tDsp",tDsp)
+		let tGils = 0
+		lstP.forEach( (p) => {
+			let desc = ret.o.pseudos[p]
+			tDsp.push({ p:p, s:desc.score||0, l:desc.lvl||0, r:desc.remb||0 })
+			if (desc.lvl) tGils += (desc.lvl>2)? 2500 : (desc.lvl>1)? 1500 : 500
+		})
+		// console.log("tDsp",tDsp)
 		tDsp.sort( (a,b) => ( (b.s||0) - (a.s||0)))
-		console.log("tDsp",tDsp)
-		dspResultat = { lst: tDsp }
-	}
-	let dspRemboursement = $state(null)
-	async function affRemboursement() {
-		let ret =	await apiCall("/contextes/ipa",'GET') // charge tous les contextes 
-		if (ret.status!=200) return
-		dspRemboursement = ret.o
+		// console.log("tDsp",tDsp) 
+		dspResultat = { lst: tDsp, gils: tGils, raw: ret.o }
 	}
 	// remboursement pour pseudo p et niveau r
-	async function admRemb(p,r) {
-		let o = dspRemboursement.pseudos[p]
-		o.remb = r
-		let ret =	await apiCall("/contextes/ipa/"+p,'POST',o)
-		affRemboursement()
+	async function admRemb(ev) {
+		let p = ev.currentTarget.getAttribute("gpP")
+		let r = ev.currentTarget.getAttribute("gpR")
+		console.log("admRemb",p,r)
+		await apiCall("/contextes/ipa/"+p,'PATCH',{k:"remb", v:r})
+		await affResultat()
+	}
+	function admVoir(ev) {
+		let p = ev.currentTarget.getAttribute("gpP")
+			displayObject(dspResultat.raw.pseudos[p])
 	}
 </script>
 
@@ -849,7 +857,7 @@
 	.synthese { font-style: italic;	font-weight: bold }
 	.quote { font-style: italic }
 	.imageFull { width: 100% } 
-	.videoDroite { width: 100%; max-height: 70dvh; }
+	.videoDroite { width: 100%; maax-height: 70dvh; }
 	*/
 </style> 
 
@@ -859,7 +867,6 @@
 <div use:scrollPageToTop>
 	{#if isAdmin(pseudo)}
 		<div class="adminCadre" style="font-size: 0.5em">
-			<input type="button" value="remboursement" onclick={affRemboursement} />
 			<input type="button" value="resetLecturePerso"
 				onclick={()=>{ confirm("Reset de toutes lectures de "+pseudo) && apiCall('/contextes/ipa/'+pseudo,'DELETE'); videosStatus={} }}
 			/>
@@ -877,7 +884,7 @@
 					<Common t="jauge" p={ {val:videosStatus.score, max:SCOREEXTRAORDINAIRE, s2:SCOREEMERITE }} />
 				{/if}
 			</span>
-			<Common t="headerPage" pageDesc={pageDesc} />
+			<!-- <Common t="headerPage" pageDesc={pageDesc} /> -->
 		</div>
 	{/if}
 
@@ -896,7 +903,9 @@
 				depuis de nombreuses années sous la forme de dizaines de vidéos.
 			</div>
 			<div>
-				En les visionnant, tu augmenteras ton score de cinéphilie et tu pourras réclamer jusque 2.5 Millions de Gils.
+				En les visionnant, tu augmenteras ton score de cinéphilie et
+				tu pourras réclamer jusque 2.5 Millions de Gils.
+				Seuls les premiers participants (environ 50) seront récompensés à concurrence de 100 millions de gils au global.
 			</div>
 			<div>
 				Tu peux voir ton avancement en cliquant sur 💎 en haut de page.
@@ -977,61 +986,49 @@
 						<div>Scores de cinéphilie</div>
 						<table class="resTable" >
 							<tbody>
+								<tr>
+									<td>Pseudo</td><td>Cinéphilie</td><td>Score</td><td>&nbsp;</td>
+									{#if isAdmin(pseudo)}
+										<td>R Lvl</td><td>R Fait</td><td></td><td>0.5M</td><td>1M</td><td>1M</td>
+									{/if}
+								</tr>
 								{#each dspResultat.lst as p}
 									<tr>
 										<td class="resTd">{p.p}</td>
-										<td class="resTd">
-											{
-												(p.l >=3)? "Fantastique!": 
-												(p.l >=2)? "Extraordinaire":
-												(p.l >=1)? "Emérite": "Novice"
-											}
-										</td>
+										<td class="resTd">{HAUTFAITS[p.l]}</td>
 										<td class="resTd">{Math.floor(p.s/1000)}</td>
-										{#if (p.l > p.r)}
-											<td gpHelp="Gils à réclamer" onclick={markClick} style="cursor:pointer">💰</td>
+										<td >
+											{#if (p.l > p.r)}
+												<span role="button" gpHelp="Tu as des gils à réclamer" onclick={markClick} style="cursor:pointer">💰</span>
+											{:else if p.l > 2 }
+												<span role="button" gpHelp="Tu es Fantastique" onclick={markClick} style="cursor:pointer">👑</span>
+											{:else if p.l > 1 }
+												<span role="button" gpHelp="Continue pour améliorer ton score" onclick={markClick} style="cursor:pointer">🥈</span>
+											{:else if p.l > 0 }
+												<span role="button" gpHelp="Continue pour améliorer ton score" onclick={markClick} style="cursor:pointer">🥉</span>
+											{/if}
+										</td>
+										{#if isAdmin(pseudo)}
+											<td class="resTd">{p.l}</td>
+											<td class="resTd">{p.r}</td>
+											<td><input type="button" value="R0" gpR="0" gpP={p.p} onclick={admRemb} /></td>
+											<td><input type="button" value="R1" gpR="1" gpP={p.p} onclick={admRemb} /></td>
+											<td><input type="button" value="R2" gpR="2" gpP={p.p} onclick={admRemb} /></td>
+											<td><input type="button" value="R3" gpR="3" gpP={p.p} onclick={admRemb} /></td>
+											<td><input type="button" value="?" gpP={p.p} onclick={admVoir} /></td>
 										{/if}
 									</tr>
 								{/each}
 							</tbody>
 						</table>
 						<div>Nombre de cinéphiles: {dspResultat.lst.length}</div>
+						<div>Gains global en gils: {dspResultat.gils/1000}/100 (en millions)</div>
 					</div>
 				</div>
 			</div>
 		</div>
 	{/if}
 
-	{#if dspRemboursement}
-		{@const lstPseudos=Object.keys(dspRemboursement.pseudos)}
-		<div class="popupCadre papier">
-			<div class="close" onclick={()=>dspRemboursement=null} onkeypress={null} role="button" tabindex=0>X</div>
-			<div class="popupZone">
-				<div class="popupContent">
-					<div>
-						<table class="resTable" style="border: 1px solid white">
-							<tbody>
-								<tr><td>Pseudo</td><td>Lvl</td><td>Score</td><td>R fait</td><td></td><td>0.5M</td><td>1M</td><td>1M</td></tr>
-								{#each lstPseudos as p}
-									{@const desc=dspRemboursement.pseudos[p]}
-									<tr>
-										<td class="resTd">{p}</td>
-										<td class="resTd">{desc.lvl}</td>
-										<td class="resTd">{Math.floor(desc.score/1000)}</td>
-										<td class="resTd">{desc.remb}</td>
-										<td><input type="button" value="R0" onclick={()=>admRemb(p,0)} /></td>
-										<td><input type="button" value="R1" onclick={()=>admRemb(p,1)} /></td>
-										<td><input type="button" value="R2" onclick={()=>admRemb(p,2)} /></td>
-										<td><input type="button" value="R3" onclick={()=>admRemb(p,3)} /></td>
-									</tr>
-								{/each}
-							</tbody>
-						</table>
-					</div>
-				</div>
-			</div>
-		</div>
-	{/if}
 	<!-- page Pipa.svelte -->
 
 

@@ -26,6 +26,12 @@ function reviver(key, value) {
   return value;
 }
 ////////////////////////////////////////////////
+// recupere le stringify d'un objet
+////////////////////////////////////////////////
+function getJsonString(o) {
+	return JSON.stringify(o,replacer)
+}
+////////////////////////////////////////////////
 // initialise les collectsions depuis le FS
 ////////////////////////////////////////////////
 let collectionsMap = new Map();
@@ -54,7 +60,7 @@ function initCollections() {
 function save(col) {
 	if (! col.name ) gbl.exception("No name in collection", 500);
 	col.versionDth = Date.now();
-	fs.writeFileSync(gbl.staticFsPath+col.name+".collection",JSON.stringify(col,replacer));
+	fs.writeFileSync(gbl.staticFsPath+col.name+".collection",getJsonString(col))
 	console.log("collection", col.name, "saved on fs");
 }
 
@@ -111,7 +117,10 @@ function init(newCol) {
 // c'est une collection dont les membres sont indexes par les pseudos
 // {name: ??, pseudos:[{}]
 //////////////////////////////////////////////////////////////////////////////////////////////
+const PSEUDOCONTEXTVALID = [ "ipa" ]
+const PSEUDOCONTEXTVALIDKEY = [ "remb" ] // liste des champs modifiables
 function pseudoContextLoad(nom){
+	if (!PSEUDOCONTEXTVALID.includes(nom)) gbl.exception("PseudoContext invalide:"+nom,400)
 	const col = init( {name: "pseudoContext_"+nom, pseudos: {} } )
 	return col
 }
@@ -122,6 +131,14 @@ function pseudoContextGet(nom,pseudo){
 function pseudoContextSet(nom,pseudo,o){
 	const col = pseudoContextLoad(nom)
 	col.pseudos[pseudo] = o
+	save(col)
+	return col.pseudos[pseudo]
+}
+function pseudoContextSetKV(nom,pseudo,o){
+	const col = pseudoContextLoad(nom)
+	if (!PSEUDOCONTEXTVALIDKEY.includes(o.k)) gbl.exception("PseudoContext clef set KV invalide:"+nom,400)
+	col.pseudos[pseudo] ??= {}
+	col.pseudos[pseudo][o.k] = o.v
 	save(col)
 	return col.pseudos[pseudo]
 }
@@ -168,7 +185,7 @@ exports.saveSimpleObject = (name,obj) => {
 	}
 	catch(e) {
 		if (e.errno==-2) 
-			console.error("Object supprime, mais file not found",e.path);
+			console.error("Object supprime, file not found",e.path);
 		else
 			console.log(e);
 	}
@@ -182,6 +199,7 @@ exports.get = get
 exports.save = save
 exports.init = init
 exports.reset = reset
+exports.getJsonString = getJsonString
 exports.loadJsonFile = loadJsonFile
 exports.pseudoContextLoad=pseudoContextLoad
 exports.pseudoContextGet=pseudoContextGet
@@ -196,12 +214,13 @@ exports.stringify = (col) => {
 // GET contextes/{name}
 // GET contextes/{name}/{pseudo}
 // POST contextes/{name}/{pseudo} {body}
+// PATCH contextes/{name}/{pseudo} {k:clef, v:valeur}
 // DELETE contextes/{name}/{pseudo}
 exports.httpCallback = async (req, res, method, reqPaths, body, pseudo, pwd) => {
 	pseudos.check(pseudo,pwd);
 	switch (method) {
 		case "OPTIONS": {
-			res.setHeader('Access-Control-Allow-Methods', 'DELETE');
+			res.setHeader('Access-Control-Allow-Methods', 'PATCH,DELETE');
 			gbl.exception("AllowedCORS",200);
 		}
 		case  "GET": {
@@ -223,6 +242,14 @@ exports.httpCallback = async (req, res, method, reqPaths, body, pseudo, pwd) => 
 					gbl.exception(pseudoContextSet(reqPaths[2],reqPaths[3],JSON.parse(body)),200)
 			}
 			gbl.exception("bad POST",400);
+		}
+		case  "PATCH": {
+			switch(reqPaths[1]) {
+				case "contextes":
+					if (reqPaths[3]!=pseudo) pseudos.check(pseudo,pwd,true) // si autre pseudo, doit etre admin
+					gbl.exception(pseudoContextSetKV(reqPaths[2],reqPaths[3],JSON.parse(body)),200)
+			}
+			gbl.exception("bad PATCH",400);
 		}
 		case  "DELETE": {
 			pseudos.check(pseudo,pwd,true); // admin
