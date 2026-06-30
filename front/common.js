@@ -163,7 +163,7 @@ export function nbSecTo(dth) {
 	return Math.floor( (dth- Date.now()) / 1000)
 }
 
-export function geUtcMsFrom(y,m,d,hh,mm,ss) {
+export function getUtcMsFrom(y,m,d,hh,mm,ss) {
 	return Date.UTC(y, m-1, d, hh, mm, ss)
 }
 

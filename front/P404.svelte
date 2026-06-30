@@ -303,6 +303,9 @@
 	/* #CA9956; F5DDB7 */
 	.aveugle {font-size:0.8em}
 	.excavation {font-size:0.8em }
+	.imgTermine { xheight: 8em; xwidth: 100%; background-size: contain; background-repeat: no-repeat }
+	.imgTermine { background-position: center }
+	.imgTermine { background-image: url("https://cdn.adhoc.click/V10a/X-cherchezlelala/parchemin-texte.jpg") }
 	table { background-image: url("https://cdn.adhoc.click/V10a/X-cherchezlelala/parchemin-texte.jpg") }
 	table { background-color: transparent; background-repeat: no-repeat; background-position: center }
 	.proba1 {background-image: radial-gradient(transparent, transparent  5%,  grey 10%, orange 100%)}
@@ -344,7 +347,6 @@
 				<input type="button" value="pseudoReset" onclick={()=>admResetPseudo(null,true)} />
 				<input type="number" min=0 max=99 placeholder="admFill" bind:value={saisies.admFillIdx} />
 				<input type="button" value="Fill" onclick={admFill} />
-				<label><input type="checkbox" bind:checked={saisies.debug} />DebugLocal</label>
 				<input type="button" value="FillALL" onclick={admFillAll} />
 			</div>
 		</div>
@@ -653,9 +655,8 @@
 		</div>
 	{/if}
 
-	{#if epiqStep==90 && etat}
+	{#if epiqStep==90 && etat && !etat.challengeTermine}
 		<div class="papier" use:scrollPageToTop>
-			<!-- {#if saisies.debug}<div>{URLPNJS+CONFIG.VOLEURS[voleurIdx]+".png"}</div>{/if} -->
 			<div class="parchemin-vertical" style="position: relative" >
 				{#if saisies.lunettes}
 					<img role="button" onclick={voleurClick} src={URLPNJS+CONFIG.VOLEURS[voleurIdx]+".png"} alt="" 
@@ -716,13 +717,37 @@
 			</div>
 		</div>
 	{/if}
-
-	{#if epiqStep==95 }
+	
+	{#if epiqStep==90 && etat && etat.challengeTermine}
 		<div class="papier" use:scrollPageToTop>
-			<input type="button" value="Revoir la vidéo" onclick={()=> playVideo(VIDEOLIEUSECRET)}/>
-				<div>👉La phase finale nécessitera de vous retrouvez le plus nombreux possible dans la base secrète.</div>
-			indiquer textuel de l'enigme finale
-			Afichage video - découverte du lieu
+			<div class="parchemin-vertical" style="position: relative" >
+				<div style="text-align: left">
+					Laisse un message sur le Livre de Correspondance de la Base Secrète
+					<br/>
+					<Btn bind:refStep={epiqStep} step=95 val="C'est fait!"/>
+				</div>
+				<div class="imgTermine">
+					<br/>
+					<br/>
+					<br/>
+					<br/>
+					<br/>
+					<br/>
+					<br/>
+				</div>																	 
+			</div>
+		</div>
+	{/if}
+
+	{#if epiqStep==95 && etat && etat.challengeTermine}
+		<div class="papier" use:scrollPageToTop>
+			<div class="parchemin-vertical" style="position: relative" >
+				<div>
+					Bravo, tu as terminé ce challenge, tu peux en regarder les résultats actuels
+					en cliquant sur "Résultat".
+				</div>
+				<Btn bind:refStep={epiqStep} step=90 val="Revoir le Parchemin"/>
+			</div>
 		</div>
 	{/if}
 
@@ -819,14 +844,16 @@
 			<div class="popupZone">
 				<div class="popupContent">
 					Paramétrage:
+					<div class="petit">ces paramètres sont inconnus des autres</div>
 					<hr/>
 					Mirages asciens
-					<div class="petit">(ce paramètre est inconnu des autres)</div>
 					<select bind:value={saisies.vitesse}>
 						<option value="1">Vitesse Roxxor (1s)</option>
 						<option value="1.7">Vitesse Pépère (1.7s)</option>
 						<option value="3">Vitesse Noob (3s)</option>
 					</select>
+					<hr/>
+					<div><label><input type="checkbox" bind:checked={saisies.debug} />Afficher Progression</label></div>
 				</div>
 			</div>
 		</div>
@@ -836,7 +863,9 @@
 			<div class="close" onclick={()=>dspResultats=null} role="button">X</div>
 			<div class="popupZone">
 				<div class="popupContent">
+					<div class="imgTermine">
 					A FAIRE 
+					</div>
 				</div>
 			</div>
 		</div>

@@ -10,7 +10,7 @@
 	// ne fonctionne pas sur android 🛈 utiliser (ℹ)
 
 	//////////////////////////////////////////
-	// Imports 
+	// Imports
 	//////////////////////////////////////////
 	import { onMount, onDestroy } from 'svelte'
 	import {
@@ -18,7 +18,7 @@
 		addNotification, displayInfo, displayError,
 		startCountDown, stopCountDown, scrollNodeToBottom, scrollNodeToMiddle,
 		connectToServer, disconnectFromServer, apiCall,	getDynMetro, getEpsilon,
-		hhmmss, hhmmssms, geUtcMsFrom,
+		hhmmss, hhmmssms, getUtcMsFrom,
 		orientationChange, visibilityChange, startBlinkGlobal, markClick, firstClick,
 		playMusic, playDing, playVideo, closeVideo, audioInit, audioSetup, wsMedia,
 		tts, tryTTS, reviver, replacer,
@@ -217,14 +217,14 @@
 		 beta: Infinity, // pas de beta
 		 help: "Challenge de Bienvenue",
 		 rootName: "ipa",
-		 resetDth: geUtcMsFrom(2026,4,1,19,0,0) // heure de reset serveur du challenge
+		 resetDth: getUtcMsFrom(2026,4,1,19,0,0) // heure de reset serveur du challenge
 		},
 		{n: 403, texte: "Le Prélude de la Rapidité",
 		 music: "X-prelude-rapidite/elcondorpasa",
 		 component: P403,
-		 start: geUtcMsFrom(2026,6,1,17,0,0), // geUtcMsFrom(2026,5,13,17,0,0),
-		 end: geUtcMsFrom(2026,6,5,21,0,0),
-		 beta: geUtcMsFrom(2026,5,14,23,0,0), // Beta
+		 start: getUtcMsFrom(2026,6,1,17,0,0), // getUtcMsFrom(2026,5,13,17,0,0),
+		 end: getUtcMsFrom(2026,6,5,21,0,0),
+		 beta: getUtcMsFrom(2026,5,14,23,0,0), // Beta
 		 rootName: "X-prelude",
 		 inscription: 20,  // nombre max de participants 
 		 after: true,
@@ -232,8 +232,8 @@
 		{n: 404, texte: "Cherchez le lala",
 		 music: "X-cherchezlelala/Cherchez-le-garcon",
 		 component: P404,
-		 start: geUtcMsFrom(2025,5,16,17,0,0), // Infinity, // pas enore disponible
-		 end: geUtcMsFrom(2026,5,14,17,0,0), // Infinity,
+		 start: Infinity, // getUtcMsFrom(2026,7,16,17,0,0), // Infinity, // pas enore disponible
+		 end: Infinity, // getUtcMsFrom(2026,7,14,17,0,0), // Infinity,
 		 beta: Infinity, // pas de beta
 		 rootName: "X-cherchezlelala",
 		 tip: {idx:2, txt: "Bientôt, chercher le Lala et trouver la base secrète de la Grande Peluche, tu devras."}
@@ -244,9 +244,9 @@
 		 public: true,
 		 // privilege: 1,
 		 component: P100,
-		 start: geUtcMsFrom(2026,9,1,17,0,0),
+		 start: getUtcMsFrom(2026,9,1,17,0,0),
 		 end: Infinity,
-		 beta: geUtcMsFrom(2026,6,17,18,0,0), // beta
+		 beta: getUtcMsFrom(2026,6,17,18,0,0), // beta
 		 rootName: "S-codex",
 		},
 		{n: 102, texte: "Les feuillets oubliés",
@@ -265,7 +265,7 @@
 		 icon: "Codex_Logo2.webp",
 		 music: "carol-bell",
 		 component: P103,
-		 start: Infinity, //geUtcMsFrom(2026,5,16,17,0,0), //, // pas enore disponible
+		 start: Infinity, //getUtcMsFrom(2026,5,16,17,0,0), //, // pas enore disponible
 		 end: Infinity,
 		 beta: Infinity, // pas de beta
 		 rootName: "S-codex-challenge",
@@ -361,8 +361,8 @@
 		 // Passé mais encore consultables 
 		 ///////////////////////////////////
 		{n: 402, texte: "Le Marché de Noël", music: "X-ventesPrivees/Marche-de-noel",
-		 start: geUtcMsFrom(2025,12,13,20,15,0),
-		 end: geUtcMsFrom(2026,1,19,20,0,0),
+		 start: getUtcMsFrom(2025,12,13,20,15,0),
+		 end: getUtcMsFrom(2026,1,19,20,0,0),
 		 beta: Infinity, // pas de beta
 		 rootName: "X-ventesprivees",
 		 component: P402,
@@ -386,22 +386,22 @@
 		 ///////////////////////////////////
 		/*
 		{n: 400, texte: "Métropolis", music: "le-jeu",
-		 start: (isProd)? geUtcMsFrom(2025, 3, 21, 19, 0, 0) : geUtcMsFrom(2025, 3, 18, 19, 0, 0),
-		 end:  geUtcMsFrom(2025, 3, 25, 8, 0, 0),
+		 start: (isProd)? getUtcMsFrom(2025, 3, 21, 19, 0, 0) : getUtcMsFrom(2025, 3, 18, 19, 0, 0),
+		 end:  getUtcMsFrom(2025, 3, 25, 8, 0, 0),
 		 beta: true,
 		 component: P400
 		},
 		*/
 		/*
 		{n: 400, texte: "Métropolis", music: "le-jeu",
-		 start: geUtcMsFrom(2025,3,21,19,0,0),
-		 end: geUtcMsFrom(2025,3,25,8,0,0),
+		 start: getUtcMsFrom(2025,3,21,19,0,0),
+		 end: getUtcMsFrom(2025,3,25,8,0,0),
 		 after: true,
 		 component: P400
 		},
 		{n: 401, texte: "Le Bug Bounty de l'IPA", music: "Alice",
-		 start: geUtcMsFrom(2025,6,20,18,0,0),
-		 end: geUtcMsFrom(2025,7,15,18,0,0),
+		 start: getUtcMsFrom(2025,6,20,18,0,0),
+		 end: getUtcMsFrom(2025,7,15,18,0,0),
 		 component: P401,
 		}, 
 		*/

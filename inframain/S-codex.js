@@ -15,6 +15,8 @@ const WEBHOOKTRAILER = {  color: 0x21908D, description: "[Final Fantasy XIV - Fr
 const THUMBALERT = gbl.cdnUrlStatic + "attention.gif"
 const CDNPSEUDO =	"https://cdn.adhoc.click/AI-Generated/pseudo-"
 
+const HISTOSYNCDELAI = 30000 // delai de l'histoSync si delayed par lag discord
+
 const CONF= {
 	DIFNBMAX: 100,			// max diffusions
 	DIFITERMAX: 31,			// iterations
@@ -154,19 +156,44 @@ function admMsgSend(pseudo,oBody) {
 // Historique
 ///////////////////////////////////////////////////////////////////////////////
 let histo = normalizeHisto(collections.get(HISTONAME,true))
-let histoJsonString = null // cache si pas de modif
+let histoSyncPendingNb = 0 // nombre de requetes discord non terminée --> histoSync devra attendre
+let histoSyncEcheance = 0 // echeance du processus de resync sur famine discord
+let histoSyncTimerId = null // si besoin timer de reshedule de l'histoSync
 function normalizeHisto(h) {
 	h.envByAbo ??= new Map()	// liste des envoi indexé par les abonnemnets, le contenu est la liste ordonnées des messages par id
 	return h
 }
+// return true si effectue ou false si resheduled
 function histoSync() {
+	console.log("histoSync début")
+	if (histoSyncTimerId) { clearTimeout(histoSyncTimerId); histoSyncTimerId = null }
+	if (histoSyncPendingNb && !histoSyncEcheance) {
+		// la synchro datastore doit être différe en attente des résultats discord
+		console.log("********************* histoSync différe", histoSyncPendingNb)
+		histoSyncEcheance = Date.now() + HISTOSYNCDELAI
+		histoSyncTimerId = setTimeout(histoSync, HISTOSYNCDELAI)
+		return false
+	}
+	// Sync normal ou apres delai de garde
 	collections.save(histo)
+	// Alert si sync réalisé avec échéance
+	if (histoSyncEcheance) {
+		console.log("********************* ALERTE SUR HISTOSYNC", histoSyncPendingNb)
+		if (histoSyncPendingNb)
+			discordAdd( { type: "Erreur", txt:"ERREUR: histoSync en différé, reste histoSyncPendingNb="+histoSyncPendingNb } )
+		else
+			discordAdd( { type: "Erreur", txt:"ATTENTION, histoSync en différé car lags discord mais au final commits discord OK" } )
+	}
+	histoSyncEcheance = 0 // indique synch résalisé
+	console.log("histoSync fin")
+	return true
 }
+
 function histoClear() {
 	histo = normalizeHisto(collections.reset(HISTONAME))
-	histoJsonString = null
 	collections.save(histo)
 }
+
 // retourne le tableau ordonné des messages envoyé à l'abo avec creation si besoin
 function histoGetEnvByAboId(aboId) {
 	// return histo.envByAbo.getOrInsert(aboId,[]) // PAS ENCORE SUPPORTE
@@ -387,7 +414,7 @@ function diffusionExecuteTypeR(dif,cat,tblPot) {
 			return	// abo suivant
 		}
 		// FAIM ??
-		if (tblDispo.length < cat?.ale) {
+		if (tblDispo.length <= cat?.ale) {
 			// alerte sur niveau
 			discordAdd( { type: "faim", abo: abo, d: tblPot.length, r: tblDispo.length  } )
 		}
@@ -489,7 +516,7 @@ function getAbonneByGuildTag(tag) {
 async function abonneAdd(pseudo,json) {
 	// Url check
 	checkWebHookUrl(json.url)
-	if (getAbonneByUrl(json.url)) gbl.exception("URL de WebHook est déjà utilisée",400)
+	if (getAbonneByUrl(json.url) && !json.bypass) gbl.exception("URL de WebHook est déjà utilisée",400)
 	// Role Check
 	let roleCalc = checkCalcRole(json.roleType,json.roleId)
 	// categorie check (main et dependante)
@@ -798,12 +825,21 @@ async function discordProcess(proc) {
 			let contenu = discordContenuAddTrailer(vJson.contenu,true)
 			discordContenuAddRole(contenu,proc.abo)
 			// console.log("webHookDif2",contenu)
+			// marque que cette requete doit être terminée avant le histoSync
+			histoSyncPendingNb++
+			// await gbl.sleep(3) pour test LAG DISCORD uniquement
 			let ret = await gbl.apiCallExtern(proc.abo.url+"?wait=true",'POST',contenu, discord.headers ,"json")
-			if (ret.status != 200) { await discordSimpleError("Erreur sur webHookDif post, voir log server",proc,ret); break }
-			// console.log("discordProcess",ret)
-			console.log("discordProcess ************** Manque verif pour nom du hook et desabonnenment autoritaire")
-			// Ajout dans l'historique (abo avec message)
-			histoAddAboMsg(proc.abo,proc.msg,proc.d,proc.r,ret.json?.id)
+			if (ret.status != 200) { 
+				await discordSimpleError("Erreur sur webHookDif post, voir log server",proc,ret)
+			}
+			else {
+				// console.log("discordProcess",ret)
+				console.log("discordProcess ************** Manque verif pour nom du hook et desabonnenment autoritaire")
+				// Ajout dans l'historique (abo avec message)
+				histoAddAboMsg(proc.abo,proc.msg,proc.d,proc.r,ret.json?.id)
+			}
+			// marque que cette requete comme terminée avant le histoSync
+			histoSyncPendingNb--  
 			break
 		}
 		case "webHookDirect" : {
@@ -823,10 +859,11 @@ async function discordProcess(proc) {
 		}
 		case "famine" : {
 			// discordAdd( { type: "famine", abo: abo,  d: tblPot.length, r: tblDispo.length  } )
-			let contenu = { embeds: [ { thumbnail: { url: THUMBALERT }, description: "# Attention,\nl'abonné "+proc.abo.tag+"("+proc.abo.id+") est en famine sur la catégorie: "+proc.abo.cat } ] }
-			await discordDualLog(contenu)
 			// Ajout dans l'historique (famine)
 			histoAddAboMsg(proc.abo,null,proc.d,proc.r)
+			// message d'alerte
+			let contenu = { embeds: [ { thumbnail: { url: THUMBALERT }, description: "# Attention,\nl'abonné "+proc.abo.tag+"("+proc.abo.id+") est en famine sur la catégorie: "+proc.abo.cat } ] }
+			await discordDualLog(contenu)
 			break
 		}
 		case "bienvenue" : {
@@ -852,7 +889,7 @@ async function discordProcess(proc) {
 		}
 		case "Erreur" : {
 			/// discordAdd( { type: "Erreur", txt:"cat introuvable:"+dif.cat  } )
-			let contenu = { embeds: [ { thumbnail: { url:THUMBALERT }, description: "# Erreur\n"+proc.txt } ] }
+			let contenu = { embeds: [ { thumbnail: { url:THUMBALERT }, description: "# Erreur ou Warning\n"+proc.txt } ] }
 			await discordDualLog(contenu)
 			break
 		}
@@ -879,7 +916,8 @@ async function discordProcess(proc) {
 					"\nWebhook sollicités: "+proc.nbDem+
 					"\nTemps calcul de décision: "+ (proc.algoEndDelta[0] * 1000 + proc.algoEndDelta[1] / 1000000)+" ms"+
 					"\nTemps de traitement dequeue Discord: "+(diffusionEnd[0] + diffusionEnd[1] / 1000000000)+" s"+
-					"\nHeure de fin: "+gbl.hhmmssms(Date.now())+"(UTC)"
+					"\nHeure de fin: "+gbl.hhmmssms(Date.now())+"(UTC)"+
+					"\nRequetes en Discord Pending: "+histoSyncPendingNb+" (Si >0 histoSync en différé)"
 			}
 			await discordDualLog(synthese)
 			histoSync() // Effectué uniquement ici pour optimiser les acces datastrore
@@ -988,6 +1026,12 @@ exports.httpCallback = async (req, res, method, reqPaths, body, pseudo, pwd) => 
 					gbl.exception( admMsgTest(pseudo,JSON.parse(body)),200)
 				case "admMsgSend":	// envoi d'un message d'admin
 					gbl.exception( admMsgSend(pseudo,JSON.parse(body)),200)
+				case "admHistoSync": { // force la flush de l'historique
+					if (histoSync())
+						gbl.exception( "histoSync OK",200)
+					else
+						gbl.exception( "histoSync DELAY voir log serveur",201)
+				}
 				case "configUpdate":	//modif de la config
 					gbl.exception( await configUpdate(pseudo,JSON.parse(body)),200)
 				case "admTestCompo": {		// test COMPO !! DANGEUREUX

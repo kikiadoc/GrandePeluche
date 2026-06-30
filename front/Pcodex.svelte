@@ -450,8 +450,21 @@
 		CONF.CATTYPES.forEach( (t) => { report.export.push('TYPE,'+t.t+','+t.d+'\n') } )
 		report.export.push('\nCATCOL,ID,PSEUDO,TIMESTAMP,TAG,DESC,TYPE,DEP,ALERTE\n')
 		etat.categories.forEach( (c) => {report.export.push( 'CAT,'+c.id+',"'+c.pseudo+'",'+c.dth+','+c.tag+','+c.desc+','+c.type+','+(c.dep||'')+','+c.ale+'\n')})
-		report.export.push('\nMSGCOL,ID,PSEUDO,TIMESTAMP,CAT,DESC\n')
-		etat.messages.forEach( (c) => { report.export.push( 'MSG,'+c.id+',"'+c.pseudo+'",'+c.dth+','+c.cat+','+c.desc+'\n') })
+		report.export.push('\nMSGCOL,ID,PSEUDO,TIMESTAMP,CAT,DESC,NBUSAGE,DETAIL\n')
+		etat.messages.forEach( (m) => {
+			let mTxt = 'MSG,'+m.id+',"'+m.pseudo+'",'+m.dth+','+m.cat+','+m.desc
+			// Ajoute la recap de diff
+			let xRef = []
+			rawReport.allByDth.forEach ( (d) => {
+				if (d.m==m.id) xRef.push(d.abo?.tag||'null')
+			})		
+			// Ajoute le total d'utilisation
+			mTxt += ','+xRef.length
+			// Ajoute le détail d'utilisation
+			if (xRef.length) mTxt += ','+xRef.join()
+			// Ajoute la ligne
+			report.export.push( mTxt+'\n')
+		})
 		report.export.push('\nABOCOL,ID,CAT,TAG\n')
 		etat.abonnes.forEach( (a) => { report.export.push( 'ABO,'+a.id+','+a.cat+','+a.tag+'\n') })
 		report.export.push('\nDIFCOL,ABOID,MSGID,CATID,TIMESTAMP,DISCORDID,ABOTAG,MSGDESC,RESTE,GLOBAL,REACTIONS...\n')
@@ -597,8 +610,12 @@
 	function adminMsgContenuSend(ev) {
 		adminMsgContenuOp(ev,"admMsgSend")
 	}
+	async function adminHistoSync(ev) {
+		let ret = await apiCall(APIROOT+"admHistoSync",'POST',null)
+		displayObject(ret)
+	}
 	/////////////////////////////////////////////////////////////////////////////////////////////
-	// ADMIN TEST 
+	// ADMIN TEST
 	/////////////////////////////////////////////////////////////////////////////////////////////
 	async function admEffaceHistorique(ev) {
 		if (!confirm('CONFIRMER Effacer les historiques')) return
@@ -1147,6 +1164,8 @@
 					<br/>
 					<input type="url" bind:value={etat.webHookLog} size=60 />
 					<input type="button" value=">" onclick={configUpdate} />
+					<hr/>
+					DataStore: <input type="button" value="Force HistoSync" onclick={adminHistoSync} />
 				</div>
 			{/if}
 		</div>
