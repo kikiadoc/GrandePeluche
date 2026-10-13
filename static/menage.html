@@ -1,0 +1,121 @@
+<html>
+	<head>
+	<meta charset="utf-8">
+	<title>La Grande Peluche (Kiki's Minijeux)</title>
+	<meta name="viewport" content="width=device-width" />
+	<script>
+		let flagLOC=false
+		let flagCDN=false
+		let minDth=0
+		let timerId=null
+		function reloadSite() {
+			window.open('.','_self')
+		}
+		function nettoyageStart() {
+			document.getElementById('audio').volume= (localStorage.getItem("audioVolume") || 100) / 100
+			document.getElementById('audio').play()
+			document.getElementById('boutonStart').style.display="none"
+			document.getElementById('encours').style.display="block"
+			document.getElementById('iframeLOC').src='./clearCache.html'
+			document.getElementById('iframeCDN').src='https://cdn.adhoc.click/STATIC/clearCache.html'
+			timerId = window.setInterval(nettoyageEnd,1000)
+		}
+		function nettoyageEnd() {
+			if (flagLOC && flagCDN && Date.now() > minDth+12000) {
+				window.clearInterval(timerId)
+				document.getElementById('encours').style.display="none"
+				document.getElementById('boutonEnd').style.display="block"
+			}
+			else {
+				console.log("Attente des flags des caches")
+			}
+		}
+		function purgeComplete() {
+			if (confirm("Attention, si tu effaces toutes tes données locales, tu perdras des données non essentielles stockées sur ton équipement")) {
+				localStorage.clear()
+				nettoyageStart()
+			}
+		}
+
+	</script>
+	<style>
+		/* smartphone portait */
+		@media (pointer: coarse) and (orientation: portrait) {
+			body { font-size: 5.8vw; } /* 4.8 */
+		}
+		/* smartphone landscape */
+		@media (pointer: coarse) and (orientation: landscape) {
+			body { font-size: 5.8vh; } /* 4.8 */
+		}
+		/* PC */
+		@media (pointer: fine) {
+			body { font-size: 2.5em }
+		}
+
+		html {  }
+		body {
+			color: white; text-shadow: 0px 0.10em 0.1em black, 0px -0.1em 0.1em black, 0px 0.20em 0.2em black, 0px -0.2em 0.2em black;
+			background-image: url("https://cdn.adhoc.click/STATIC/oracle.png");
+			background-position: center;
+			background-size: cover;
+			background-repeat: no-repeat;
+			margin:auto;
+		}
+		input {
+			cursor: pointer;
+			font-size: 1.5em;
+		}
+		.blinkMsg {
+			text-decoration-line: underline;
+			text-decoration-style: double;
+			text-decoration-color: black;
+			animation-duration: 2s;
+			animation-name: msgFrames;
+			animation-iteration-count: infinite;
+		}
+		@keyframes msgFrames {
+			from { text-decoration-color: black; }
+			to { text-decoration-color: white; }
+		}
+		div {
+			text-align: center;
+			margin:auto;
+		}
+		.txt {
+			background-color: red;
+			margin-top: 1vh;
+			color: black;
+			overflow: hidden;
+			white-space: nowrap;
+			text-overflow: clip;
+		}
+		iframe {
+			height: 2em;
+			width: 100%;
+			background-color: green;
+			border:0;
+		}
+	</style>
+	</head>
+	<body>
+		<audio id="audio" src="https://cdn.adhoc.click/STATIC/nuit-incolore-depasse.mp3" loop=1 crossorigin="anonymous"></audio>
+		<div style="height: 45vh"> </div>
+		<div id="boutonStart">
+			<p><input type="button" value="Nettoyage caches" onclick="nettoyageStart()" /></p>
+			<p><input type="button" value="Nettoyage intégral" onclick="purgeComplete()" style="color:red" /></p>
+			<p><input type="button" value="Retourner sur le site" onclick="reloadSite()" /></p>
+		</div>
+		<div id="encours" style="display:none; width: 50%; background-color:green">
+			<img style="width:30%" src="https://cdn.adhoc.click/STATIC/depanneuse-anim.gif" />
+			<div style="text-align:left">
+				<div>Purge cache local</div>
+				<iframe id="iframeLOC" src="" onload="flagLOC=true;minDth=Date.now()" ></iframe>
+				<div>Purge cache multimédia (CDN)</div>
+				<iframe id="iframeCDN" src="" onload="flagCDN=true;minDth=Date.now()" ></iframe>
+			</div>
+		</div>
+		<div id="boutonEnd" style="display:none">
+			<input type="button" value="Retourner sur le site" onclick="reloadSite()" />
+		</div>
+	</body>
+</html>

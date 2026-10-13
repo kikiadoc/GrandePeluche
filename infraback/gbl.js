@@ -1,0 +1,251 @@
+
+exports.staticFsPath="../inframain/datastore/";
+exports.grimoireFsPath="/var/www/static/grimoire/";
+exports.grimoireUrlPath= "https://ff14.adhoc.click/grimoire/"
+exports.pCloudUrl= "https://filedn.eu/lxYwBeV7fws8lvi48b3a3TH/"
+exports.cdnUrl= "https://cdn.adhoc.click/V10a/"
+exports.cdnUrlStatic= "https://cdn.adhoc.click/STATIC/"
+exports.cdnUrlAI= "https://cdn.adhoc.click/AI-Generated/"
+exports.vaultPath="/home/ec2-user/.vault.donotdelete";
+exports.ipAdmin="91.164.33.248" // adrese PC perso Kikiadoc
+
+
+function padValue(v) { return "00".concat(v).slice(-2); } ;
+function padValue3(v) { return "000".concat(v).slice(-3); } ;
+
+exports.isLowerNumeric = (str) => /^[a-z0-9]{1,50}$/.test(str);
+exports.isNumeric = (str) => /^[0-9]{1,50}$/.test(str);
+exports.isPseudoValid = (str) => /^[A-Za-z0-9-']{2,20}$/.test(str);
+exports.isDataNameValid = (str) => /^[\.A-Za-z0-9]{1,100}$/.test(str) // DataName est une chaine alphanum avec des points
+exports.capitalizeFirstLetter = (str) => { return str.charAt(0).toUpperCase() + str.slice(1); } ;
+exports.lowerFirstLetter = (str) => { return str.charAt(0).toLowerCase() + str.slice(1); } ;
+exports.alphanum2placer = (str) => { return str.replace(/[a-z0-9]/,"﹇") } ;
+exports.stripBlank = (str) => { return str.replace(/[ \:\.\,]/,"") };
+
+const flagProd = __filename.indexOf('/prod/') > 0
+exports.isProd = () => {
+	return flagProd
+}
+
+exports.MONDES = [
+		"Cerberus","Louisoix","Moogle","Omega","Phantom","Ragnarok","Sagittarius","Spriggan",
+		"Alpha","Lich","Odin","Phoenix","Raiden","Shiva","Twintania","Zodiark"
+]
+exports.HOUSING = [
+		"La Coupe", "Lavandière", "Brumée", "Shirogane", "Empyrée"
+]
+
+// filtrage lors d'un stingify pour supprimer les champs p_*
+exports.jsonReplacerDeletePrivKey = (k,v) => {
+	return k.startsWith('p_')? undefined : v
+}
+// tri des propriétés d'un stringify (usage: stockage datastore)
+exports.jsonReplaceReorderKeys = (key, value) => {
+  // On vérifie si la valeur est un objet classique (et non un tableau ou null)
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    return Object.keys(value)
+      .sort() // Tri alphabétique des propriétés
+      .reduce((obj, k) => {
+        obj[k] = value[k];
+        return obj;
+      }, {});
+  }
+  return value;
+}
+
+
+exports.countDownTo = (dth) => {
+	if (dth==null || dth==undefined)
+		return "--:--:--";
+	const nbSec = Math.floor( (dth- Date.now()) / 1000);
+	if (nbSec <= 0) return "00:00:00";
+	const h = Math.floor(nbSec/3600);
+	const m = Math.floor( (nbSec - h*3600) / 60);
+	const s = Math.floor( nbSec % 60);
+	return padValue(h) + "h" + padValue(m) + "m" + padValue(s)+"s";
+}
+
+exports.hhmmssms = ms => {
+	if (ms) {
+		let dth = new Date(ms);
+		return	 padValue(dth.getHours())+":"
+			+padValue(dth.getMinutes())+":"
+			+padValue(dth.getSeconds())+"."
+			+padValue3(dth.getMilliseconds());
+	}
+	return "--:--:--.---";
+};
+
+// ms est un nombre de millisecond
+exports.jjmmhhmmss = (ms) => {
+	if (ms) {
+		let dth = new Date(ms);
+		return "le "+padValue(dth.getDate())+"/"+padValue(dth.getMonth()+1)+" à "+padValue(dth.getHours())+":"+padValue(dth.getMinutes())+":"+padValue(dth.getSeconds());
+	}
+	return "...";
+	
+}
+
+exports.hexToUint8Array = (hexString) => {
+	const hexStr = (hexString)? hexString :  "0000"
+	var bytes = new Uint8Array(Math.ceil(hexStr.length / 2));
+	for (var i = 0; i < bytes.length; i++) bytes[i] = parseInt(hexStr.substr(i * 2, 2), 16);
+	return bytes
+}
+
+
+exports.uuidv4 = () => {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
+// compacte un objet pour optimisation mémoire
+exports.deepCompact = (val) => {
+  const data = Array.isArray(val) ? val.filter(Boolean) : val;
+  return Object.entries(data).reduce(
+    (acc, [key, value]) => {
+      if (Boolean(value))
+        acc[key] = typeof value === 'object' ? exports.deepCompact(value) : value;
+      return acc;
+    },
+    Array.isArray(val) ? [] : {}
+  );
+};
+
+// genere une exeption au "standard" 
+exports.exception = (message,code,msgIsJson) => {
+	throw {
+		code: code, 
+		msg : (typeof message == "string")? message : "nomsg",
+		o : (typeof message == "object")? message : null,
+		msgIsJson: msgIsJson
+	}
+}
+
+// compte le nombre de bits d'un int 32 bits
+exports.countBits = (n) => {
+  let count = 0;
+  while (n !== 0) {
+    count += n & 1; // Ajoute 1 si le dernier bit est à 1
+    n = n >>> 1;  // Décale d'un bit vers la droite
+  }
+  return count;
+}
+
+
+// vérification du parametre, retourne la valeur ou gbl exception 400 sinon
+exports.checkInt = (v,min,max) => {
+	let i = parseInt(v,10);
+	if (isNaN(i) || i < min || i > max) exports.exception("bad int param",400)
+	return i;
+}
+// vérification du parametre, retourne la valeur ou gbl exception 400 sinon
+exports.checkFloat = (v,min,max) => {
+	let i = parseFloat(v);
+	if (isNaN(i) || i < min || i > max) exports.exception("bad float param",400)
+	return i;
+}
+
+// return true/false selon la distance quadratique
+exports.isDistance = (x,y,tX,tY,d) => {
+	return (x>=tX-d && x<=tX+d && y>=tY-d && y<=tY+d)
+}
+
+// return un texte "escapé" pouvant être utilise comme fileName
+// ce codage doit être strictement identique a ceui effectué coté client
+const ESCAPETEXTREGEXP =  /[^A-Za-z0-9', ]/g
+exports.escapeTexte = (str) => {
+	return str.replace( ESCAPETEXTREGEXP, "_" );
+	// return encodeURIComponent(str).replace( ESCAPETEXTREGEXP, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}` );
+}
+
+// appel api externe retornant un JSON avec un champ status
+exports.apiCall = async (fullUrl,method,body,headers) => {
+	try {
+		const res = await fetch(fullUrl, {
+			method: method? method: 'GET', 	
+			mode: "cors",
+			cache: "no-store",
+			body: (body)? JSON.stringify(body) : null,
+			headers: (headers)? headers : { 'Content-Type': 'application/json; charset=UTF-8'}
+		});
+	  const json = await res.json();
+		json.status = res.status;
+		return json;
+	}
+	catch(e) {
+		console.log("Erreur sur APICALL",e);
+		return { status: 503 };
+	}
+}
+
+// appel api externe retornant un JSON avec un champ status
+// le pars de resultat est fait selon parseType
+exports.apiCallExtern = async (fullUrl,method,body,headers,parseType) => {
+	let res;
+	try {
+		res = await fetch(fullUrl, {
+			method: method? method: 'GET', 	
+			mode: "cors",
+			cache: "no-store",
+			body: (body)? JSON.stringify(body) : null,
+			headers: (headers)? headers : { 'Content-Type': 'application/json; charset=UTF-8'}
+		});
+		if (!parseType || parseType=="text") return { status: res.status, text: await res.text() }
+		if (parseType=="json") return { status: res.status, json: await res.json() }
+		if (parseType=="raw") return { status: res.status, raw: await res.blob() }
+		return { status: 503, statusReq: res.status, msg: "apiCallExtern bad parseType" }
+	}
+	catch(e) {
+		console.log("-----------------------");
+		console.log(e,"RES=",res);
+		console.log("-----------------------");
+		return { status: 503 };
+	}
+}
+
+// melange un tableau
+exports.shuffle = (array) => {
+  let currentIndex = array.length,  randomIndex;
+  // While there remain elements to shuffle.
+  while (currentIndex != 0) {
+    // Pick a remaining element.
+    randomIndex = Math.floor(Math.random() * currentIndex);
+    currentIndex--;
+    // And swap it with the current element.
+    [array[currentIndex], array[randomIndex]] = [
+      array[randomIndex], array[currentIndex]];
+  }
+  return array;
+}
+
+// provoque une attente
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms))
+} 
+exports.sleep = async (sec) => {
+	await delay(sec*1000)
+}
+// queue une promesse "independante" sans analyser son retour
+function promIndepOK(r) {
+	// console.log('********** promIndepOK')
+}
+function promIndepKO(r) {
+	// console.log('********** promIndepKO')
+}
+function promIndepCatch(e) {
+	console.log('********** promIndepCatch')
+	console.error(e)
+	console.log('**********')
+}
+exports.promIndep = (p) => {
+	p.then(promIndepOK,promIndepKO).catch(promIndepCatch)
+}
+
+console.log("****************************************************");
+console.log("Running envronment: ", (flagProd)? "PRODUCTION" : "STAGING");
+console.log("****************************************************");
+console.log("gbl loaded");
+

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="fr">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width" />
+		<meta name="robots" content="noindex, nofollow">
+		<link rel="manifest" href="home.webmanifest" />
+		<title>La Grande Peluche</title>
+		<style>
+			.splashAnim {
+				background: radial-gradient(red, yellow, transparent 50%);
+				z-index: 9998;
+				position:fixed;
+				top: 0; left: 0;
+				width:100%;
+				height:80%;
+				animation-duration: 2s;
+				animation-name: splashFrames;
+				animation-iteration-count: infinite;
+			}
+			@keyframes splashFrames {
+				from { opacity: 0%}
+				50% { opacity: 100%}
+				to { opacity: 0%}
+			}
+			.splashTexte {
+				text-align:center; width:40%; margin: 30%;
+				font-size: 3em;
+				color: white;
+			}
+
+		</style>
+		<link rel="icon" href="./kiki-favicon.png" />
+		<script src="./home.js?v=5" async></script>
+		%sveltekit.head%
+		<!-- pas de style externe cause discord <link rel="stylesheet" href="./home.css" /> -->
+	</head>
+	<body style="background-color: black" data-sveltekit-preload-data="hover">
+		<div id="kikiSplash" class="splashAnim">
+			<div class="splashTexte">
+				&nbsp;
+			</div>
+		</div>
+		<div id="kikiSvelte" style="display: content">%sveltekit.body%</div>
+	</body>
+</html>

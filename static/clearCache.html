@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="fr">
+<!-- CE FICHIER DOIT ETRE SERVI PAR APACHE AVEC LA POLITIQUE CLEARCACHE -->
+	<head>
+		<meta charset="utf-8">
+		<title>La Grande Peluche (Kiki's Minijeux)</title>
+		<script>
+			let TIMERLIMIT=10
+			let timer=0
+			let timerId=null
+			function decTimer() {
+				timer++
+				if (timer > TIMERLIMIT) {
+					clearInterval(timerId)
+				}
+				else {
+					document.getElementById("decTimer").style.width= (100*timer/TIMERLIMIT).toFixed(0)+"%"
+				}
+			}
+			timerId=setInterval(decTimer,1000)
+		</script>
+		<style>
+			.txt {
+				font-size:2em;
+				background-color: blue;
+				color: black;
+				font-size: 2em;
+				overflow: hidden;
+				height: 1em;
+				white-space: nowrap;
+				text-overflow: clip;
+			}
+		</style>
+	</head>
+  <body>
+		<div style="text-align: left; margin:auto">
+			<div class="txt" id="decTimer">
+			</div>
+		</div>
+	</body>
+ </html>
