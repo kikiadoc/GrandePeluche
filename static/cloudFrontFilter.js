@@ -6,7 +6,7 @@ function handler(event) {
   const referer = event.request.headers.referer
   const refVal = referer && referer.value
   const clientIP = event.viewer.ip
-  const isKiki = clientIP=="91.164.33.248" || clientIP=="2a01:e0a:108:7e30:9da9:71eb:8610:7ef5" // adresses de Kiki en IPV4 ou IPV6
+  const isKiki = false // adresses de Kiki en IPV4 ou IPV6
 
   if ( refVal && (refVal.startsWith("https://ff14.adhoc.click/") || refVal.startsWith("https://cdn.adhoc.click/") || refVal.startsWith("https://svelte.dev/")) || isKiki)
     return event.request
