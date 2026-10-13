@@ -1,10 +1,14 @@
-Version publique des sources du site de la Grande Peluche @ Tue Oct 13 09:31:13 UTC 2026
+Version publique des sources du site de la Grande Peluche @ Tue Oct 13 10:16:02 UTC 2026
 
-Ceci est un repo complémentaire pour diffuser certains éléments de code source.
+Ceci est un repo complémentaire public pour diffuser le code source.
 
 Ce n'est pas le repo technique utilisé en CI/CD.
 
-Je sais que le code n'est pas parfait.
+Pour des raisons sentimentales, je conserve ici de nombreux anciens éléments qui ne sont plus utilisés par l'application actuelle.
+
+Et je sais que le code n'est pas parfait.
+
+On apprend en marchant: c'est ma première application qui met en oeuvre https://svelte.dev/
 
 N'hésitez pas à réutiliser des élements.
 
