@@ -21,8 +21,6 @@ const hostDescription = {
 		skin: { titreLbl: "La Grande Peluche" },
 		PAGEASSISTANCE: "https://help.adhoc.click/HELP/index.html",
 		URLPRIVE: "https://ff14.adhoc.click/enjoyTest",
-		URLDISCORD: "discord://-/channels/934449346655715378/1151925290570874951",
-
 	}, 
 	'ff14.adhoc.click': {
 		public: false, discord:false, discordClientId: null, skin: "FF",
@@ -30,15 +28,13 @@ const hostDescription = {
 		skin: { titreLbl: "La Grande Peluche" },
 		PAGEASSISTANCE: "https://help.adhoc.click/HELP/index.html",
 		URLPRIVE: "https://ff14.adhoc.click/enjoy",
-		URLDISCORD: "discord://-/channels/934449346655715378/1151925290570874951"
 	},
-	'1523960774723375206.discordsays.com': {
+	'1523960774723375206.discordsays.com': { 
 		public: true, discord:true, discordClientId: '1523960774723375206', skin: "FF",
 		rpId: "1523960774723375206.discordsays.com", rpName: "La Grande Peluche", typeAuth: "discord",
 		skin: { titreLbl: "La Grande Peluche - Staging Discord " },
 		PAGEASSISTANCE: "https://help.adhoc.click/HELP/index.html",
 		URLPRIVE: "https://ff14.adhoc.click/enjoyTest",
-		URLDISCORD: "discord://-/channels/934449346655715378/1151925290570874951"
 	},
 	'1523699928701075677.discordsays.com': {
 		public: true, discord:true, discordClientId: '1523699928701075677', skin: "FF",
@@ -46,7 +42,6 @@ const hostDescription = {
 		skin: { titreLbl: "La Grande Peluche" },
 		PAGEASSISTANCE: "https://help.adhoc.click/HELP/index.html",
 		URLPRIVE: "https://ff14.adhoc.click/enjoy",
-		URLDISCORD: "discord://-/channels/934449346655715378/1151925290570874951"
 	},
 }
 // Description du host
@@ -113,7 +108,7 @@ export const GBLCONST = {
 	PRIVCODEX  : 0x00000001, // spécifique admin codex
 	PRIVENIGME : 0x00000002, // spécifique admin enigme
 	
-	PRIVACCES  : 0x00800000, // acces au page de menu vérouillées
+	PRIVACCES  : 0x00800000, // acces au page de menu vérouillées 
 	PRIVBAN    : 0x00400000, // possibilite de ban
 	
 	PRIVDROITS : 0x01000000, // gestion des droits < 0xFFFFFF 
