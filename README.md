@@ -1,4 +1,4 @@
-Version publique des sources du site de la Grande Peluche @ Tue Oct 13 10:55:50 UTC 2026
+Version publique des sources du site de la Grande Peluche @ Tue Oct 13 11:01:32 UTC 2026
 
 Ceci est un repo complémentaire public pour diffuser le code source.
 
@@ -13,5 +13,6 @@ Et je sais que le code n'est pas parfait.
 N'hésitez pas à réutiliser des élements.
 
 Entry point client: front/+page.svelte
+
 Entry point server: inframain/server.js
 
